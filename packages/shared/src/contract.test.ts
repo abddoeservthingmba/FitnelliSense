@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { createMediaAssetRequestSchema, seedCatalogueSchema } from './index.js';
-import { decimalStringSchema, paginationSchema, rpeSchema } from './primitives.js';
-import { registerRequestSchema } from './auth.js';
-import { listExercisesQuerySchema, createExerciseRequestSchema } from './exercise.js';
-import { saveRoutineRequestSchema } from './routine.js';
-import { httpStatusFor, isRetryable } from './errors.js';
+import { createMediaAssetRequestSchema, seedCatalogueSchema } from './index';
+import { decimalStringSchema, paginationSchema, rpeSchema } from './primitives';
+import { registerRequestSchema } from './auth';
+import { listExercisesQuerySchema, createExerciseRequestSchema } from './exercise';
+import { saveRoutineRequestSchema } from './routine';
+import { httpStatusFor, isRetryable } from './errors';
 
 describe('decimalStringSchema', () => {
   it('normalises numbers and strings to one string form', () => {

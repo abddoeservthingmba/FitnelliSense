@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { type Dec, dec, decToString } from './decimal.js';
-import { ONE_RM_FORMULA_NAME, ONE_RM_MAX_REPS, estimate1RM } from './one-rep-max.js';
+import { type Dec, dec, decToString } from './decimal';
+import { ONE_RM_FORMULA_NAME, ONE_RM_MAX_REPS, estimate1RM } from './one-rep-max';
 
 const str = (value: Dec | null) => (value === null ? null : decToString(value));
 

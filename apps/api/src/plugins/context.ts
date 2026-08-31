@@ -4,10 +4,10 @@
  */
 import fp from 'fastify-plugin';
 import type { FastifyInstance } from 'fastify';
-import type { Config } from '../config.js';
-import type { DatabaseHandle } from '../db/client.js';
-import type { Storage } from '../lib/r2.js';
-import type { TokenConfig } from '../lib/tokens.js';
+import type { Config } from '../config';
+import type { DatabaseHandle } from '../db/client';
+import type { Storage } from '../lib/r2';
+import type { TokenConfig } from '../lib/tokens';
 
 export interface AppContext {
   readonly config: Config;

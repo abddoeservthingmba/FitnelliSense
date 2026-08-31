@@ -2,10 +2,10 @@
  * Personal record detection. BRD FR-HP-06 — run once on workout completion,
  * pure and deterministic so the same workout always yields the same records.
  */
-import { type Dec, gt } from './decimal.js';
-import { estimate1RM } from './one-rep-max.js';
-import { type AttributedSet, type Counting, type PrType } from './types.js';
-import { countsTowardVolume, setVolume } from './volume.js';
+import { type Dec, gt } from './decimal';
+import { estimate1RM } from './one-rep-max';
+import { type AttributedSet, type Counting, type PrType } from './types';
+import { countsTowardVolume, setVolume } from './volume';
 
 export const PR_TYPES: readonly PrType[] = ['heaviest_weight', 'best_1rm', 'best_set_volume'];
 

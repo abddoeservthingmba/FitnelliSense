@@ -12,7 +12,7 @@ import {
   mulInt,
   sub,
   sum,
-} from './decimal.js';
+} from './decimal';
 
 describe('dec', () => {
   it('parses whole and fractional strings', () => {

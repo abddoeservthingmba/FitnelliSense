@@ -7,9 +7,9 @@
  * namespace is not enumerable (BRD §10.2).
  */
 import fp from 'fastify-plugin';
-import { notFound, unauthenticated } from '../lib/errors.js';
-import { verifyAccessToken } from '../lib/tokens.js';
-import { hashUserId } from '../lib/logging.js';
+import { notFound, unauthenticated } from '../lib/errors';
+import { verifyAccessToken } from '../lib/tokens';
+import { hashUserId } from '../lib/logging';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 export interface AuthenticatedUser {

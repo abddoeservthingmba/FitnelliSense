@@ -15,11 +15,11 @@ import {
   updateMediaAssetRequestSchema,
   uuidSchema,
 } from '@fi/shared';
-import { mediaAssets } from '../../db/schema.js';
-import { badRequest, notFound } from '../../lib/errors.js';
-import { newId } from '../../lib/ids.js';
-import { currentUser } from '../../plugins/auth.js';
-import { recordAudit } from '../../services/audit-service.js';
+import { mediaAssets } from '../../db/schema';
+import { badRequest, notFound } from '../../lib/errors';
+import { newId } from '../../lib/ids';
+import { currentUser } from '../../plugins/auth';
+import { recordAudit } from '../../services/audit-service';
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 

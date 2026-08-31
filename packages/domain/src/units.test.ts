@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dec, decToString } from './decimal.js';
+import { dec, decToString } from './decimal';
 import {
   DEFAULT_INCREMENT_KG,
   formatWeight,
@@ -9,7 +9,7 @@ import {
   roundToIncrement,
   toDisplayUnit,
   unitLabel,
-} from './units.js';
+} from './units';
 
 describe('conversion', () => {
   it('round-trips kilograms through pounds', () => {

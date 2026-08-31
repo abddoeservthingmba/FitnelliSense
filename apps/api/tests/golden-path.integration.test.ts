@@ -18,7 +18,7 @@ import {
   type TestClient,
   type TestContext,
   type TestUser,
-} from './helpers/harness.js';
+} from './helpers/harness';
 
 describeIntegration('golden path', () => {
   let ctx: TestContext;

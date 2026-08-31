@@ -1,6 +1,6 @@
 /** Profile contracts — FR-AUTH-07..09. */
 import { z } from 'zod';
-import { experienceLevelSchema, unitSystemSchema } from './enums.js';
+import { experienceLevelSchema, unitSystemSchema } from './enums';
 import {
   isoDateSchema,
   isoDateTimeSchema,
@@ -8,7 +8,7 @@ import {
   restSecsSchema,
   shortTextSchema,
   uuidSchema,
-} from './primitives.js';
+} from './primitives';
 
 export const profileSchema = z.object({
   displayName: shortTextSchema,

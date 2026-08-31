@@ -7,7 +7,7 @@
  */
 import { z } from 'zod';
 import { resolvedMediaSchema, routes, uuidSchema } from '@fi/shared';
-import { resolveMediaOrThrow, type MediaDeps } from '../services/media-service.js';
+import { resolveMediaOrThrow, type MediaDeps } from '../services/media-service';
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 

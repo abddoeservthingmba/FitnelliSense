@@ -3,10 +3,10 @@
  * (dashboard streak and rolling volume). Deterministic and pure — from Phase 4
  * these are the figures handed to the model as context (BRD §8.4).
  */
-import { type Dec, ZERO, add, max } from './decimal.js';
-import { estimate1RM } from './one-rep-max.js';
-import { type Counting, type LoggedSet } from './types.js';
-import { countsTowardVolume, setVolume } from './volume.js';
+import { type Dec, ZERO, add, max } from './decimal';
+import { estimate1RM } from './one-rep-max';
+import { type Counting, type LoggedSet } from './types';
+import { countsTowardVolume, setVolume } from './volume';
 
 export type ProgressMetric = 'best_set_weight' | 'estimated_1rm' | 'total_volume' | 'total_reps';
 

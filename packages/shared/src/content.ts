@@ -7,8 +7,8 @@
  * exercise with unverifiable media (BRD §16.2 task 3).
  */
 import { z } from 'zod';
-import { licenceStatusSchema, mediaDeliverySchema, mediaKindSchema } from './enums.js';
-import { noteTextSchema, shortTextSchema, slugSchema } from './primitives.js';
+import { licenceStatusSchema, mediaDeliverySchema, mediaKindSchema } from './enums';
+import { noteTextSchema, shortTextSchema, slugSchema } from './primitives';
 
 export const seedMediaSchema = z.object({
   kind: mediaKindSchema,

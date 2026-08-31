@@ -11,9 +11,9 @@ import {
   updateExerciseRequestSchema,
   uuidSchema,
 } from '@fi/shared';
-import { currentUser } from '../plugins/auth.js';
-import * as exerciseService from '../services/exercise-service.js';
-import { getTaxonomy } from '../services/taxonomy-service.js';
+import { currentUser } from '../plugins/auth';
+import * as exerciseService from '../services/exercise-service';
+import { getTaxonomy } from '../services/taxonomy-service';
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 

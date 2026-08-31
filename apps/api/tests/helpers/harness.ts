@@ -13,10 +13,10 @@ import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import { sql } from 'drizzle-orm';
 import { describe } from 'vitest';
 import type { FastifyInstance, InjectOptions, LightMyRequestResponse } from 'fastify';
-import { buildApp } from '../../src/app.js';
-import { loadConfig, type Config } from '../../src/config.js';
-import { createDatabase, type DatabaseHandle } from '../../src/db/client.js';
-import { createStorage } from '../../src/lib/r2.js';
+import { buildApp } from '../../src/app';
+import { loadConfig, type Config } from '../../src/config';
+import { createDatabase, type DatabaseHandle } from '../../src/db/client';
+import { createStorage } from '../../src/lib/r2';
 
 export const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;
 export const describeIntegration = TEST_DATABASE_URL ? describe : describe.skip;
@@ -197,8 +197,8 @@ export function first<T>(items: readonly T[], what = 'item'): T {
 /** Loads the seeded catalogue into the test database. */
 export async function seedCatalogue(context: TestContext): Promise<void> {
   const { readFile } = await import('node:fs/promises');
-  const { importCatalogue } = await import('../../src/services/content-service.js');
-  const { seedFilePath } = await import('../../src/db/paths.js');
+  const { importCatalogue } = await import('../../src/services/content-service');
+  const { seedFilePath } = await import('../../src/db/paths');
   const catalogue: unknown = JSON.parse(await readFile(seedFilePath(), 'utf8'));
   await importCatalogue(context.database.db, catalogue);
 }

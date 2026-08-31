@@ -2,11 +2,11 @@
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { routes, shortTextSchema, slugSchema, taxonomyResponseSchema } from '@fi/shared';
-import { equipment, muscleGroups, muscles } from '../../db/schema.js';
-import { badRequest, notFound } from '../../lib/errors.js';
-import { currentUser } from '../../plugins/auth.js';
-import { recordAudit } from '../../services/audit-service.js';
-import { getTaxonomy } from '../../services/taxonomy-service.js';
+import { equipment, muscleGroups, muscles } from '../../db/schema';
+import { badRequest, notFound } from '../../lib/errors';
+import { currentUser } from '../../plugins/auth';
+import { recordAudit } from '../../services/audit-service';
+import { getTaxonomy } from '../../services/taxonomy-service';
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 

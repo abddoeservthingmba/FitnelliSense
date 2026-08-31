@@ -8,7 +8,7 @@
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { SignJWT, jwtVerify, errors as joseErrors } from 'jose';
 import { accessTokenClaimsSchema, type AccessTokenClaims } from '@fi/shared';
-import { unauthenticated } from './errors.js';
+import { unauthenticated } from './errors';
 
 const ISSUER = 'fitness-intellisense';
 const AUDIENCE = 'fi-client';

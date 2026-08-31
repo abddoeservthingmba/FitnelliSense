@@ -2,7 +2,7 @@
  * Estimated one-rep max. BRD FR-HP-05: Epley, and the formula name is shown
  * in the UI so the number is never presented as ground truth.
  */
-import { type Dec, mulFloat } from './decimal.js';
+import { type Dec, mulFloat } from './decimal';
 
 export const ONE_RM_FORMULA_NAME = 'Epley';
 export const ONE_RM_FORMULA_TEXT = '1RM = weight × (1 + reps / 30)';

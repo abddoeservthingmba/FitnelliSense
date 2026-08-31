@@ -7,10 +7,10 @@
  */
 import { and, asc, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm';
 import type { Page, RoutineDetail, RoutineSummary, SaveRoutineRequest } from '@fi/shared';
-import { exercises, routineExercises, routines } from '../db/schema.js';
-import { badRequest, notFound } from '../lib/errors.js';
-import { newId } from '../lib/ids.js';
-import type { Database } from '../db/client.js';
+import { exercises, routineExercises, routines } from '../db/schema';
+import { badRequest, notFound } from '../lib/errors';
+import { newId } from '../lib/ids';
+import type { Database } from '../db/client';
 
 const MAX_ROUTINES_LISTED = 200;
 

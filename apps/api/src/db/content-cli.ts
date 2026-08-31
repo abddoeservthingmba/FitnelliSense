@@ -8,10 +8,10 @@
  * commit the diff, and the catalogue survives any database reset (R11).
  */
 import { readFile, writeFile } from 'node:fs/promises';
-import { loadConfig } from '../config.js';
-import { createDatabase } from './client.js';
-import { exportCatalogue, importCatalogue } from '../services/content-service.js';
-import { seedFilePath } from './paths.js';
+import { loadConfig } from '../config';
+import { createDatabase } from './client';
+import { exportCatalogue, importCatalogue } from '../services/content-service';
+import { seedFilePath } from './paths';
 
 async function main(): Promise<void> {
   const command = process.argv[2];

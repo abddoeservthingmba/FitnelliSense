@@ -16,7 +16,7 @@ import {
   routes,
   tokenPairSchema,
 } from '@fi/shared';
-import * as authService from '../services/auth-service.js';
+import * as authService from '../services/auth-service';
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 

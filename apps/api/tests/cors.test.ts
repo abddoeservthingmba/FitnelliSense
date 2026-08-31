@@ -7,10 +7,10 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
-import { buildApp } from '../src/app.js';
-import { loadConfig } from '../src/config.js';
-import { createStorage } from '../src/lib/r2.js';
-import type { DatabaseHandle } from '../src/db/client.js';
+import { buildApp } from '../src/app';
+import { loadConfig } from '../src/config';
+import { createStorage } from '../src/lib/r2';
+import type { DatabaseHandle } from '../src/db/client';
 
 const ALLOWED = 'http://localhost:8081';
 const DISALLOWED = 'https://evil.example.com';

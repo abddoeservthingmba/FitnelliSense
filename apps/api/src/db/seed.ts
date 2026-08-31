@@ -7,10 +7,10 @@
  * (FR-MED-10) and this script does not bypass it.
  */
 import { readFile } from 'node:fs/promises';
-import { loadConfig } from '../config.js';
-import { createDatabase } from './client.js';
-import { importCatalogue } from '../services/content-service.js';
-import { seedFilePath } from './paths.js';
+import { loadConfig } from '../config';
+import { createDatabase } from './client';
+import { importCatalogue } from '../services/content-service';
+import { seedFilePath } from './paths';
 
 async function main(): Promise<void> {
   const config = loadConfig();

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { dec, decToString } from './decimal.js';
-import { type LoggedSet, type SetType } from './types.js';
+import { dec, decToString } from './decimal';
+import { type LoggedSet, type SetType } from './types';
 import {
   completedSetCount,
   countsTowardVolume,
@@ -9,7 +9,7 @@ import {
   totalReps,
   totalVolume,
   volumeByExercise,
-} from './volume.js';
+} from './volume';
 
 function set(
   weight: string | null,

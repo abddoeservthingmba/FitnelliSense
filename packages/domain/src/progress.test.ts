@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { dec, decToNumber, decToString } from './decimal.js';
+import { dec, decToNumber, decToString } from './decimal';
 import {
   currentStreakDays,
   isoDateDaysAgo,
   progressSeries,
   volumeSince,
   type SessionSets,
-} from './progress.js';
-import { type LoggedSet } from './types.js';
+} from './progress';
+import { type LoggedSet } from './types';
 
 function set(weight: string | null, reps: number | null, over: Partial<LoggedSet> = {}): LoggedSet {
   return {

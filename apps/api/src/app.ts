@@ -14,15 +14,15 @@ import {
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
 import { API_PREFIX, HEADERS } from '@fi/shared';
-import { buildLoggerOptions } from './lib/logging.js';
-import { contextPlugin, type AppContext } from './plugins/context.js';
-import { requestContextPlugin, requestIdFactory } from './plugins/request-context.js';
-import { errorHandlerPlugin } from './plugins/error-handler.js';
-import { authPlugin } from './plugins/auth.js';
-import { idempotencyPlugin } from './plugins/idempotency.js';
-import { registerRoutes } from './routes/index.js';
-import { healthRoutes } from './routes/health.js';
-import { rateLimited } from './lib/errors.js';
+import { buildLoggerOptions } from './lib/logging';
+import { contextPlugin, type AppContext } from './plugins/context';
+import { requestContextPlugin, requestIdFactory } from './plugins/request-context';
+import { errorHandlerPlugin } from './plugins/error-handler';
+import { authPlugin } from './plugins/auth';
+import { idempotencyPlugin } from './plugins/idempotency';
+import { registerRoutes } from './routes/index';
+import { healthRoutes } from './routes/health';
+import { rateLimited } from './lib/errors';
 
 export async function buildApp(context: AppContext): Promise<FastifyInstance> {
   const { config } = context;

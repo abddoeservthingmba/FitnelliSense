@@ -14,8 +14,8 @@ import fp from 'fastify-plugin';
 import { createHash } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { HEADERS } from '@fi/shared';
-import { conflict } from '../lib/errors.js';
-import { idempotencyKeys } from '../db/schema.js';
+import { conflict } from '../lib/errors';
+import { idempotencyKeys } from '../db/schema';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);

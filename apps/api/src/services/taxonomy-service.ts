@@ -4,8 +4,8 @@
  */
 import { asc } from 'drizzle-orm';
 import type { TaxonomyResponse } from '@fi/shared';
-import { equipment, muscleGroups, muscles } from '../db/schema.js';
-import type { Database } from '../db/client.js';
+import { equipment, muscleGroups, muscles } from '../db/schema';
+import type { Database } from '../db/client';
 
 export async function getTaxonomy(db: Database): Promise<TaxonomyResponse> {
   const [groups, allMuscles, allEquipment] = await Promise.all([

@@ -18,9 +18,9 @@ import {
   workoutDetailSchema,
   workoutSummarySchema,
 } from '@fi/shared';
-import { currentUser } from '../plugins/auth.js';
-import { notFound } from '../lib/errors.js';
-import * as workoutService from '../services/workout-service.js';
+import { currentUser } from '../plugins/auth';
+import { notFound } from '../lib/errors';
+import * as workoutService from '../services/workout-service';
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 

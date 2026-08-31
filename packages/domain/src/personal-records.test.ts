@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { type Dec, dec, decToString } from './decimal.js';
-import { detectPRs, recordKey } from './personal-records.js';
-import { type AttributedSet } from './types.js';
+import { type Dec, dec, decToString } from './decimal';
+import { detectPRs, recordKey } from './personal-records';
+import { type AttributedSet } from './types';
 
 function set(
   id: string,

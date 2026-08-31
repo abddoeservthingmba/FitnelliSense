@@ -43,5 +43,12 @@ export default tseslint.config(
     ],
     rules: { 'no-console': 'off' },
   },
+  {
+    // Metro and Babel configs are CommonJS by contract — the toolchain loads
+    // them with `require`, so they cannot be ES modules.
+    files: ['apps/mobile/metro.config.js', 'apps/mobile/babel.config.js'],
+    languageOptions: { globals: { module: 'writable', require: 'readonly', __dirname: 'readonly' } },
+    rules: { '@typescript-eslint/no-require-imports': 'off', 'no-undef': 'off' },
+  },
   prettier,
 );

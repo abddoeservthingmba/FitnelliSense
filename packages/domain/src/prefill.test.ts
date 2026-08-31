@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { dec, decToString } from './decimal.js';
-import { prefillSet } from './prefill.js';
+import { dec, decToString } from './decimal';
+import { prefillSet } from './prefill';
 
 describe('prefillSet', () => {
   it('prefers the previous set in the live workout', () => {

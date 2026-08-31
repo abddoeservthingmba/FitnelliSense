@@ -2,7 +2,7 @@
  * Unit conversion. BRD FR-WK-12: kilograms are canonical everywhere; pounds
  * exist only at the presentation layer.
  */
-import { type Dec, dec, decToString, mulFloat } from './decimal.js';
+import { type Dec, dec, decToString, mulFloat } from './decimal';
 
 export const KG_PER_LB = 0.45359237;
 export const LB_PER_KG = 1 / KG_PER_LB;

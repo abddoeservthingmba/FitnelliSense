@@ -11,8 +11,8 @@ import {
   mediaDeliverySchema,
   mediaKindSchema,
   mediaStateSchema,
-} from './enums.js';
-import { isoDateTimeSchema, noteTextSchema, shortTextSchema, uuidSchema } from './primitives.js';
+} from './enums';
+import { isoDateTimeSchema, noteTextSchema, shortTextSchema, uuidSchema } from './primitives';
 
 /** What an exercise payload carries: an id and enough to lay out a placeholder. */
 export const mediaRefSchema = z.object({

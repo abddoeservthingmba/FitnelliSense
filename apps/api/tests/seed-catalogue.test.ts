@@ -5,7 +5,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { RENDERABLE_LICENCES, seedCatalogueSchema } from '@fi/shared';
-import { seedFilePath } from '../src/db/paths.js';
+import { seedFilePath } from '../src/db/paths';
 
 const catalogue = seedCatalogueSchema.parse(
   JSON.parse(readFileSync(seedFilePath(), 'utf8')) as unknown,

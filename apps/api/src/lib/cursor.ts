@@ -5,7 +5,7 @@
  * because the shape is ours to change; keyset-based because OFFSET on a growing
  * history gets slower every week.
  */
-import { badRequest } from './errors.js';
+import { badRequest } from './errors';
 
 export function encodeCursor(parts: readonly (string | number)[]): string {
   return Buffer.from(JSON.stringify(parts), 'utf8').toString('base64url');

@@ -3,7 +3,7 @@
  * unsafe deployment impossible rather than merely discouraged.
  */
 import { describe, expect, it } from 'vitest';
-import { ConfigError, loadConfig } from '../src/config.js';
+import { ConfigError, loadConfig } from '../src/config';
 
 const valid = {
   NODE_ENV: 'development',

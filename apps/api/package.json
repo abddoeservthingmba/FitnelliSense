@@ -4,18 +4,18 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch --env-file-if-exists=.env src/index.ts",
     "build": "tsup",
-    "start": "node dist/index.js",
+    "start": "node --env-file-if-exists=.env dist/index.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx src/db/migrate.ts",
-    "db:seed": "tsx src/db/seed.ts",
+    "db:migrate": "tsx --env-file-if-exists=.env src/db/migrate.ts",
+    "db:seed": "tsx --env-file-if-exists=.env src/db/seed.ts",
     "db:studio": "drizzle-kit studio",
-    "content:export": "tsx src/db/content-cli.ts export",
-    "content:import": "tsx src/db/content-cli.ts import"
+    "content:export": "tsx --env-file-if-exists=.env src/db/content-cli.ts export",
+    "content:import": "tsx --env-file-if-exists=.env src/db/content-cli.ts import"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.937.0",

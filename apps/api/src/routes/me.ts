@@ -9,12 +9,12 @@ import {
   routes,
   updateProfileRequestSchema,
 } from '@fi/shared';
-import { currentUser } from '../plugins/auth.js';
-import { keys } from '../lib/r2.js';
-import { badRequest } from '../lib/errors.js';
-import * as profileService from '../services/profile-service.js';
-import * as authService from '../services/auth-service.js';
-import { exportUserData } from '../services/export-service.js';
+import { currentUser } from '../plugins/auth';
+import { keys } from '../lib/r2';
+import { badRequest } from '../lib/errors';
+import * as profileService from '../services/profile-service';
+import * as authService from '../services/auth-service';
+import { exportUserData } from '../services/export-service';
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 

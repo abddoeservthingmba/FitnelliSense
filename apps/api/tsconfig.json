@@ -1,11 +1,13 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    // Bundler resolution, not NodeNext: the deployed artefact is a tsup bundle
+    // (see docs/adr/0001-stack.md), and the workspace packages are consumed as
+    // source by Metro too — which cannot resolve NodeNext's `.js`-for-`.ts`
+    // specifiers. One resolution mode across the repo keeps that honest.
     "lib": ["ES2023"],
     "types": ["node", "vitest/globals"],
     "noEmit": true
   },
-  "include": ["src", "drizzle.config.ts", "vitest.config.ts", "tests"]
+  "include": ["src", "drizzle.config.ts", "tsup.config.ts", "vitest.config.ts", "tests"]
 }

@@ -7,7 +7,7 @@ import {
   registerUser,
   truncateAll,
   type TestContext,
-} from './helpers/harness.js';
+} from './helpers/harness';
 
 describeIntegration('auth', () => {
   let ctx: TestContext;

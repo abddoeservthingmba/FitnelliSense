@@ -1,6 +1,6 @@
 /** Taxonomy contracts — FR-EX-03, FR-EX-06. Two levels: group -> muscle. */
 import { z } from 'zod';
-import { shortTextSchema, slugSchema } from './primitives.js';
+import { shortTextSchema, slugSchema } from './primitives';
 
 export const muscleGroupSchema = z.object({
   id: z.number().int(),

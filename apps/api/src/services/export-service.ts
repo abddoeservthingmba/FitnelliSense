@@ -17,9 +17,9 @@ import {
   workoutExercises,
   workoutSets,
   workouts,
-} from '../db/schema.js';
-import { notFound } from '../lib/errors.js';
-import type { Database } from '../db/client.js';
+} from '../db/schema';
+import { notFound } from '../lib/errors';
+import type { Database } from '../db/client';
 
 export async function exportUserData(db: Database, userId: string): Promise<Record<string, unknown>> {
   const [account] = await db

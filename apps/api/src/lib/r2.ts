@@ -9,7 +9,7 @@
 import { DeleteObjectCommand, GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import type { Config } from '../config.js';
+import type { Config } from '../config';
 
 export interface PresignedUpload {
   readonly url: string;

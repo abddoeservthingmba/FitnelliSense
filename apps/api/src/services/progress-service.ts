@@ -29,9 +29,9 @@ import {
   workoutExercises,
   workoutSets,
   workouts,
-} from '../db/schema.js';
-import { notFound } from '../lib/errors.js';
-import type { Database } from '../db/client.js';
+} from '../db/schema';
+import { notFound } from '../lib/errors';
+import type { Database } from '../db/client';
 
 /** Only estimated 1RM is a formula worth attributing on the chart (FR-HP-05). */
 function formulaFor(metric: ProgressMetric): string | null {

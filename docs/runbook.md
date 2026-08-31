@@ -1,0 +1,187 @@
+# Runbook
+
+Operational procedures for Fitness Intellisense. BRD §11, §7.7, NFR-D-06,
+NFR-B-03.
+
+Anything marked **UNVERIFIED** has been written but not yet performed. Milestone
+0 is not complete until the deploy, rollback and restore procedures have each
+been run at least once and marked verified here, with the date.
+
+---
+
+## 1. Local development
+
+```bash
+pnpm install
+cp apps/api/.env.example apps/api/.env     # then fill DATABASE_URL and the secrets
+pnpm db:migrate                            # forward-only
+pnpm db:seed                               # loads content/exercises.seed.json
+pnpm dev:api                               # http://localhost:3000
+pnpm dev:mobile                            # press 'w' for web, 'a' for Android
+```
+
+Generate the two secrets with `openssl rand -base64 48` (or
+`node -e "console.log(require('crypto').randomBytes(36).toString('base64'))"`).
+
+Verify the API is up and identifiable:
+
+```bash
+curl -s http://localhost:3000/health | jq
+curl -s http://localhost:3000/health/deep | jq   # checks DB and R2
+```
+
+`/health` answers without a database. `/health/deep` returns 503 when Postgres
+is unreachable, and reports R2 as `degraded` rather than `down` when R2 is simply
+not configured — media then degrades to placeholders (NFR-B-06).
+
+### Making yourself an admin (Q14)
+
+There is no self-service admin signup. Register normally, then:
+
+```sql
+UPDATE users SET is_admin = true WHERE email = 'you@example.com';
+```
+
+Sign in again afterwards — `isAdmin` is a claim inside the access token, so an
+existing token stays non-admin until it is reissued.
+
+---
+
+## 2. Migrations
+
+Forward-only, and reviewed by hand (BRD §16.4 — Drizzle diffs can silently drop
+columns).
+
+```bash
+pnpm db:generate            # writes SQL into apps/api/src/db/migrations
+# READ THE GENERATED SQL. Every line.
+pnpm db:migrate             # applies it
+```
+
+Per NFR-D-03, a column change is spread across releases: add column → deploy code
+that writes it → backfill → remove the old column in a *later* release. Never
+drop and deploy in one step.
+
+Run against staging first (§11.2). Neon branching makes that cheap.
+
+---
+
+## 3. Content changes (FR-ADM-07)
+
+The catalogue is data, not code, and round-trips:
+
+```bash
+pnpm content:export     # live catalogue -> content/exercises.seed.json
+git diff content/       # review it like any other change
+pnpm content:import     # idempotent; safe to re-run
+```
+
+Import is keyed on slugs, so re-running updates rather than duplicating. A seed
+file whose media lacks a stated licence fails to parse (FR-MED-10).
+
+---
+
+## 4. Deploy
+
+**UNVERIFIED** — no environment has been provisioned yet. Q13 (domain) and Q15
+(Neon plan) are still open; see `adr/0002-infrastructure-tiers.md`.
+
+### API (Render)
+
+1. Connect the repository; root directory `apps/api`.
+2. Build: `pnpm install --frozen-lockfile && pnpm --filter @fi/api build`
+3. Start: `node dist/index.js`
+4. Environment: every key in `apps/api/.env.example`. `COMMIT_SHA` must be the
+   real commit — the process refuses to boot in production with `COMMIT_SHA=local`
+   (NFR-D-05).
+5. `CORS_ORIGINS` must list the exact web origins for that environment. A
+   wildcard outside development makes the process refuse to start (§12.3).
+6. Health check path: `/health`.
+7. Migrations run as a pre-deploy step: `node dist/migrate.js`.
+
+Production is promoted manually, never automatically on merge (§11.2).
+
+### Web (Cloudflare Pages)
+
+1. Build: `pnpm install --frozen-lockfile && pnpm --filter @fi/mobile build:web`
+2. Output directory: `apps/mobile/dist`
+3. Set `EXPO_PUBLIC_API_URL` to that environment's API origin.
+
+### Android (EAS)
+
+Profiles `development`, `preview` (internal testing) and `production`. Play Store
+submission is a Phase 3 exit item, not earlier.
+
+---
+
+## 5. Rollback (NFR-D-06)
+
+**UNVERIFIED** — must be performed once before Milestone 0 is complete.
+
+1. Render dashboard → the service → Deploys → the previous successful deploy →
+   **Redeploy**.
+2. Confirm with `curl -s https://<api-host>/health | jq .commit` — it must show
+   the commit you rolled back to.
+3. If the rolled-back code predates the current schema, remember that migrations
+   are forward-only: the schema stays. This is exactly why NFR-D-03 forbids
+   dropping a column in the same release that stops writing it.
+
+Record here when first performed: _date, commit rolled back from and to._
+
+---
+
+## 6. Backup and restore (NFR-B-02, NFR-B-03)
+
+**NOT YET IMPLEMENTED** — Phase 3, and a Phase 3 exit criterion.
+
+Intended shape:
+
+```bash
+# Weekly, to R2 under $R2_BACKUP_PREFIX, with its own lifecycle policy
+pg_dump "$DATABASE_URL" --format=custom --no-owner --no-acl \
+  | aws s3 cp - "s3://$R2_BUCKET/$R2_BACKUP_PREFIX/$(date -u +%Y-%m-%d).dump" \
+      --endpoint-url "https://$R2_ACCOUNT_ID.r2.cloudflarestorage.com"
+```
+
+Restore rehearsal, which is the part that matters (R14 — a backup that has never
+been restored is not a backup):
+
+1. Create a fresh Neon branch.
+2. `pg_restore` the newest dump into it.
+3. Point a local API at the branch; sign in; confirm a known workout's sets are
+   intact.
+4. Record the wall-clock time taken here, as the measured RTO.
+
+Record here when first performed: _date, dump restored, time taken._
+
+---
+
+## 7. Incident triage
+
+Start from the correlation ID. Every response carries `X-Request-Id`, every log
+line for that request carries it, and the error state in the app shows it to the
+user as a reference (NFR-O-04, NFR-O-05).
+
+| Symptom | Likely cause | Check |
+|---|---|---|
+| First request after idle is slow, then fine | Neon compute resuming (expected, R1) | `/health/deep` latency on the `database` dependency |
+| `SERVICE_UNAVAILABLE` from many endpoints | Postgres unreachable | `/health/deep` → `database: down`. The client treats this as offline (NFR-B-08) |
+| Exercise images missing, everything else fine | R2 unconfigured or unreachable | `/health/deep` → `r2: degraded`. Expected behaviour, not an incident (NFR-B-06) |
+| Web app fails, Android app fine | CORS — nearly always | Compare the browser's `Origin` against `CORS_ORIGINS`. Native sends no `Origin` and is not subject to CORS (NFR-C-07) |
+| Direct browser upload to R2 fails | Bucket CORS is configured separately from the API's | R2 bucket CORS policy (NFR-C-09) |
+| Process exits at boot with code 78 | Invalid configuration | The `ConfigError` message lists every offending key at once |
+| `409 CONFLICT` on starting a workout | The user already has one in progress | Expected (FR-WK-02). The client should offer to resume |
+| `409` on a repeated mutation | Same `Idempotency-Key`, different body | A client bug, not a server one (§10.2) |
+
+Logs never contain emails, tokens or request bodies (NFR-O-10). The user is
+identified by a salted hash of their id, so activity can be correlated without
+identifying anyone from the logs alone.
+
+---
+
+## 8. Account deletion (FR-AUTH-10, NFR-B-05)
+
+`DELETE /me` revokes every refresh token, marks the user deleted and anonymises
+the email immediately. The 30-day grace job that hard-deletes rows and R2 objects
+is **not yet implemented** — Phase 3, task 23. Until it exists, deletion is a
+soft delete plus anonymisation, which does not yet satisfy FR-AUTH-10 in full.

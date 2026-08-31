@@ -5,10 +5,10 @@
  * so a new admin route cannot be added without it. Non-admins receive 404, so
  * the namespace is not discoverable.
  */
-import { adminExerciseRoutes } from './exercises.js';
-import { adminTaxonomyRoutes } from './taxonomy.js';
-import { adminMediaRoutes } from './media.js';
-import { adminContentRoutes } from './content.js';
+import { adminExerciseRoutes } from './exercises';
+import { adminTaxonomyRoutes } from './taxonomy';
+import { adminMediaRoutes } from './media';
+import { adminContentRoutes } from './content';
 import type { FastifyInstance } from 'fastify';
 
 export async function adminRoutes(app: FastifyInstance): Promise<void> {

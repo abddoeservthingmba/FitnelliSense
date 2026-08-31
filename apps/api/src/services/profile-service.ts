@@ -3,10 +3,10 @@
  */
 import { eq } from 'drizzle-orm';
 import type { MeResponse, UpdateProfileRequest } from '@fi/shared';
-import { userProfiles, users } from '../db/schema.js';
-import { notFound } from '../lib/errors.js';
-import type { Database } from '../db/client.js';
-import type { Storage } from '../lib/r2.js';
+import { userProfiles, users } from '../db/schema';
+import { notFound } from '../lib/errors';
+import type { Database } from '../db/client';
+import type { Storage } from '../lib/r2';
 
 export interface ProfileDeps {
   readonly db: Database;

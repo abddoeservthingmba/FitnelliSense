@@ -8,10 +8,10 @@
  */
 import { eq } from 'drizzle-orm';
 import { RENDERABLE_LICENCES, type ResolvedMedia } from '@fi/shared';
-import { mediaAssets } from '../db/schema.js';
-import { notFound } from '../lib/errors.js';
-import type { Database } from '../db/client.js';
-import type { Storage } from '../lib/r2.js';
+import { mediaAssets } from '../db/schema';
+import { notFound } from '../lib/errors';
+import type { Database } from '../db/client';
+import type { Storage } from '../lib/r2';
 
 export interface MediaDeps {
   readonly db: Database;

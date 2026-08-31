@@ -19,12 +19,12 @@ import {
   exercises,
   mediaAssets,
   muscles,
-} from '../db/schema.js';
-import { conflict, notFound } from '../lib/errors.js';
-import { newId } from '../lib/ids.js';
-import { decodeCursor, encodeCursor, takePage } from '../lib/cursor.js';
-import { isRenderable } from './media-service.js';
-import type { Database } from '../db/client.js';
+} from '../db/schema';
+import { conflict, notFound } from '../lib/errors';
+import { newId } from '../lib/ids';
+import { decodeCursor, encodeCursor, takePage } from '../lib/cursor';
+import { isRenderable } from './media-service';
+import type { Database } from '../db/client';
 
 /** The visibility predicate, in one place so no query can forget it. */
 function visibleTo(userId: string): SQL {

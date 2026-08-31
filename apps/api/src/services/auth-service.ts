@@ -6,18 +6,18 @@
  */
 import { and, eq, gt, isNull } from 'drizzle-orm';
 import type { TokenPair } from '@fi/shared';
-import { refreshTokens, passwordResetTokens, userProfiles, users } from '../db/schema.js';
-import { conflict, unauthenticated } from '../lib/errors.js';
-import { newId } from '../lib/ids.js';
-import { hashPassword, verifyPassword } from '../lib/passwords.js';
+import { refreshTokens, passwordResetTokens, userProfiles, users } from '../db/schema';
+import { conflict, unauthenticated } from '../lib/errors';
+import { newId } from '../lib/ids';
+import { hashPassword, verifyPassword } from '../lib/passwords';
 import {
   hashRefreshToken,
   issueRefreshToken,
   issueSingleUseToken,
   signAccessToken,
   type TokenConfig,
-} from '../lib/tokens.js';
-import type { Database } from '../db/client.js';
+} from '../lib/tokens';
+import type { Database } from '../db/client';
 
 export interface AuthDeps {
   readonly db: Database;

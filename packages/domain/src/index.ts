@@ -4,11 +4,11 @@
  * Pure functions, no I/O, no framework imports. Both the API and the client
  * import from here; neither reimplements a formula.
  */
-export * from './decimal.js';
-export * from './types.js';
-export * from './units.js';
-export * from './one-rep-max.js';
-export * from './volume.js';
-export * from './personal-records.js';
-export * from './prefill.js';
-export * from './progress.js';
+export * from './decimal';
+export * from './types';
+export * from './units';
+export * from './one-rep-max';
+export * from './volume';
+export * from './personal-records';
+export * from './prefill';
+export * from './progress';

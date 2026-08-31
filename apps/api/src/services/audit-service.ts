@@ -2,8 +2,8 @@
  * Admin audit trail (FR-ADM-08). Append-only: who did what, to which entity,
  * with the diff and the correlation id that ties it to the request logs.
  */
-import { adminAuditLog } from '../db/schema.js';
-import type { Database } from '../db/client.js';
+import { adminAuditLog } from '../db/schema';
+import type { Database } from '../db/client';
 
 export interface AuditEntry {
   readonly actorId: string;

@@ -8,9 +8,9 @@
 import { seedCatalogueSchema } from '@fi/shared';
 import { z } from 'zod';
 import { routes } from '@fi/shared';
-import { exportCatalogue, importCatalogue } from '../../services/content-service.js';
-import { currentUser } from '../../plugins/auth.js';
-import { recordAudit } from '../../services/audit-service.js';
+import { exportCatalogue, importCatalogue } from '../../services/content-service';
+import { currentUser } from '../../plugins/auth';
+import { recordAudit } from '../../services/audit-service';
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 

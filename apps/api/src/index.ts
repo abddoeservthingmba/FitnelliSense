@@ -4,10 +4,10 @@
  * Configuration is validated before anything else, so a misconfigured deploy
  * fails loudly at boot rather than quietly at request time (BRD §12.3).
  */
-import { buildApp } from './app.js';
-import { ConfigError, loadConfig } from './config.js';
-import { createDatabase } from './db/client.js';
-import { createStorage } from './lib/r2.js';
+import { buildApp } from './app';
+import { ConfigError, loadConfig } from './config';
+import { createDatabase } from './db/client';
+import { createStorage } from './lib/r2';
 
 async function main(): Promise<void> {
   const config = loadConfig();

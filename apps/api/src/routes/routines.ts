@@ -9,8 +9,8 @@ import {
   shortTextSchema,
   uuidSchema,
 } from '@fi/shared';
-import { currentUser } from '../plugins/auth.js';
-import * as routineService from '../services/routine-service.js';
+import { currentUser } from '../plugins/auth';
+import * as routineService from '../services/routine-service';
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 

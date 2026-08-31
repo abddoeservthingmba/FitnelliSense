@@ -1,6 +1,6 @@
 /** Auth contracts — FR-AUTH-01..06. */
 import { z } from 'zod';
-import { isoDateTimeSchema, shortTextSchema, uuidSchema } from './primitives.js';
+import { isoDateTimeSchema, shortTextSchema, uuidSchema } from './primitives';
 
 export const emailSchema = z.email().max(254).toLowerCase().trim();
 

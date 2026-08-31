@@ -5,17 +5,17 @@
  * every shape crossing the wire. Types are derived with `z.infer`; nothing here
  * has a hand-written twin on either side.
  */
-export * from './primitives.js';
-export * from './enums.js';
-export * from './errors.js';
-export * from './auth.js';
-export * from './profile.js';
-export * from './taxonomy.js';
-export * from './media.js';
-export * from './exercise.js';
-export * from './routine.js';
-export * from './workout.js';
-export * from './progress.js';
-export * from './content.js';
-export * from './health.js';
-export * from './routes.js';
+export * from './primitives';
+export * from './enums';
+export * from './errors';
+export * from './auth';
+export * from './profile';
+export * from './taxonomy';
+export * from './media';
+export * from './exercise';
+export * from './routine';
+export * from './workout';
+export * from './progress';
+export * from './content';
+export * from './health';
+export * from './routes';

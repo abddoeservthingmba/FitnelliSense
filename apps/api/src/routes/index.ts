@@ -2,15 +2,15 @@
  * Route registration. One list, in the order of BRD §10.1, so what the API
  * exposes is answerable by reading a single file.
  */
-import { authRoutes } from './auth.js';
-import { meRoutes } from './me.js';
-import { exerciseRoutes } from './exercises.js';
-import { routineRoutes } from './routines.js';
-import { workoutRoutes } from './workouts.js';
-import { progressRoutes } from './progress.js';
-import { mediaRoutes } from './media.js';
-import { healthRoutes } from './health.js';
-import { adminRoutes } from './admin/index.js';
+import { authRoutes } from './auth';
+import { meRoutes } from './me';
+import { exerciseRoutes } from './exercises';
+import { routineRoutes } from './routines';
+import { workoutRoutes } from './workouts';
+import { progressRoutes } from './progress';
+import { mediaRoutes } from './media';
+import { healthRoutes } from './health';
+import { adminRoutes } from './admin/index';
 import type { FastifyInstance } from 'fastify';
 
 export async function registerRoutes(app: FastifyInstance): Promise<void> {

@@ -3,8 +3,8 @@
  * charts and (from Phase 4) AI context all read, so there is exactly one
  * implementation and it lives here.
  */
-import { type Dec, ZERO, add, mulInt, sum } from './decimal.js';
-import { type Counting, type LoggedSet, type SetType } from './types.js';
+import { type Dec, ZERO, add, mulInt, sum } from './decimal';
+import { type Counting, type LoggedSet, type SetType } from './types';
 
 /** Warmup sets are logged but excluded from volume, as lifters expect. */
 export const VOLUME_COUNTED_SET_TYPES: readonly SetType[] = ['normal', 'failure', 'drop'];

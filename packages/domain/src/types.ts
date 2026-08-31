@@ -3,7 +3,7 @@
  * `packages/domain` knows nothing about Drizzle rows, HTTP payloads or React
  * state, so both the API and the client can feed it what they already have.
  */
-import { type Dec } from './decimal.js';
+import { type Dec } from './decimal';
 
 export type SetType = 'normal' | 'warmup' | 'failure' | 'drop';
 

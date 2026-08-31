@@ -17,10 +17,10 @@ import {
   mediaAssets,
   muscleGroups,
   muscles,
-} from '../db/schema.js';
-import { badRequest } from '../lib/errors.js';
-import { newId } from '../lib/ids.js';
-import type { Database } from '../db/client.js';
+} from '../db/schema';
+import { badRequest } from '../lib/errors';
+import { newId } from '../lib/ids';
+import type { Database } from '../db/client';
 
 export interface ImportStats {
   muscleGroups: number;

@@ -1,7 +1,7 @@
 /** Exercise contracts — FR-EX-01..10. */
 import { z } from 'zod';
-import { muscleRoleSchema } from './enums.js';
-import { mediaRefSchema } from './media.js';
+import { muscleRoleSchema } from './enums';
+import { mediaRefSchema } from './media';
 import {
   isoDateTimeSchema,
   noteTextSchema,
@@ -9,7 +9,7 @@ import {
   shortTextSchema,
   slugSchema,
   uuidSchema,
-} from './primitives.js';
+} from './primitives';
 
 export const exerciseMuscleSchema = z.object({
   muscleId: z.number().int(),

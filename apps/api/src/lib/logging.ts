@@ -7,7 +7,7 @@
  */
 import { createHash } from 'node:crypto';
 import type { FastifyServerOptions } from 'fastify';
-import type { Config } from '../config.js';
+import type { Config } from '../config';
 
 type LoggerOptions = Exclude<FastifyServerOptions['logger'], boolean | undefined>;
 

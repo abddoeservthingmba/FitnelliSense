@@ -5,8 +5,8 @@
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { loadConfig } from '../config.js';
-import { createDatabase } from './client.js';
+import { loadConfig } from '../config';
+import { createDatabase } from './client';
 
 const migrationsFolder = path.join(path.dirname(fileURLToPath(import.meta.url)), 'migrations');
 

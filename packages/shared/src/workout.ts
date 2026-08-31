@@ -1,6 +1,6 @@
 /** Workout contracts — FR-WK-01..12. */
 import { z } from 'zod';
-import { prTypeSchema, setTypeSchema, workoutStatusSchema } from './enums.js';
+import { prTypeSchema, setTypeSchema, workoutStatusSchema } from './enums';
 import {
   isoDateTimeSchema,
   noteTextSchema,
@@ -12,7 +12,7 @@ import {
   rpeSchema,
   shortTextSchema,
   uuidSchema,
-} from './primitives.js';
+} from './primitives';
 
 export const workoutSetSchema = z.object({
   id: uuidSchema,

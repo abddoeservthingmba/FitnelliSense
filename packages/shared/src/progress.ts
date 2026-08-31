@@ -1,6 +1,6 @@
 /** Progress contracts — FR-HP-04..07. */
 import { z } from 'zod';
-import { progressMetricSchema, prTypeSchema } from './enums.js';
+import { progressMetricSchema, prTypeSchema } from './enums';
 import {
   isoDateSchema,
   isoDateTimeSchema,
@@ -8,7 +8,7 @@ import {
   repsSchema,
   shortTextSchema,
   uuidSchema,
-} from './primitives.js';
+} from './primitives';
 
 export const progressPointSchema = z.object({
   date: isoDateSchema,

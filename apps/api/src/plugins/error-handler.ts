@@ -9,7 +9,7 @@ import { ZodError } from 'zod';
 import { hasZodFastifySchemaValidationErrors, isResponseSerializationError } from 'fastify-type-provider-zod';
 import type { ApiError } from '@fi/shared';
 import { httpStatusFor } from '@fi/shared';
-import { AppError, isConnectionError, serviceUnavailable } from '../lib/errors.js';
+import { AppError, isConnectionError, serviceUnavailable } from '../lib/errors';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 function envelope(error: AppError, requestId: string): ApiError {
@@ -40,9 +40,11 @@ export function toAppError(error: unknown): AppError {
 
   if (hasZodFastifySchemaValidationErrors(error)) {
     return new AppError('VALIDATION_ERROR', 'Some of that could not be accepted', {
+      // The provider reports a JSON-pointer `instancePath` (`/email`); the
+      // client matches on a dotted field path (`email`), so convert once here.
       details: error.validation.map((issue) => ({
-        path: issue.params.issue.path.join('.'),
-        message: issue.params.issue.message,
+        path: (issue.instancePath ?? '').replace(/^\//, '').replace(/\//g, '.'),
+        message: issue.message ?? 'That value is not valid',
       })),
     });
   }

@@ -4,7 +4,7 @@
  * routine target -> empty. The order is the product decision; keeping it here
  * means the logging screen never re-implements it.
  */
-import { type Dec } from './decimal.js';
+import { type Dec } from './decimal';
 
 export interface PrefillSource {
   readonly weightKg: Dec | null;

@@ -1,6 +1,6 @@
 /** Health contracts — NFR-O-01, NFR-O-02, NFR-D-05. */
 import { z } from 'zod';
-import { isoDateTimeSchema } from './primitives.js';
+import { isoDateTimeSchema } from './primitives';
 
 export const healthResponseSchema = z.object({
   status: z.literal('ok'),

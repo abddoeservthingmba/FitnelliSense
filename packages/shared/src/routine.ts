@@ -9,7 +9,7 @@ import {
   restSecsSchema,
   shortTextSchema,
   uuidSchema,
-} from './primitives.js';
+} from './primitives';
 
 export const routineExerciseSchema = z.object({
   id: uuidSchema,
