@@ -1,0 +1,52 @@
+{
+  "expo": {
+    "name": "Fitness Intellisense",
+    "slug": "fitness-intellisense",
+    "scheme": "fitnessintellisense",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "assetBundlePatterns": ["**/*"],
+    "android": {
+      "package": "com.fitnessintellisense.app",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#0B0F14"
+      },
+      "edgeToEdgeEnabled": true,
+      "permissions": ["POST_NOTIFICATIONS", "VIBRATE"]
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.fitnessintellisense.app"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0B0F14",
+          "dark": { "backgroundColor": "#0B0F14" }
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#22D3A6"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "apiBaseUrl": "http://localhost:3000"
+    }
+  }
+}

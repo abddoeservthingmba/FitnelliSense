@@ -1,0 +1,63 @@
+/**
+ * The root layout: providers, theming and the navigation shell.
+ *
+ * Deliberately thin. Auth redirection lives in the two group layouts, so this
+ * file never has to know which screen a user should be on.
+ */
+import { useMemo } from 'react';
+import { View } from 'react-native';
+import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from '../src/auth/auth-context';
+import { createQueryClient } from '../src/api/query-client';
+import { ThemeProvider, useTheme } from '../src/theme';
+
+export default function RootLayout() {
+  // One client for the app's lifetime; recreating it would drop every cache.
+  const queryClient = useMemo(() => createQueryClient(), []);
+
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider>
+            <AuthProvider>
+              <ThemedShell />
+            </AuthProvider>
+          </ThemeProvider>
+        </QueryClientProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
+  );
+}
+
+function ThemedShell() {
+  const theme = useTheme();
+
+  return (
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <StatusBar style={theme.scheme === 'dark' ? 'light' : 'dark'} />
+      <Stack
+        screenOptions={{
+          headerStyle: { backgroundColor: theme.colors.background },
+          headerTintColor: theme.colors.text,
+          headerTitleStyle: { fontWeight: theme.fontWeight.semibold },
+          headerShadowVisible: false,
+          contentStyle: { backgroundColor: theme.colors.background },
+        }}
+      >
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="workout/active" options={{ title: 'Workout', headerBackTitle: 'Back' }} />
+        <Stack.Screen name="workout/[id]" options={{ title: 'Workout' }} />
+        <Stack.Screen name="exercise/[id]" options={{ title: 'Exercise' }} />
+        <Stack.Screen name="exercise/new" options={{ title: 'New exercise', presentation: 'modal' }} />
+        <Stack.Screen name="routine/[id]" options={{ title: 'Routine' }} />
+        <Stack.Screen name="progress/[exerciseId]" options={{ title: 'Progress' }} />
+      </Stack>
+    </View>
+  );
+}

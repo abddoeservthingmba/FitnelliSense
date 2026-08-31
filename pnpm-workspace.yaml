@@ -1,0 +1,13 @@
+packages:
+  - 'apps/api'
+  - 'apps/mobile'
+  - 'packages/*'
+
+# Expo / React Native resolve native modules by walking node_modules; the
+# hoisted linker is the supported layout for an Expo app inside a pnpm monorepo.
+nodeLinker: hoisted
+
+# Explicit allowlist of dependencies permitted to run install scripts.
+onlyBuiltDependencies:
+  - esbuild
+  - '@node-rs/argon2'

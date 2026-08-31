@@ -1,0 +1,2967 @@
+{
+  "version": 1,
+  "taxonomy": {
+    "muscleGroups": [
+      {
+        "slug": "chest",
+        "name": "Chest"
+      },
+      {
+        "slug": "back",
+        "name": "Back"
+      },
+      {
+        "slug": "shoulders",
+        "name": "Shoulders"
+      },
+      {
+        "slug": "arms",
+        "name": "Arms"
+      },
+      {
+        "slug": "legs",
+        "name": "Legs"
+      },
+      {
+        "slug": "core",
+        "name": "Core"
+      }
+    ],
+    "muscles": [
+      {
+        "slug": "pectoralis-major",
+        "name": "Pectoralis Major",
+        "muscleGroup": "chest"
+      },
+      {
+        "slug": "pectoralis-minor",
+        "name": "Pectoralis Minor",
+        "muscleGroup": "chest"
+      },
+      {
+        "slug": "serratus-anterior",
+        "name": "Serratus Anterior",
+        "muscleGroup": "chest"
+      },
+      {
+        "slug": "latissimus-dorsi",
+        "name": "Latissimus Dorsi",
+        "muscleGroup": "back"
+      },
+      {
+        "slug": "trapezius",
+        "name": "Trapezius",
+        "muscleGroup": "back"
+      },
+      {
+        "slug": "rhomboids",
+        "name": "Rhomboids",
+        "muscleGroup": "back"
+      },
+      {
+        "slug": "erector-spinae",
+        "name": "Erector Spinae",
+        "muscleGroup": "back"
+      },
+      {
+        "slug": "teres-major",
+        "name": "Teres Major",
+        "muscleGroup": "back"
+      },
+      {
+        "slug": "anterior-deltoid",
+        "name": "Anterior Deltoid",
+        "muscleGroup": "shoulders"
+      },
+      {
+        "slug": "lateral-deltoid",
+        "name": "Lateral Deltoid",
+        "muscleGroup": "shoulders"
+      },
+      {
+        "slug": "posterior-deltoid",
+        "name": "Posterior Deltoid",
+        "muscleGroup": "shoulders"
+      },
+      {
+        "slug": "rotator-cuff",
+        "name": "Rotator Cuff",
+        "muscleGroup": "shoulders"
+      },
+      {
+        "slug": "biceps-brachii",
+        "name": "Biceps Brachii",
+        "muscleGroup": "arms"
+      },
+      {
+        "slug": "triceps-brachii",
+        "name": "Triceps Brachii",
+        "muscleGroup": "arms"
+      },
+      {
+        "slug": "brachialis",
+        "name": "Brachialis",
+        "muscleGroup": "arms"
+      },
+      {
+        "slug": "forearm-flexors",
+        "name": "Forearm Flexors",
+        "muscleGroup": "arms"
+      },
+      {
+        "slug": "forearm-extensors",
+        "name": "Forearm Extensors",
+        "muscleGroup": "arms"
+      },
+      {
+        "slug": "quadriceps",
+        "name": "Quadriceps",
+        "muscleGroup": "legs"
+      },
+      {
+        "slug": "hamstrings",
+        "name": "Hamstrings",
+        "muscleGroup": "legs"
+      },
+      {
+        "slug": "gluteus-maximus",
+        "name": "Gluteus Maximus",
+        "muscleGroup": "legs"
+      },
+      {
+        "slug": "gluteus-medius",
+        "name": "Gluteus Medius",
+        "muscleGroup": "legs"
+      },
+      {
+        "slug": "adductors",
+        "name": "Adductors",
+        "muscleGroup": "legs"
+      },
+      {
+        "slug": "calves",
+        "name": "Calves",
+        "muscleGroup": "legs"
+      },
+      {
+        "slug": "tibialis-anterior",
+        "name": "Tibialis Anterior",
+        "muscleGroup": "legs"
+      },
+      {
+        "slug": "rectus-abdominis",
+        "name": "Rectus Abdominis",
+        "muscleGroup": "core"
+      },
+      {
+        "slug": "obliques",
+        "name": "Obliques",
+        "muscleGroup": "core"
+      },
+      {
+        "slug": "transverse-abdominis",
+        "name": "Transverse Abdominis",
+        "muscleGroup": "core"
+      },
+      {
+        "slug": "hip-flexors",
+        "name": "Hip Flexors",
+        "muscleGroup": "core"
+      }
+    ],
+    "equipment": [
+      {
+        "slug": "barbell",
+        "name": "Barbell"
+      },
+      {
+        "slug": "dumbbell",
+        "name": "Dumbbell"
+      },
+      {
+        "slug": "kettlebell",
+        "name": "Kettlebell"
+      },
+      {
+        "slug": "ez-bar",
+        "name": "EZ Bar"
+      },
+      {
+        "slug": "trap-bar",
+        "name": "Trap Bar"
+      },
+      {
+        "slug": "machine",
+        "name": "Machine"
+      },
+      {
+        "slug": "cable",
+        "name": "Cable"
+      },
+      {
+        "slug": "smith-machine",
+        "name": "Smith Machine"
+      },
+      {
+        "slug": "bodyweight",
+        "name": "Bodyweight"
+      },
+      {
+        "slug": "resistance-band",
+        "name": "Resistance Band"
+      },
+      {
+        "slug": "medicine-ball",
+        "name": "Medicine Ball"
+      },
+      {
+        "slug": "sled",
+        "name": "Sled"
+      },
+      {
+        "slug": "other",
+        "name": "Other"
+      }
+    ]
+  },
+  "exercises": [
+    {
+      "slug": "barbell-bench-press",
+      "name": "Barbell Bench Press",
+      "description": null,
+      "instructions": "Lie flat with eyes under the bar. Grip just wider than shoulders, brace, and unrack. Lower to mid-chest with control, then press back to lockout.",
+      "equipment": "barbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "pectoralis-major"
+      ],
+      "secondaryMuscles": [
+        "triceps-brachii",
+        "anterior-deltoid"
+      ],
+      "movementPattern": "horizontal-push",
+      "media": []
+    },
+    {
+      "slug": "incline-barbell-bench-press",
+      "name": "Incline Barbell Bench Press",
+      "description": null,
+      "instructions": "Set the bench to 30–45°. Lower the bar to the upper chest, keeping the elbows tucked slightly, and press back over the collarbone.",
+      "equipment": "barbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "pectoralis-major"
+      ],
+      "secondaryMuscles": [
+        "anterior-deltoid",
+        "triceps-brachii"
+      ],
+      "movementPattern": "horizontal-push",
+      "media": []
+    },
+    {
+      "slug": "decline-barbell-bench-press",
+      "name": "Decline Barbell Bench Press",
+      "description": null,
+      "instructions": "Secure your legs on a decline bench. Lower the bar to the lower chest and press back to lockout.",
+      "equipment": "barbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "pectoralis-major"
+      ],
+      "secondaryMuscles": [
+        "triceps-brachii"
+      ],
+      "movementPattern": "horizontal-push",
+      "media": []
+    },
+    {
+      "slug": "dumbbell-bench-press",
+      "name": "Dumbbell Bench Press",
+      "description": null,
+      "instructions": "Lie flat holding dumbbells at chest height. Press up until the arms are straight, then lower until you feel a stretch across the chest.",
+      "equipment": "dumbbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "pectoralis-major"
+      ],
+      "secondaryMuscles": [
+        "triceps-brachii",
+        "anterior-deltoid"
+      ],
+      "movementPattern": "horizontal-push",
+      "media": []
+    },
+    {
+      "slug": "incline-dumbbell-press",
+      "name": "Incline Dumbbell Press",
+      "description": null,
+      "instructions": "On a 30–45° bench, press the dumbbells from the upper chest to arms-straight, keeping the wrists stacked over the elbows.",
+      "equipment": "dumbbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "pectoralis-major"
+      ],
+      "secondaryMuscles": [
+        "anterior-deltoid"
+      ],
+      "movementPattern": "horizontal-push",
+      "media": []
+    },
+    {
+      "slug": "dumbbell-fly",
+      "name": "Dumbbell Fly",
+      "description": null,
+      "instructions": "With a slight bend in the elbows, open the arms wide until you feel a chest stretch, then bring the dumbbells back together.",
+      "equipment": "dumbbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "pectoralis-major"
+      ],
+      "secondaryMuscles": [
+        "anterior-deltoid"
+      ],
+      "movementPattern": "horizontal-push",
+      "media": []
+    },
+    {
+      "slug": "incline-dumbbell-fly",
+      "name": "Incline Dumbbell Fly",
+      "description": null,
+      "instructions": "On an inclined bench, open the arms in a wide arc and return, keeping the elbow angle fixed throughout.",
+      "equipment": "dumbbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "pectoralis-major"
+      ],
+      "secondaryMuscles": [
+        "anterior-deltoid"
+      ],
+      "movementPattern": "horizontal-push",
+      "media": []
+    },
+    {
+      "slug": "cable-fly",
+      "name": "Cable Fly",
+      "description": null,
+      "instructions": "Set the pulleys high or mid. Bring the handles together in front of the chest, pause, and return under control.",
+      "equipment": "cable",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "pectoralis-major"
+      ],
+      "secondaryMuscles": [
+        "anterior-deltoid"
+      ],
+      "movementPattern": "horizontal-push",
+      "media": []
+    },
+    {
+      "slug": "cable-crossover",
+      "name": "Cable Crossover",
+      "description": null,
+      "instructions": "From high pulleys, sweep the handles down and across the body, crossing slightly at the bottom.",
+      "equipment": "cable",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "pectoralis-major"
+      ],
+      "secondaryMuscles": [
+        "serratus-anterior"
+      ],
+      "movementPattern": "horizontal-push",
+      "media": []
+    },
+    {
+      "slug": "machine-chest-press",
+      "name": "Machine Chest Press",
+      "description": null,
+      "instructions": "Set the seat so the handles sit at mid-chest. Press forward to nearly straight arms and return under control.",
+      "equipment": "machine",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "pectoralis-major"
+      ],
+      "secondaryMuscles": [
+        "triceps-brachii",
+        "anterior-deltoid"
+      ],
+      "movementPattern": "horizontal-push",
+      "media": []
+    },
+    {
+      "slug": "pec-deck",
+      "name": "Pec Deck",
+      "description": null,
+      "instructions": "With the elbows on the pads, bring the arms together in front of the chest and squeeze before returning.",
+      "equipment": "machine",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "pectoralis-major"
+      ],
+      "secondaryMuscles": [
+        "anterior-deltoid"
+      ],
+      "movementPattern": "horizontal-push",
+      "media": []
+    },
+    {
+      "slug": "push-up",
+      "name": "Push-Up",
+      "description": null,
+      "instructions": "Hands under the shoulders, body in a straight line. Lower until the chest is just off the floor and press back up.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "pectoralis-major"
+      ],
+      "secondaryMuscles": [
+        "triceps-brachii",
+        "rectus-abdominis"
+      ],
+      "movementPattern": "horizontal-push",
+      "media": []
+    },
+    {
+      "slug": "incline-push-up",
+      "name": "Incline Push-Up",
+      "description": null,
+      "instructions": "Hands on a bench or box. Lower the chest to the surface and press back, keeping the hips level.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "pectoralis-major"
+      ],
+      "secondaryMuscles": [
+        "triceps-brachii"
+      ],
+      "movementPattern": "horizontal-push",
+      "media": []
+    },
+    {
+      "slug": "decline-push-up",
+      "name": "Decline Push-Up",
+      "description": null,
+      "instructions": "Feet elevated on a bench. Lower the chest to the floor and press back without letting the hips sag.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "pectoralis-major"
+      ],
+      "secondaryMuscles": [
+        "anterior-deltoid"
+      ],
+      "movementPattern": "horizontal-push",
+      "media": []
+    },
+    {
+      "slug": "chest-dip",
+      "name": "Chest Dip",
+      "description": null,
+      "instructions": "Lean the torso forward on parallel bars. Lower until you feel a chest stretch, then press back up.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "pectoralis-major"
+      ],
+      "secondaryMuscles": [
+        "triceps-brachii",
+        "anterior-deltoid"
+      ],
+      "movementPattern": "vertical-push",
+      "media": []
+    },
+    {
+      "slug": "smith-machine-bench-press",
+      "name": "Smith Machine Bench Press",
+      "description": null,
+      "instructions": "Set the bar over mid-chest. Unrack, lower with control, and press back to lockout.",
+      "equipment": "smith-machine",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "pectoralis-major"
+      ],
+      "secondaryMuscles": [
+        "triceps-brachii"
+      ],
+      "movementPattern": "horizontal-push",
+      "media": []
+    },
+    {
+      "slug": "svend-press",
+      "name": "Svend Press",
+      "description": null,
+      "instructions": "Press a plate between the palms straight out in front of the chest, squeezing throughout.",
+      "equipment": "other",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "pectoralis-major"
+      ],
+      "secondaryMuscles": [
+        "anterior-deltoid"
+      ],
+      "movementPattern": "horizontal-push",
+      "media": []
+    },
+    {
+      "slug": "band-chest-press",
+      "name": "Band Chest Press",
+      "description": null,
+      "instructions": "Anchor the band behind you at chest height and press the handles forward until the arms are straight.",
+      "equipment": "resistance-band",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "pectoralis-major"
+      ],
+      "secondaryMuscles": [
+        "triceps-brachii"
+      ],
+      "movementPattern": "horizontal-push",
+      "media": []
+    },
+    {
+      "slug": "deadlift",
+      "name": "Deadlift",
+      "description": null,
+      "instructions": "Bar over mid-foot. Hinge, grip just outside the knees, brace, and stand up by driving the floor away. Keep the bar against the legs.",
+      "equipment": "barbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "erector-spinae",
+        "gluteus-maximus"
+      ],
+      "secondaryMuscles": [
+        "hamstrings",
+        "trapezius",
+        "latissimus-dorsi"
+      ],
+      "movementPattern": "hinge",
+      "media": []
+    },
+    {
+      "slug": "sumo-deadlift",
+      "name": "Sumo Deadlift",
+      "description": null,
+      "instructions": "Take a wide stance with the hands inside the knees. Push the floor apart and stand tall.",
+      "equipment": "barbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "gluteus-maximus",
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "adductors",
+        "erector-spinae"
+      ],
+      "movementPattern": "hinge",
+      "media": []
+    },
+    {
+      "slug": "romanian-deadlift",
+      "name": "Romanian Deadlift",
+      "description": null,
+      "instructions": "From standing, push the hips back with soft knees until you feel a hamstring stretch, then drive the hips forward.",
+      "equipment": "barbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "secondaryMuscles": [
+        "gluteus-maximus",
+        "erector-spinae"
+      ],
+      "movementPattern": "hinge",
+      "media": []
+    },
+    {
+      "slug": "trap-bar-deadlift",
+      "name": "Trap Bar Deadlift",
+      "description": null,
+      "instructions": "Stand inside the trap bar, hinge to the handles, brace, and stand up tall.",
+      "equipment": "trap-bar",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "quadriceps",
+        "gluteus-maximus"
+      ],
+      "secondaryMuscles": [
+        "erector-spinae",
+        "trapezius"
+      ],
+      "movementPattern": "hinge",
+      "media": []
+    },
+    {
+      "slug": "barbell-row",
+      "name": "Barbell Row",
+      "description": null,
+      "instructions": "Hinge to roughly 45°. Pull the bar to the lower ribs, squeeze the shoulder blades, and lower under control.",
+      "equipment": "barbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "latissimus-dorsi"
+      ],
+      "secondaryMuscles": [
+        "rhomboids",
+        "biceps-brachii",
+        "posterior-deltoid"
+      ],
+      "movementPattern": "horizontal-pull",
+      "media": []
+    },
+    {
+      "slug": "pendlay-row",
+      "name": "Pendlay Row",
+      "description": null,
+      "instructions": "From a flat back parallel to the floor, pull the bar explosively to the chest and return it to the floor each rep.",
+      "equipment": "barbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "latissimus-dorsi"
+      ],
+      "secondaryMuscles": [
+        "rhomboids",
+        "trapezius"
+      ],
+      "movementPattern": "horizontal-pull",
+      "media": []
+    },
+    {
+      "slug": "dumbbell-row",
+      "name": "Dumbbell Row",
+      "description": null,
+      "instructions": "Brace one hand on a bench. Pull the dumbbell to the hip, keeping the shoulders square.",
+      "equipment": "dumbbell",
+      "isUnilateral": true,
+      "primaryMuscles": [
+        "latissimus-dorsi"
+      ],
+      "secondaryMuscles": [
+        "rhomboids",
+        "biceps-brachii"
+      ],
+      "movementPattern": "horizontal-pull",
+      "media": []
+    },
+    {
+      "slug": "chest-supported-row",
+      "name": "Chest-Supported Row",
+      "description": null,
+      "instructions": "Lie chest-down on an incline bench and row the dumbbells to the ribs.",
+      "equipment": "dumbbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "rhomboids"
+      ],
+      "secondaryMuscles": [
+        "latissimus-dorsi",
+        "posterior-deltoid"
+      ],
+      "movementPattern": "horizontal-pull",
+      "media": []
+    },
+    {
+      "slug": "seated-cable-row",
+      "name": "Seated Cable Row",
+      "description": null,
+      "instructions": "Sit tall, pull the handle to the navel, and let the shoulder blades separate on the way out.",
+      "equipment": "cable",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "latissimus-dorsi"
+      ],
+      "secondaryMuscles": [
+        "rhomboids",
+        "biceps-brachii"
+      ],
+      "movementPattern": "horizontal-pull",
+      "media": []
+    },
+    {
+      "slug": "t-bar-row",
+      "name": "T-Bar Row",
+      "description": null,
+      "instructions": "Hinge over the bar, pull the handles to the chest, and lower with control.",
+      "equipment": "machine",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "latissimus-dorsi"
+      ],
+      "secondaryMuscles": [
+        "rhomboids",
+        "trapezius"
+      ],
+      "movementPattern": "horizontal-pull",
+      "media": []
+    },
+    {
+      "slug": "pull-up",
+      "name": "Pull-Up",
+      "description": null,
+      "instructions": "Hang from an overhand grip. Pull until the chin clears the bar, then lower to full extension.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "latissimus-dorsi"
+      ],
+      "secondaryMuscles": [
+        "biceps-brachii",
+        "teres-major"
+      ],
+      "movementPattern": "vertical-pull",
+      "media": []
+    },
+    {
+      "slug": "chin-up",
+      "name": "Chin-Up",
+      "description": null,
+      "instructions": "Hang from an underhand grip and pull until the chin clears the bar.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "latissimus-dorsi"
+      ],
+      "secondaryMuscles": [
+        "biceps-brachii"
+      ],
+      "movementPattern": "vertical-pull",
+      "media": []
+    },
+    {
+      "slug": "lat-pulldown",
+      "name": "Lat Pulldown",
+      "description": null,
+      "instructions": "Pull the bar to the upper chest with the elbows driving down, then control the return.",
+      "equipment": "cable",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "latissimus-dorsi"
+      ],
+      "secondaryMuscles": [
+        "biceps-brachii",
+        "rhomboids"
+      ],
+      "movementPattern": "vertical-pull",
+      "media": []
+    },
+    {
+      "slug": "close-grip-lat-pulldown",
+      "name": "Close-Grip Lat Pulldown",
+      "description": null,
+      "instructions": "Using a narrow neutral grip, pull to the chest and squeeze the lats at the bottom.",
+      "equipment": "cable",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "latissimus-dorsi"
+      ],
+      "secondaryMuscles": [
+        "biceps-brachii"
+      ],
+      "movementPattern": "vertical-pull",
+      "media": []
+    },
+    {
+      "slug": "straight-arm-pulldown",
+      "name": "Straight-Arm Pulldown",
+      "description": null,
+      "instructions": "With nearly straight arms, sweep the bar down to the thighs, then return overhead.",
+      "equipment": "cable",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "latissimus-dorsi"
+      ],
+      "secondaryMuscles": [
+        "triceps-brachii"
+      ],
+      "movementPattern": "vertical-pull",
+      "media": []
+    },
+    {
+      "slug": "inverted-row",
+      "name": "Inverted Row",
+      "description": null,
+      "instructions": "Hang under a fixed bar with the body straight and pull the chest to the bar.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "rhomboids"
+      ],
+      "secondaryMuscles": [
+        "latissimus-dorsi",
+        "biceps-brachii"
+      ],
+      "movementPattern": "horizontal-pull",
+      "media": []
+    },
+    {
+      "slug": "face-pull",
+      "name": "Face Pull",
+      "description": null,
+      "instructions": "Pull the rope to the face with high elbows, ending with the hands beside the ears.",
+      "equipment": "cable",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "posterior-deltoid"
+      ],
+      "secondaryMuscles": [
+        "trapezius",
+        "rotator-cuff"
+      ],
+      "movementPattern": "horizontal-pull",
+      "media": []
+    },
+    {
+      "slug": "barbell-shrug",
+      "name": "Barbell Shrug",
+      "description": null,
+      "instructions": "Stand tall and lift the shoulders straight up, pause, and lower fully.",
+      "equipment": "barbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "trapezius"
+      ],
+      "secondaryMuscles": [
+        "forearm-flexors"
+      ],
+      "movementPattern": "carry",
+      "media": []
+    },
+    {
+      "slug": "dumbbell-shrug",
+      "name": "Dumbbell Shrug",
+      "description": null,
+      "instructions": "Hold dumbbells at your sides and shrug the shoulders straight up.",
+      "equipment": "dumbbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "trapezius"
+      ],
+      "secondaryMuscles": [
+        "forearm-flexors"
+      ],
+      "movementPattern": "carry",
+      "media": []
+    },
+    {
+      "slug": "back-extension",
+      "name": "Back Extension",
+      "description": null,
+      "instructions": "On a 45° bench, hinge down and extend back until the body is in a straight line.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "erector-spinae"
+      ],
+      "secondaryMuscles": [
+        "gluteus-maximus",
+        "hamstrings"
+      ],
+      "movementPattern": "hinge",
+      "media": []
+    },
+    {
+      "slug": "good-morning",
+      "name": "Good Morning",
+      "description": null,
+      "instructions": "With the bar on the upper back, push the hips back until the torso is near parallel, then stand.",
+      "equipment": "barbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "secondaryMuscles": [
+        "erector-spinae",
+        "gluteus-maximus"
+      ],
+      "movementPattern": "hinge",
+      "media": []
+    },
+    {
+      "slug": "rack-pull",
+      "name": "Rack Pull",
+      "description": null,
+      "instructions": "Set the bar at knee height in a rack and pull to lockout.",
+      "equipment": "barbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "erector-spinae"
+      ],
+      "secondaryMuscles": [
+        "trapezius",
+        "gluteus-maximus"
+      ],
+      "movementPattern": "hinge",
+      "media": []
+    },
+    {
+      "slug": "meadows-row",
+      "name": "Meadows Row",
+      "description": null,
+      "instructions": "Stand side-on to a landmine bar and row the end of the bar to the hip.",
+      "equipment": "barbell",
+      "isUnilateral": true,
+      "primaryMuscles": [
+        "latissimus-dorsi"
+      ],
+      "secondaryMuscles": [
+        "posterior-deltoid",
+        "rhomboids"
+      ],
+      "movementPattern": "horizontal-pull",
+      "media": []
+    },
+    {
+      "slug": "overhead-press",
+      "name": "Overhead Press",
+      "description": null,
+      "instructions": "From the front rack, brace hard and press the bar overhead, moving the head through at lockout.",
+      "equipment": "barbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "anterior-deltoid"
+      ],
+      "secondaryMuscles": [
+        "triceps-brachii",
+        "lateral-deltoid"
+      ],
+      "movementPattern": "vertical-push",
+      "media": []
+    },
+    {
+      "slug": "push-press",
+      "name": "Push Press",
+      "description": null,
+      "instructions": "Dip at the knees, drive up, and use the momentum to press the bar overhead.",
+      "equipment": "barbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "anterior-deltoid"
+      ],
+      "secondaryMuscles": [
+        "triceps-brachii",
+        "quadriceps"
+      ],
+      "movementPattern": "vertical-push",
+      "media": []
+    },
+    {
+      "slug": "seated-dumbbell-shoulder-press",
+      "name": "Seated Dumbbell Shoulder Press",
+      "description": null,
+      "instructions": "Press the dumbbells overhead from shoulder height and lower to ear level.",
+      "equipment": "dumbbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "anterior-deltoid"
+      ],
+      "secondaryMuscles": [
+        "triceps-brachii",
+        "lateral-deltoid"
+      ],
+      "movementPattern": "vertical-push",
+      "media": []
+    },
+    {
+      "slug": "arnold-press",
+      "name": "Arnold Press",
+      "description": null,
+      "instructions": "Start with the palms facing you, rotate outward as you press overhead, and reverse on the way down.",
+      "equipment": "dumbbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "anterior-deltoid"
+      ],
+      "secondaryMuscles": [
+        "lateral-deltoid",
+        "triceps-brachii"
+      ],
+      "movementPattern": "vertical-push",
+      "media": []
+    },
+    {
+      "slug": "dumbbell-lateral-raise",
+      "name": "Dumbbell Lateral Raise",
+      "description": null,
+      "instructions": "Raise the dumbbells out to shoulder height with a soft elbow, then lower slowly.",
+      "equipment": "dumbbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "lateral-deltoid"
+      ],
+      "secondaryMuscles": [
+        "trapezius"
+      ],
+      "movementPattern": "vertical-push",
+      "media": []
+    },
+    {
+      "slug": "cable-lateral-raise",
+      "name": "Cable Lateral Raise",
+      "description": null,
+      "instructions": "With the pulley low and behind you, raise the handle out to shoulder height.",
+      "equipment": "cable",
+      "isUnilateral": true,
+      "primaryMuscles": [
+        "lateral-deltoid"
+      ],
+      "secondaryMuscles": [],
+      "movementPattern": "vertical-push",
+      "media": []
+    },
+    {
+      "slug": "machine-lateral-raise",
+      "name": "Machine Lateral Raise",
+      "description": null,
+      "instructions": "Press the pads outward to shoulder height and lower under control.",
+      "equipment": "machine",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "lateral-deltoid"
+      ],
+      "secondaryMuscles": [],
+      "movementPattern": "vertical-push",
+      "media": []
+    },
+    {
+      "slug": "front-raise",
+      "name": "Front Raise",
+      "description": null,
+      "instructions": "Raise the dumbbells in front to shoulder height, keeping the torso still.",
+      "equipment": "dumbbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "anterior-deltoid"
+      ],
+      "secondaryMuscles": [
+        "pectoralis-major"
+      ],
+      "movementPattern": "vertical-push",
+      "media": []
+    },
+    {
+      "slug": "rear-delt-fly",
+      "name": "Rear Delt Fly",
+      "description": null,
+      "instructions": "Hinge forward and open the arms wide to shoulder height, leading with the elbows.",
+      "equipment": "dumbbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "posterior-deltoid"
+      ],
+      "secondaryMuscles": [
+        "rhomboids",
+        "trapezius"
+      ],
+      "movementPattern": "horizontal-pull",
+      "media": []
+    },
+    {
+      "slug": "reverse-pec-deck",
+      "name": "Reverse Pec Deck",
+      "description": null,
+      "instructions": "Facing the pad, sweep the arms back and squeeze the rear delts.",
+      "equipment": "machine",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "posterior-deltoid"
+      ],
+      "secondaryMuscles": [
+        "rhomboids"
+      ],
+      "movementPattern": "horizontal-pull",
+      "media": []
+    },
+    {
+      "slug": "upright-row",
+      "name": "Upright Row",
+      "description": null,
+      "instructions": "Pull the bar up the front of the body to chest height with the elbows leading.",
+      "equipment": "barbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "lateral-deltoid"
+      ],
+      "secondaryMuscles": [
+        "trapezius",
+        "biceps-brachii"
+      ],
+      "movementPattern": "vertical-pull",
+      "media": []
+    },
+    {
+      "slug": "landmine-press",
+      "name": "Landmine Press",
+      "description": null,
+      "instructions": "Press the end of a landmine bar from the shoulder up and slightly forward.",
+      "equipment": "barbell",
+      "isUnilateral": true,
+      "primaryMuscles": [
+        "anterior-deltoid"
+      ],
+      "secondaryMuscles": [
+        "triceps-brachii",
+        "pectoralis-major"
+      ],
+      "movementPattern": "vertical-push",
+      "media": []
+    },
+    {
+      "slug": "cuban-rotation",
+      "name": "Cuban Rotation",
+      "description": null,
+      "instructions": "With the elbows at shoulder height, rotate the forearms up and back, then reverse.",
+      "equipment": "dumbbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "rotator-cuff"
+      ],
+      "secondaryMuscles": [
+        "posterior-deltoid"
+      ],
+      "movementPattern": "vertical-push",
+      "media": []
+    },
+    {
+      "slug": "band-pull-apart",
+      "name": "Band Pull-Apart",
+      "description": null,
+      "instructions": "Hold a band at shoulder height and pull it apart until the arms are wide.",
+      "equipment": "resistance-band",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "posterior-deltoid"
+      ],
+      "secondaryMuscles": [
+        "rhomboids"
+      ],
+      "movementPattern": "horizontal-pull",
+      "media": []
+    },
+    {
+      "slug": "barbell-curl",
+      "name": "Barbell Curl",
+      "description": null,
+      "instructions": "Keeping the elbows at your sides, curl the bar to shoulder height and lower fully.",
+      "equipment": "barbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "biceps-brachii"
+      ],
+      "secondaryMuscles": [
+        "brachialis",
+        "forearm-flexors"
+      ],
+      "movementPattern": "curl",
+      "media": []
+    },
+    {
+      "slug": "ez-bar-curl",
+      "name": "EZ Bar Curl",
+      "description": null,
+      "instructions": "Curl the EZ bar with the wrists in the angled grooves, keeping the elbows still.",
+      "equipment": "ez-bar",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "biceps-brachii"
+      ],
+      "secondaryMuscles": [
+        "brachialis"
+      ],
+      "movementPattern": "curl",
+      "media": []
+    },
+    {
+      "slug": "dumbbell-curl",
+      "name": "Dumbbell Curl",
+      "description": null,
+      "instructions": "Curl the dumbbells with the palms up, avoiding any swing at the hips.",
+      "equipment": "dumbbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "biceps-brachii"
+      ],
+      "secondaryMuscles": [
+        "forearm-flexors"
+      ],
+      "movementPattern": "curl",
+      "media": []
+    },
+    {
+      "slug": "hammer-curl",
+      "name": "Hammer Curl",
+      "description": null,
+      "instructions": "Curl with a neutral grip, thumbs up throughout.",
+      "equipment": "dumbbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "brachialis"
+      ],
+      "secondaryMuscles": [
+        "biceps-brachii",
+        "forearm-flexors"
+      ],
+      "movementPattern": "curl",
+      "media": []
+    },
+    {
+      "slug": "incline-dumbbell-curl",
+      "name": "Incline Dumbbell Curl",
+      "description": null,
+      "instructions": "Lie back on an incline bench, let the arms hang, and curl without moving the elbows forward.",
+      "equipment": "dumbbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "biceps-brachii"
+      ],
+      "secondaryMuscles": [
+        "brachialis"
+      ],
+      "movementPattern": "curl",
+      "media": []
+    },
+    {
+      "slug": "preacher-curl",
+      "name": "Preacher Curl",
+      "description": null,
+      "instructions": "With the upper arms flat on the pad, curl to the top and lower to a full stretch.",
+      "equipment": "ez-bar",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "biceps-brachii"
+      ],
+      "secondaryMuscles": [
+        "brachialis"
+      ],
+      "movementPattern": "curl",
+      "media": []
+    },
+    {
+      "slug": "concentration-curl",
+      "name": "Concentration Curl",
+      "description": null,
+      "instructions": "Brace the elbow on the inner thigh and curl the dumbbell to the shoulder.",
+      "equipment": "dumbbell",
+      "isUnilateral": true,
+      "primaryMuscles": [
+        "biceps-brachii"
+      ],
+      "secondaryMuscles": [],
+      "movementPattern": "curl",
+      "media": []
+    },
+    {
+      "slug": "cable-curl",
+      "name": "Cable Curl",
+      "description": null,
+      "instructions": "Curl a low-pulley bar to shoulder height with the elbows pinned.",
+      "equipment": "cable",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "biceps-brachii"
+      ],
+      "secondaryMuscles": [
+        "forearm-flexors"
+      ],
+      "movementPattern": "curl",
+      "media": []
+    },
+    {
+      "slug": "spider-curl",
+      "name": "Spider Curl",
+      "description": null,
+      "instructions": "Lie chest-down on an incline bench and curl the dumbbells straight up.",
+      "equipment": "dumbbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "biceps-brachii"
+      ],
+      "secondaryMuscles": [],
+      "movementPattern": "curl",
+      "media": []
+    },
+    {
+      "slug": "close-grip-bench-press",
+      "name": "Close-Grip Bench Press",
+      "description": null,
+      "instructions": "Grip about shoulder width, tuck the elbows, and press from the lower chest.",
+      "equipment": "barbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "triceps-brachii"
+      ],
+      "secondaryMuscles": [
+        "pectoralis-major",
+        "anterior-deltoid"
+      ],
+      "movementPattern": "horizontal-push",
+      "media": []
+    },
+    {
+      "slug": "triceps-pushdown",
+      "name": "Triceps Pushdown",
+      "description": null,
+      "instructions": "With the elbows at your sides, extend the arms down and squeeze at lockout.",
+      "equipment": "cable",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "triceps-brachii"
+      ],
+      "secondaryMuscles": [],
+      "movementPattern": "extension",
+      "media": []
+    },
+    {
+      "slug": "rope-pushdown",
+      "name": "Rope Pushdown",
+      "description": null,
+      "instructions": "Push the rope down and spread the ends apart at the bottom.",
+      "equipment": "cable",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "triceps-brachii"
+      ],
+      "secondaryMuscles": [],
+      "movementPattern": "extension",
+      "media": []
+    },
+    {
+      "slug": "overhead-triceps-extension",
+      "name": "Overhead Triceps Extension",
+      "description": null,
+      "instructions": "Hold one dumbbell overhead with both hands and lower it behind the head, then extend.",
+      "equipment": "dumbbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "triceps-brachii"
+      ],
+      "secondaryMuscles": [],
+      "movementPattern": "extension",
+      "media": []
+    },
+    {
+      "slug": "skull-crusher",
+      "name": "Skull Crusher",
+      "description": null,
+      "instructions": "Lying flat, lower the bar toward the forehead by bending only at the elbow, then extend.",
+      "equipment": "ez-bar",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "triceps-brachii"
+      ],
+      "secondaryMuscles": [],
+      "movementPattern": "extension",
+      "media": []
+    },
+    {
+      "slug": "triceps-dip",
+      "name": "Triceps Dip",
+      "description": null,
+      "instructions": "Keep the torso upright on parallel bars, lower to about 90° at the elbow, and press up.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "triceps-brachii"
+      ],
+      "secondaryMuscles": [
+        "pectoralis-major",
+        "anterior-deltoid"
+      ],
+      "movementPattern": "vertical-push",
+      "media": []
+    },
+    {
+      "slug": "bench-dip",
+      "name": "Bench Dip",
+      "description": null,
+      "instructions": "With the hands on a bench behind you, lower the hips and press back up.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "triceps-brachii"
+      ],
+      "secondaryMuscles": [
+        "anterior-deltoid"
+      ],
+      "movementPattern": "vertical-push",
+      "media": []
+    },
+    {
+      "slug": "diamond-push-up",
+      "name": "Diamond Push-Up",
+      "description": null,
+      "instructions": "Place the hands close together under the chest and lower with the elbows tucked.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "triceps-brachii"
+      ],
+      "secondaryMuscles": [
+        "pectoralis-major"
+      ],
+      "movementPattern": "horizontal-push",
+      "media": []
+    },
+    {
+      "slug": "wrist-curl",
+      "name": "Wrist Curl",
+      "description": null,
+      "instructions": "Rest the forearms on a bench and curl the wrists up, then lower fully.",
+      "equipment": "dumbbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "forearm-flexors"
+      ],
+      "secondaryMuscles": [],
+      "movementPattern": "curl",
+      "media": []
+    },
+    {
+      "slug": "reverse-wrist-curl",
+      "name": "Reverse Wrist Curl",
+      "description": null,
+      "instructions": "With the palms down and the forearms braced, lift the backs of the hands upward.",
+      "equipment": "dumbbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "forearm-extensors"
+      ],
+      "secondaryMuscles": [],
+      "movementPattern": "extension",
+      "media": []
+    },
+    {
+      "slug": "reverse-curl",
+      "name": "Reverse Curl",
+      "description": null,
+      "instructions": "Curl with an overhand grip, keeping the wrists straight.",
+      "equipment": "ez-bar",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "forearm-extensors"
+      ],
+      "secondaryMuscles": [
+        "brachialis",
+        "biceps-brachii"
+      ],
+      "movementPattern": "curl",
+      "media": []
+    },
+    {
+      "slug": "farmer-carry",
+      "name": "Farmer Carry",
+      "description": null,
+      "instructions": "Hold heavy weights at your sides and walk with tall posture for distance or time.",
+      "equipment": "dumbbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "forearm-flexors"
+      ],
+      "secondaryMuscles": [
+        "trapezius",
+        "transverse-abdominis"
+      ],
+      "movementPattern": "carry",
+      "media": []
+    },
+    {
+      "slug": "back-squat",
+      "name": "Back Squat",
+      "description": null,
+      "instructions": "Bar on the upper back, brace, and sit down between the hips until at least parallel. Drive up through mid-foot.",
+      "equipment": "barbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "gluteus-maximus",
+        "erector-spinae",
+        "adductors"
+      ],
+      "movementPattern": "squat",
+      "media": []
+    },
+    {
+      "slug": "front-squat",
+      "name": "Front Squat",
+      "description": null,
+      "instructions": "With the bar in a front rack, keep the elbows high and the torso upright as you squat.",
+      "equipment": "barbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "gluteus-maximus",
+        "rectus-abdominis"
+      ],
+      "movementPattern": "squat",
+      "media": []
+    },
+    {
+      "slug": "goblet-squat",
+      "name": "Goblet Squat",
+      "description": null,
+      "instructions": "Hold a dumbbell at the chest and squat between the knees, keeping the chest tall.",
+      "equipment": "dumbbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "gluteus-maximus",
+        "adductors"
+      ],
+      "movementPattern": "squat",
+      "media": []
+    },
+    {
+      "slug": "hack-squat",
+      "name": "Hack Squat",
+      "description": null,
+      "instructions": "With the back on the pad, lower until the knees reach about 90° and press back up.",
+      "equipment": "machine",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "gluteus-maximus"
+      ],
+      "movementPattern": "squat",
+      "media": []
+    },
+    {
+      "slug": "leg-press",
+      "name": "Leg Press",
+      "description": null,
+      "instructions": "Lower the sled until the knees approach the chest without the hips rolling, then press.",
+      "equipment": "machine",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "gluteus-maximus",
+        "hamstrings"
+      ],
+      "movementPattern": "squat",
+      "media": []
+    },
+    {
+      "slug": "bulgarian-split-squat",
+      "name": "Bulgarian Split Squat",
+      "description": null,
+      "instructions": "With the rear foot on a bench, lower straight down until the front thigh is parallel.",
+      "equipment": "dumbbell",
+      "isUnilateral": true,
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "gluteus-maximus",
+        "adductors"
+      ],
+      "movementPattern": "lunge",
+      "media": []
+    },
+    {
+      "slug": "walking-lunge",
+      "name": "Walking Lunge",
+      "description": null,
+      "instructions": "Step forward and lower the back knee toward the floor, then drive through the front foot.",
+      "equipment": "dumbbell",
+      "isUnilateral": true,
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "gluteus-maximus",
+        "hamstrings"
+      ],
+      "movementPattern": "lunge",
+      "media": []
+    },
+    {
+      "slug": "reverse-lunge",
+      "name": "Reverse Lunge",
+      "description": null,
+      "instructions": "Step backwards, lower the back knee, and return to standing.",
+      "equipment": "dumbbell",
+      "isUnilateral": true,
+      "primaryMuscles": [
+        "gluteus-maximus"
+      ],
+      "secondaryMuscles": [
+        "quadriceps"
+      ],
+      "movementPattern": "lunge",
+      "media": []
+    },
+    {
+      "slug": "step-up",
+      "name": "Step-Up",
+      "description": null,
+      "instructions": "Step onto a box, driving through the whole foot, and lower under control.",
+      "equipment": "dumbbell",
+      "isUnilateral": true,
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "gluteus-maximus"
+      ],
+      "movementPattern": "lunge",
+      "media": []
+    },
+    {
+      "slug": "leg-extension",
+      "name": "Leg Extension",
+      "description": null,
+      "instructions": "Extend the knees fully against the pad, pause, and lower slowly.",
+      "equipment": "machine",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [],
+      "movementPattern": "extension",
+      "media": []
+    },
+    {
+      "slug": "lying-leg-curl",
+      "name": "Lying Leg Curl",
+      "description": null,
+      "instructions": "Curl the pad toward the glutes and lower without letting the hips lift.",
+      "equipment": "machine",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "secondaryMuscles": [
+        "calves"
+      ],
+      "movementPattern": "curl",
+      "media": []
+    },
+    {
+      "slug": "seated-leg-curl",
+      "name": "Seated Leg Curl",
+      "description": null,
+      "instructions": "Curl the pad down and under, keeping the thighs pinned.",
+      "equipment": "machine",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "secondaryMuscles": [],
+      "movementPattern": "curl",
+      "media": []
+    },
+    {
+      "slug": "nordic-curl",
+      "name": "Nordic Curl",
+      "description": null,
+      "instructions": "With the ankles anchored, lower the torso forward as slowly as possible and pull back up.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "secondaryMuscles": [
+        "gluteus-maximus"
+      ],
+      "movementPattern": "curl",
+      "media": []
+    },
+    {
+      "slug": "hip-thrust",
+      "name": "Hip Thrust",
+      "description": null,
+      "instructions": "With the upper back on a bench and the bar over the hips, drive the hips to full extension.",
+      "equipment": "barbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "gluteus-maximus"
+      ],
+      "secondaryMuscles": [
+        "hamstrings"
+      ],
+      "movementPattern": "hinge",
+      "media": []
+    },
+    {
+      "slug": "glute-bridge",
+      "name": "Glute Bridge",
+      "description": null,
+      "instructions": "Lying on the floor, drive the hips up until the body is in a straight line and squeeze.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "gluteus-maximus"
+      ],
+      "secondaryMuscles": [
+        "hamstrings"
+      ],
+      "movementPattern": "hinge",
+      "media": []
+    },
+    {
+      "slug": "cable-kickback",
+      "name": "Cable Kickback",
+      "description": null,
+      "instructions": "With a cuff on the ankle, drive the leg back and up, then return under control.",
+      "equipment": "cable",
+      "isUnilateral": true,
+      "primaryMuscles": [
+        "gluteus-maximus"
+      ],
+      "secondaryMuscles": [
+        "hamstrings"
+      ],
+      "movementPattern": "hinge",
+      "media": []
+    },
+    {
+      "slug": "hip-abduction",
+      "name": "Hip Abduction",
+      "description": null,
+      "instructions": "Press the knees outward against the pads and return slowly.",
+      "equipment": "machine",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "gluteus-medius"
+      ],
+      "secondaryMuscles": [],
+      "movementPattern": "other",
+      "media": []
+    },
+    {
+      "slug": "hip-adduction",
+      "name": "Hip Adduction",
+      "description": null,
+      "instructions": "Squeeze the knees together against the pads and return under control.",
+      "equipment": "machine",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "adductors"
+      ],
+      "secondaryMuscles": [],
+      "movementPattern": "other",
+      "media": []
+    },
+    {
+      "slug": "standing-calf-raise",
+      "name": "Standing Calf Raise",
+      "description": null,
+      "instructions": "Rise onto the toes as high as possible, pause, and lower into a full stretch.",
+      "equipment": "machine",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [],
+      "movementPattern": "other",
+      "media": []
+    },
+    {
+      "slug": "seated-calf-raise",
+      "name": "Seated Calf Raise",
+      "description": null,
+      "instructions": "With the knees bent under the pad, press onto the toes and lower fully.",
+      "equipment": "machine",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [],
+      "movementPattern": "other",
+      "media": []
+    },
+    {
+      "slug": "tibialis-raise",
+      "name": "Tibialis Raise",
+      "description": null,
+      "instructions": "With the heels down and the back against a wall, pull the toes up toward the shins.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "tibialis-anterior"
+      ],
+      "secondaryMuscles": [],
+      "movementPattern": "other",
+      "media": []
+    },
+    {
+      "slug": "box-jump",
+      "name": "Box Jump",
+      "description": null,
+      "instructions": "Dip and jump onto a box, landing softly with the knees tracking over the toes.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "gluteus-maximus",
+        "calves"
+      ],
+      "movementPattern": "squat",
+      "media": []
+    },
+    {
+      "slug": "sled-push",
+      "name": "Sled Push",
+      "description": null,
+      "instructions": "Drive the sled forward with short, powerful steps and a braced torso.",
+      "equipment": "sled",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "gluteus-maximus",
+        "calves"
+      ],
+      "movementPattern": "other",
+      "media": []
+    },
+    {
+      "slug": "kettlebell-swing",
+      "name": "Kettlebell Swing",
+      "description": null,
+      "instructions": "Hinge and hike the bell back, then snap the hips forward to float it to chest height.",
+      "equipment": "kettlebell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "gluteus-maximus"
+      ],
+      "secondaryMuscles": [
+        "hamstrings",
+        "erector-spinae"
+      ],
+      "movementPattern": "hinge",
+      "media": []
+    },
+    {
+      "slug": "zercher-squat",
+      "name": "Zercher Squat",
+      "description": null,
+      "instructions": "Hold the bar in the crooks of the elbows and squat with an upright torso.",
+      "equipment": "barbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "erector-spinae",
+        "gluteus-maximus"
+      ],
+      "movementPattern": "squat",
+      "media": []
+    },
+    {
+      "slug": "smith-machine-squat",
+      "name": "Smith Machine Squat",
+      "description": null,
+      "instructions": "With the feet slightly forward, squat along the fixed bar path and press back up.",
+      "equipment": "smith-machine",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "gluteus-maximus"
+      ],
+      "movementPattern": "squat",
+      "media": []
+    },
+    {
+      "slug": "pistol-squat",
+      "name": "Pistol Squat",
+      "description": null,
+      "instructions": "Balance on one leg, lower to the bottom with the other leg extended, and stand.",
+      "equipment": "bodyweight",
+      "isUnilateral": true,
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "gluteus-maximus",
+        "transverse-abdominis"
+      ],
+      "movementPattern": "squat",
+      "media": []
+    },
+    {
+      "slug": "belt-squat",
+      "name": "Belt Squat",
+      "description": null,
+      "instructions": "With the load on a hip belt, squat down and drive back up without spinal loading.",
+      "equipment": "machine",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "gluteus-maximus"
+      ],
+      "movementPattern": "squat",
+      "media": []
+    },
+    {
+      "slug": "plank",
+      "name": "Plank",
+      "description": null,
+      "instructions": "Hold a straight line from head to heels on the forearms, ribs down and glutes tight.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "transverse-abdominis"
+      ],
+      "secondaryMuscles": [
+        "rectus-abdominis",
+        "obliques"
+      ],
+      "movementPattern": "core",
+      "media": []
+    },
+    {
+      "slug": "side-plank",
+      "name": "Side Plank",
+      "description": null,
+      "instructions": "Stack the feet and hips and hold a straight line on one forearm.",
+      "equipment": "bodyweight",
+      "isUnilateral": true,
+      "primaryMuscles": [
+        "obliques"
+      ],
+      "secondaryMuscles": [
+        "transverse-abdominis"
+      ],
+      "movementPattern": "core",
+      "media": []
+    },
+    {
+      "slug": "hanging-leg-raise",
+      "name": "Hanging Leg Raise",
+      "description": null,
+      "instructions": "Hanging from a bar, raise the legs to hip height or above without swinging.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "rectus-abdominis"
+      ],
+      "secondaryMuscles": [
+        "hip-flexors"
+      ],
+      "movementPattern": "core",
+      "media": []
+    },
+    {
+      "slug": "hanging-knee-raise",
+      "name": "Hanging Knee Raise",
+      "description": null,
+      "instructions": "Hanging from a bar, draw the knees up to the chest and lower with control.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "rectus-abdominis"
+      ],
+      "secondaryMuscles": [
+        "hip-flexors"
+      ],
+      "movementPattern": "core",
+      "media": []
+    },
+    {
+      "slug": "cable-crunch",
+      "name": "Cable Crunch",
+      "description": null,
+      "instructions": "Kneel under a high pulley and crunch the ribs toward the hips.",
+      "equipment": "cable",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "rectus-abdominis"
+      ],
+      "secondaryMuscles": [
+        "obliques"
+      ],
+      "movementPattern": "core",
+      "media": []
+    },
+    {
+      "slug": "ab-wheel-rollout",
+      "name": "Ab Wheel Rollout",
+      "description": null,
+      "instructions": "Roll out as far as you can hold a neutral spine, then pull back with the abs.",
+      "equipment": "other",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "rectus-abdominis"
+      ],
+      "secondaryMuscles": [
+        "transverse-abdominis",
+        "latissimus-dorsi"
+      ],
+      "movementPattern": "core",
+      "media": []
+    },
+    {
+      "slug": "russian-twist",
+      "name": "Russian Twist",
+      "description": null,
+      "instructions": "Sit leaning back and rotate the ball from hip to hip.",
+      "equipment": "medicine-ball",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "obliques"
+      ],
+      "secondaryMuscles": [
+        "rectus-abdominis"
+      ],
+      "movementPattern": "core",
+      "media": []
+    },
+    {
+      "slug": "dead-bug",
+      "name": "Dead Bug",
+      "description": null,
+      "instructions": "On your back with the ribs down, extend the opposite arm and leg, then return.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "transverse-abdominis"
+      ],
+      "secondaryMuscles": [
+        "rectus-abdominis"
+      ],
+      "movementPattern": "core",
+      "media": []
+    },
+    {
+      "slug": "bird-dog",
+      "name": "Bird Dog",
+      "description": null,
+      "instructions": "On all fours, extend the opposite arm and leg and hold without rotating the hips.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "erector-spinae"
+      ],
+      "secondaryMuscles": [
+        "transverse-abdominis",
+        "gluteus-maximus"
+      ],
+      "movementPattern": "core",
+      "media": []
+    },
+    {
+      "slug": "pallof-press",
+      "name": "Pallof Press",
+      "description": null,
+      "instructions": "Stand side-on to a pulley and press the handle straight out, resisting rotation.",
+      "equipment": "cable",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "obliques"
+      ],
+      "secondaryMuscles": [
+        "transverse-abdominis"
+      ],
+      "movementPattern": "core",
+      "media": []
+    },
+    {
+      "slug": "sit-up",
+      "name": "Sit-Up",
+      "description": null,
+      "instructions": "With the feet anchored, curl up to a seated position and lower with control.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "rectus-abdominis"
+      ],
+      "secondaryMuscles": [
+        "hip-flexors"
+      ],
+      "movementPattern": "core",
+      "media": []
+    },
+    {
+      "slug": "crunch",
+      "name": "Crunch",
+      "description": null,
+      "instructions": "Lift the shoulder blades off the floor by curling the ribs down, then lower.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "rectus-abdominis"
+      ],
+      "secondaryMuscles": [],
+      "movementPattern": "core",
+      "media": []
+    },
+    {
+      "slug": "bicycle-crunch",
+      "name": "Bicycle Crunch",
+      "description": null,
+      "instructions": "Alternate bringing each elbow toward the opposite knee while extending the other leg.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "obliques"
+      ],
+      "secondaryMuscles": [
+        "rectus-abdominis"
+      ],
+      "movementPattern": "core",
+      "media": []
+    },
+    {
+      "slug": "mountain-climber",
+      "name": "Mountain Climber",
+      "description": null,
+      "instructions": "From a push-up position, drive the knees to the chest one at a time at pace.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "rectus-abdominis"
+      ],
+      "secondaryMuscles": [
+        "hip-flexors",
+        "anterior-deltoid"
+      ],
+      "movementPattern": "core",
+      "media": []
+    },
+    {
+      "slug": "hollow-body-hold",
+      "name": "Hollow Body Hold",
+      "description": null,
+      "instructions": "Press the lower back into the floor and hold the arms and legs off the ground.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "rectus-abdominis"
+      ],
+      "secondaryMuscles": [
+        "transverse-abdominis"
+      ],
+      "movementPattern": "core",
+      "media": []
+    },
+    {
+      "slug": "suitcase-carry",
+      "name": "Suitcase Carry",
+      "description": null,
+      "instructions": "Carry a single heavy weight at one side without leaning.",
+      "equipment": "kettlebell",
+      "isUnilateral": true,
+      "primaryMuscles": [
+        "obliques"
+      ],
+      "secondaryMuscles": [
+        "forearm-flexors",
+        "transverse-abdominis"
+      ],
+      "movementPattern": "carry",
+      "media": []
+    },
+    {
+      "slug": "power-clean",
+      "name": "Power Clean",
+      "description": null,
+      "instructions": "Pull the bar from the floor, extend the hips explosively, and catch it in a front rack.",
+      "equipment": "barbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "trapezius",
+        "gluteus-maximus"
+      ],
+      "secondaryMuscles": [
+        "quadriceps",
+        "erector-spinae"
+      ],
+      "movementPattern": "olympic",
+      "media": []
+    },
+    {
+      "slug": "hang-clean",
+      "name": "Hang Clean",
+      "description": null,
+      "instructions": "From mid-thigh, extend the hips and pull under the bar into a front rack.",
+      "equipment": "barbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "trapezius"
+      ],
+      "secondaryMuscles": [
+        "gluteus-maximus",
+        "quadriceps"
+      ],
+      "movementPattern": "olympic",
+      "media": []
+    },
+    {
+      "slug": "power-snatch",
+      "name": "Power Snatch",
+      "description": null,
+      "instructions": "With a wide grip, pull the bar from the floor and receive it overhead with straight arms.",
+      "equipment": "barbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "trapezius"
+      ],
+      "secondaryMuscles": [
+        "gluteus-maximus",
+        "lateral-deltoid"
+      ],
+      "movementPattern": "olympic",
+      "media": []
+    },
+    {
+      "slug": "clean-and-jerk",
+      "name": "Clean and Jerk",
+      "description": null,
+      "instructions": "Clean the bar to the shoulders, then dip and drive it overhead to lockout.",
+      "equipment": "barbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "anterior-deltoid",
+        "gluteus-maximus",
+        "trapezius"
+      ],
+      "movementPattern": "olympic",
+      "media": []
+    },
+    {
+      "slug": "thruster",
+      "name": "Thruster",
+      "description": null,
+      "instructions": "From a front squat, stand explosively and press the bar overhead in one movement.",
+      "equipment": "barbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "anterior-deltoid",
+        "gluteus-maximus"
+      ],
+      "movementPattern": "olympic",
+      "media": []
+    },
+    {
+      "slug": "burpee",
+      "name": "Burpee",
+      "description": null,
+      "instructions": "Drop to a push-up, jump the feet back in, and finish with a jump.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "pectoralis-major",
+        "rectus-abdominis"
+      ],
+      "movementPattern": "other",
+      "media": []
+    },
+    {
+      "slug": "kettlebell-clean",
+      "name": "Kettlebell Clean",
+      "description": null,
+      "instructions": "Hike the bell back and guide it to the rack position at the shoulder.",
+      "equipment": "kettlebell",
+      "isUnilateral": true,
+      "primaryMuscles": [
+        "gluteus-maximus"
+      ],
+      "secondaryMuscles": [
+        "trapezius",
+        "forearm-flexors"
+      ],
+      "movementPattern": "olympic",
+      "media": []
+    },
+    {
+      "slug": "kettlebell-snatch",
+      "name": "Kettlebell Snatch",
+      "description": null,
+      "instructions": "Swing the bell and punch through at the top to lock it out overhead.",
+      "equipment": "kettlebell",
+      "isUnilateral": true,
+      "primaryMuscles": [
+        "gluteus-maximus"
+      ],
+      "secondaryMuscles": [
+        "lateral-deltoid",
+        "trapezius"
+      ],
+      "movementPattern": "olympic",
+      "media": []
+    },
+    {
+      "slug": "turkish-get-up",
+      "name": "Turkish Get-Up",
+      "description": null,
+      "instructions": "From lying, stand up while keeping the bell locked out overhead, then reverse.",
+      "equipment": "kettlebell",
+      "isUnilateral": true,
+      "primaryMuscles": [
+        "transverse-abdominis"
+      ],
+      "secondaryMuscles": [
+        "anterior-deltoid",
+        "gluteus-maximus"
+      ],
+      "movementPattern": "other",
+      "media": []
+    },
+    {
+      "slug": "wall-ball",
+      "name": "Wall Ball",
+      "description": null,
+      "instructions": "Squat with the ball at the chest, then stand and throw it to a target on the wall.",
+      "equipment": "medicine-ball",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "anterior-deltoid",
+        "gluteus-maximus"
+      ],
+      "movementPattern": "olympic",
+      "media": []
+    },
+    {
+      "slug": "assisted-pull-up",
+      "name": "Assisted Pull-Up",
+      "description": null,
+      "instructions": "Use the counterweight to pull the chin above the bar with good control.",
+      "equipment": "machine",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "latissimus-dorsi"
+      ],
+      "secondaryMuscles": [
+        "biceps-brachii"
+      ],
+      "movementPattern": "vertical-pull",
+      "media": []
+    },
+    {
+      "slug": "assisted-dip",
+      "name": "Assisted Dip",
+      "description": null,
+      "instructions": "Use the counterweight to lower to about 90° and press back up.",
+      "equipment": "machine",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "triceps-brachii"
+      ],
+      "secondaryMuscles": [
+        "pectoralis-major"
+      ],
+      "movementPattern": "vertical-push",
+      "media": []
+    },
+    {
+      "slug": "machine-row",
+      "name": "Machine Row",
+      "description": null,
+      "instructions": "With the chest on the pad, pull the handles to the ribs and squeeze.",
+      "equipment": "machine",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "latissimus-dorsi"
+      ],
+      "secondaryMuscles": [
+        "rhomboids",
+        "biceps-brachii"
+      ],
+      "movementPattern": "horizontal-pull",
+      "media": []
+    },
+    {
+      "slug": "machine-shoulder-press",
+      "name": "Machine Shoulder Press",
+      "description": null,
+      "instructions": "Press the handles overhead from shoulder height and lower to ear level.",
+      "equipment": "machine",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "anterior-deltoid"
+      ],
+      "secondaryMuscles": [
+        "triceps-brachii"
+      ],
+      "movementPattern": "vertical-push",
+      "media": []
+    },
+    {
+      "slug": "machine-biceps-curl",
+      "name": "Machine Biceps Curl",
+      "description": null,
+      "instructions": "With the upper arms on the pad, curl the handles up and lower fully.",
+      "equipment": "machine",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "biceps-brachii"
+      ],
+      "secondaryMuscles": [
+        "brachialis"
+      ],
+      "movementPattern": "curl",
+      "media": []
+    },
+    {
+      "slug": "machine-triceps-extension",
+      "name": "Machine Triceps Extension",
+      "description": null,
+      "instructions": "Extend the arms against the pad and return under control.",
+      "equipment": "machine",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "triceps-brachii"
+      ],
+      "secondaryMuscles": [],
+      "movementPattern": "extension",
+      "media": []
+    },
+    {
+      "slug": "cable-pull-through",
+      "name": "Cable Pull-Through",
+      "description": null,
+      "instructions": "Facing away from a low pulley, hinge back and drive the hips forward to stand tall.",
+      "equipment": "cable",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "gluteus-maximus"
+      ],
+      "secondaryMuscles": [
+        "hamstrings",
+        "erector-spinae"
+      ],
+      "movementPattern": "hinge",
+      "media": []
+    },
+    {
+      "slug": "cable-woodchop",
+      "name": "Cable Woodchop",
+      "description": null,
+      "instructions": "Rotate from high to low across the body, keeping the arms fairly straight.",
+      "equipment": "cable",
+      "isUnilateral": true,
+      "primaryMuscles": [
+        "obliques"
+      ],
+      "secondaryMuscles": [
+        "transverse-abdominis"
+      ],
+      "movementPattern": "core",
+      "media": []
+    },
+    {
+      "slug": "cable-rear-delt-fly",
+      "name": "Cable Rear Delt Fly",
+      "description": null,
+      "instructions": "From crossed cables, sweep the arms wide and back at shoulder height.",
+      "equipment": "cable",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "posterior-deltoid"
+      ],
+      "secondaryMuscles": [
+        "rhomboids"
+      ],
+      "movementPattern": "horizontal-pull",
+      "media": []
+    },
+    {
+      "slug": "cable-overhead-triceps-extension",
+      "name": "Cable Overhead Triceps Extension",
+      "description": null,
+      "instructions": "Face away from the pulley and extend the rope overhead until the arms are straight.",
+      "equipment": "cable",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "triceps-brachii"
+      ],
+      "secondaryMuscles": [],
+      "movementPattern": "extension",
+      "media": []
+    },
+    {
+      "slug": "cable-hammer-curl",
+      "name": "Cable Hammer Curl",
+      "description": null,
+      "instructions": "Curl a rope with a neutral grip, keeping the elbows fixed.",
+      "equipment": "cable",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "brachialis"
+      ],
+      "secondaryMuscles": [
+        "biceps-brachii"
+      ],
+      "movementPattern": "curl",
+      "media": []
+    },
+    {
+      "slug": "smith-machine-row",
+      "name": "Smith Machine Row",
+      "description": null,
+      "instructions": "Hinge over the fixed bar and row it to the lower ribs.",
+      "equipment": "smith-machine",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "latissimus-dorsi"
+      ],
+      "secondaryMuscles": [
+        "rhomboids"
+      ],
+      "movementPattern": "horizontal-pull",
+      "media": []
+    },
+    {
+      "slug": "smith-machine-shoulder-press",
+      "name": "Smith Machine Shoulder Press",
+      "description": null,
+      "instructions": "Seated under the bar, press overhead along the fixed path.",
+      "equipment": "smith-machine",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "anterior-deltoid"
+      ],
+      "secondaryMuscles": [
+        "triceps-brachii"
+      ],
+      "movementPattern": "vertical-push",
+      "media": []
+    },
+    {
+      "slug": "smith-machine-calf-raise",
+      "name": "Smith Machine Calf Raise",
+      "description": null,
+      "instructions": "With the bar on the back and the toes on a plate, rise onto the toes and lower fully.",
+      "equipment": "smith-machine",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [],
+      "movementPattern": "other",
+      "media": []
+    },
+    {
+      "slug": "landmine-row",
+      "name": "Landmine Row",
+      "description": null,
+      "instructions": "Straddle a landmine bar and row the handle to the chest.",
+      "equipment": "barbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "latissimus-dorsi"
+      ],
+      "secondaryMuscles": [
+        "rhomboids",
+        "biceps-brachii"
+      ],
+      "movementPattern": "horizontal-pull",
+      "media": []
+    },
+    {
+      "slug": "landmine-squat",
+      "name": "Landmine Squat",
+      "description": null,
+      "instructions": "Hold the end of a landmine bar at the chest and squat with an upright torso.",
+      "equipment": "barbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "gluteus-maximus"
+      ],
+      "movementPattern": "squat",
+      "media": []
+    },
+    {
+      "slug": "dumbbell-pullover",
+      "name": "Dumbbell Pullover",
+      "description": null,
+      "instructions": "Lying across a bench, lower one dumbbell behind the head and pull it back over the chest.",
+      "equipment": "dumbbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "latissimus-dorsi"
+      ],
+      "secondaryMuscles": [
+        "pectoralis-major",
+        "serratus-anterior"
+      ],
+      "movementPattern": "vertical-pull",
+      "media": []
+    },
+    {
+      "slug": "dumbbell-floor-press",
+      "name": "Dumbbell Floor Press",
+      "description": null,
+      "instructions": "Lying on the floor, press the dumbbells until the triceps touch down between reps.",
+      "equipment": "dumbbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "pectoralis-major"
+      ],
+      "secondaryMuscles": [
+        "triceps-brachii"
+      ],
+      "movementPattern": "horizontal-push",
+      "media": []
+    },
+    {
+      "slug": "dumbbell-romanian-deadlift",
+      "name": "Dumbbell Romanian Deadlift",
+      "description": null,
+      "instructions": "Hinge with the dumbbells tracking down the legs until you feel a hamstring stretch.",
+      "equipment": "dumbbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "secondaryMuscles": [
+        "gluteus-maximus",
+        "erector-spinae"
+      ],
+      "movementPattern": "hinge",
+      "media": []
+    },
+    {
+      "slug": "single-leg-romanian-deadlift",
+      "name": "Single-Leg Romanian Deadlift",
+      "description": null,
+      "instructions": "Balance on one leg and hinge forward, letting the free leg extend behind you.",
+      "equipment": "dumbbell",
+      "isUnilateral": true,
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "secondaryMuscles": [
+        "gluteus-medius",
+        "erector-spinae"
+      ],
+      "movementPattern": "hinge",
+      "media": []
+    },
+    {
+      "slug": "dumbbell-thruster",
+      "name": "Dumbbell Thruster",
+      "description": null,
+      "instructions": "Squat with the dumbbells at the shoulders and press them overhead as you stand.",
+      "equipment": "dumbbell",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "anterior-deltoid"
+      ],
+      "movementPattern": "olympic",
+      "media": []
+    },
+    {
+      "slug": "dumbbell-snatch",
+      "name": "Dumbbell Snatch",
+      "description": null,
+      "instructions": "Hinge, then drive the dumbbell from between the legs to overhead in one pull.",
+      "equipment": "dumbbell",
+      "isUnilateral": true,
+      "primaryMuscles": [
+        "gluteus-maximus"
+      ],
+      "secondaryMuscles": [
+        "lateral-deltoid",
+        "trapezius"
+      ],
+      "movementPattern": "olympic",
+      "media": []
+    },
+    {
+      "slug": "band-face-pull",
+      "name": "Band Face Pull",
+      "description": null,
+      "instructions": "Pull a band to the face with high elbows and squeeze the rear delts.",
+      "equipment": "resistance-band",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "posterior-deltoid"
+      ],
+      "secondaryMuscles": [
+        "trapezius"
+      ],
+      "movementPattern": "horizontal-pull",
+      "media": []
+    },
+    {
+      "slug": "band-squat",
+      "name": "Band Squat",
+      "description": null,
+      "instructions": "Stand on the band with it over the shoulders and squat against the resistance.",
+      "equipment": "resistance-band",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "gluteus-maximus"
+      ],
+      "movementPattern": "squat",
+      "media": []
+    },
+    {
+      "slug": "band-row",
+      "name": "Band Row",
+      "description": null,
+      "instructions": "Anchor the band in front and row the handles to the ribs.",
+      "equipment": "resistance-band",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "latissimus-dorsi"
+      ],
+      "secondaryMuscles": [
+        "rhomboids"
+      ],
+      "movementPattern": "horizontal-pull",
+      "media": []
+    },
+    {
+      "slug": "band-lateral-walk",
+      "name": "Band Lateral Walk",
+      "description": null,
+      "instructions": "With a band above the knees, step sideways in a quarter squat.",
+      "equipment": "resistance-band",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "gluteus-medius"
+      ],
+      "secondaryMuscles": [],
+      "movementPattern": "other",
+      "media": []
+    },
+    {
+      "slug": "trap-bar-carry",
+      "name": "Trap Bar Carry",
+      "description": null,
+      "instructions": "Load the trap bar, stand tall, and walk for distance.",
+      "equipment": "trap-bar",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "forearm-flexors"
+      ],
+      "secondaryMuscles": [
+        "trapezius",
+        "transverse-abdominis"
+      ],
+      "movementPattern": "carry",
+      "media": []
+    },
+    {
+      "slug": "sled-drag",
+      "name": "Sled Drag",
+      "description": null,
+      "instructions": "Walk backwards or forwards pulling a loaded sled with straps.",
+      "equipment": "sled",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "hamstrings"
+      ],
+      "secondaryMuscles": [
+        "gluteus-maximus",
+        "calves"
+      ],
+      "movementPattern": "other",
+      "media": []
+    },
+    {
+      "slug": "jump-rope",
+      "name": "Jump Rope",
+      "description": null,
+      "instructions": "Skip with a relaxed grip and small bounces, landing on the balls of the feet.",
+      "equipment": "other",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [
+        "tibialis-anterior"
+      ],
+      "movementPattern": "other",
+      "media": []
+    },
+    {
+      "slug": "rowing-machine",
+      "name": "Rowing Machine",
+      "description": null,
+      "instructions": "Drive with the legs, swing the torso back, then pull the handle to the ribs.",
+      "equipment": "machine",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "latissimus-dorsi"
+      ],
+      "secondaryMuscles": [
+        "quadriceps",
+        "erector-spinae"
+      ],
+      "movementPattern": "other",
+      "media": []
+    },
+    {
+      "slug": "seated-cable-face-pull",
+      "name": "Seated Cable Face Pull",
+      "description": null,
+      "instructions": "Seated at a mid pulley, pull the rope to the face with high elbows.",
+      "equipment": "cable",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "posterior-deltoid"
+      ],
+      "secondaryMuscles": [
+        "trapezius",
+        "rotator-cuff"
+      ],
+      "movementPattern": "horizontal-pull",
+      "media": []
+    },
+    {
+      "slug": "chest-supported-t-bar-row",
+      "name": "Chest-Supported T-Bar Row",
+      "description": null,
+      "instructions": "With the chest on the pad, row the handles to the ribs and squeeze.",
+      "equipment": "machine",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "latissimus-dorsi"
+      ],
+      "secondaryMuscles": [
+        "rhomboids"
+      ],
+      "movementPattern": "horizontal-pull",
+      "media": []
+    },
+    {
+      "slug": "weighted-pull-up",
+      "name": "Weighted Pull-Up",
+      "description": null,
+      "instructions": "Add load with a belt or vest and pull the chin above the bar.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "latissimus-dorsi"
+      ],
+      "secondaryMuscles": [
+        "biceps-brachii"
+      ],
+      "movementPattern": "vertical-pull",
+      "media": []
+    },
+    {
+      "slug": "weighted-dip",
+      "name": "Weighted Dip",
+      "description": null,
+      "instructions": "Add load with a belt and dip to about 90° at the elbow.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "triceps-brachii"
+      ],
+      "secondaryMuscles": [
+        "pectoralis-major"
+      ],
+      "movementPattern": "vertical-push",
+      "media": []
+    },
+    {
+      "slug": "hip-thrust-machine",
+      "name": "Hip Thrust Machine",
+      "description": null,
+      "instructions": "Drive the hips to full extension against the pad and squeeze at the top.",
+      "equipment": "machine",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "gluteus-maximus"
+      ],
+      "secondaryMuscles": [
+        "hamstrings"
+      ],
+      "movementPattern": "hinge",
+      "media": []
+    },
+    {
+      "slug": "copenhagen-plank",
+      "name": "Copenhagen Plank",
+      "description": null,
+      "instructions": "With the top leg on a bench, hold a side plank driven by the inner thigh.",
+      "equipment": "bodyweight",
+      "isUnilateral": true,
+      "primaryMuscles": [
+        "adductors"
+      ],
+      "secondaryMuscles": [
+        "obliques"
+      ],
+      "movementPattern": "core",
+      "media": []
+    },
+    {
+      "slug": "calf-raise",
+      "name": "Calf Raise",
+      "description": null,
+      "instructions": "Rise onto the toes from a flat floor or step and lower into a stretch.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "calves"
+      ],
+      "secondaryMuscles": [],
+      "movementPattern": "other",
+      "media": []
+    },
+    {
+      "slug": "wall-sit",
+      "name": "Wall Sit",
+      "description": null,
+      "instructions": "Sit against a wall with the thighs parallel to the floor and hold.",
+      "equipment": "bodyweight",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "gluteus-maximus"
+      ],
+      "movementPattern": "squat",
+      "media": []
+    },
+    {
+      "slug": "barbell-hip-abduction",
+      "name": "Barbell Hip Abduction",
+      "description": null,
+      "instructions": "With a band around the ankles, lift one leg out to the side against resistance.",
+      "equipment": "resistance-band",
+      "isUnilateral": true,
+      "primaryMuscles": [
+        "gluteus-medius"
+      ],
+      "secondaryMuscles": [],
+      "movementPattern": "other",
+      "media": []
+    }
+  ]
+}
