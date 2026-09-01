@@ -29,10 +29,12 @@ ios/
 # committing it means anyone can publish as you. Back it up outside the repo.
 apps/mobile/credentials/
 
-# Built APKs. The signed release APK in build-output/ is committed as the
-# distributable artefact, on request — note that each build adds ~60 MB to the
-# repo permanently, since git history keeps every version. GitHub Releases is
-# the usual home for this if the repo gets heavy.
-# The `android/` entry above stays ignored: that is generated prebuild
-# scaffolding, not an artefact.
-!build-output/
+# Built APKs — artefacts, not source. ~69 MB each, and git history keeps every
+# version forever, so they stay out of the repo.
+#
+# build-output/README.md is the exception: it records each release's version,
+# size, hash and signing certificate. That record is what makes a changed
+# signing identity detectable in review, rather than at install time on
+# someone's phone.
+build-output/*
+!build-output/README.md

@@ -1,26 +1,30 @@
 # Release builds
 
-The signed Android APK, committed as the distributable artefact.
+**The APKs themselves are not committed** — ~69 MB each, and git history keeps
+every version forever. Only this record is tracked.
 
-**Note on repo size:** each build is ~69 MB and git keeps every version
-forever, so this directory grows permanently. If the repo gets heavy, GitHub
-Releases is the usual home for binaries — the build itself is reproducible from
-[docs/runbook.md](../docs/runbook.md) either way.
+That is the whole point of the file: an APK's signing certificate has to stay
+identical across releases or every user must uninstall before they can update,
+and a digest written down in review is the cheapest way to catch a change before
+it reaches a phone.
+
+To get an APK: build it (`docs/runbook.md` → _Deploy_), or attach it to a GitHub
+Release, which is the usual home for binaries.
 
 ## Current
 
-| | |
-|---|---|
-| File | `FitnessIntellisense-0.3.0.apk` |
-| versionName | 0.3.0 |
-| versionCode | 4 |
-| Size | 72,260,597 bytes (68.9 MB) |
-| SHA-256 | `1bfb1ed5db8c5292d8e6bec41563b66b894cb02a52147e74f7878813274a17c1` |
+|                      |                                                                    |
+| -------------------- | ------------------------------------------------------------------ |
+| File                 | `FitnessIntellisense-0.3.0.apk`                                    |
+| versionName          | 0.3.0                                                              |
+| versionCode          | 4                                                                  |
+| Size                 | 72,260,597 bytes (68.9 MB)                                         |
+| SHA-256              | `1bfb1ed5db8c5292d8e6bec41563b66b894cb02a52147e74f7878813274a17c1` |
 | Signing cert SHA-256 | `c35574e619810ce487e6e92d2e3cbabced3e85356f32e4d793183335a0fee5de` |
-| API it points at | `https://fitnellisense.onrender.com` |
-| ABIs | arm64-v8a, armeabi-v7a |
+| API it points at     | `https://fitnellisense.onrender.com`                               |
+| ABIs                 | arm64-v8a, armeabi-v7a                                             |
 
-The signing certificate is **the same as version 0.2.0's**, so this installs
+The signing certificate is **the same as version 0.2.0's**, so 0.3.0 installs
 over an existing install without uninstalling first. Verify before shipping any
 future build:
 
