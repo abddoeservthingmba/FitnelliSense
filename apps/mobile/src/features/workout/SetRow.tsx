@@ -1,10 +1,13 @@
 /**
  * One logged set (FR-WK-04, J2's "≤3 taps per set").
  *
- * Weight and reps are always-editable numeric fields, so logging is: type,
- * type, tap the tick. The tick is a 44 dp target on the right, where a thumb
- * already is (NFR-U-02). Values commit on blur and on completion, never on
- * every keystroke, so the network is not asked to keep up with typing.
+ * The two numbers are the whole interface, so they are set large and tabular,
+ * on a row tall enough to hit without looking. Type, type, tap the tick.
+ *
+ * A completed set drops its field chrome and turns the numbers accent — done
+ * work should look settled, not still editable, even though it still is.
+ * Values commit on blur and on completion, never per keystroke, so the network
+ * is not asked to keep up with typing.
  */
 import { memo, useEffect, useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
@@ -74,15 +77,16 @@ export const SetRow = memo(function SetRow({
 
   const fieldStyle = {
     flex: 1,
-    minHeight: theme.hitSlop,
+    minHeight: 52,
     textAlign: 'center' as const,
     borderRadius: theme.radius.sm,
     borderWidth: 1,
     borderColor: set.isCompleted ? 'transparent' : theme.colors.border,
     backgroundColor: set.isCompleted ? 'transparent' : theme.colors.surfaceRaised,
-    color: theme.colors.text,
-    fontSize: theme.fontSize.callout,
-    fontWeight: theme.fontWeight.medium,
+    color: set.isCompleted ? theme.colors.accent : theme.colors.text,
+    fontSize: theme.fontSize.title,
+    fontWeight: theme.fontWeight.heavy,
+    letterSpacing: theme.tracking.snug,
     paddingHorizontal: theme.space.sm,
   };
 
@@ -95,7 +99,6 @@ export const SetRow = memo(function SetRow({
         alignItems: 'center',
         gap: theme.space.sm,
         paddingVertical: theme.space.xs,
-        opacity: set.isCompleted ? 0.9 : 1,
       }}
     >
       <Pressable
@@ -103,10 +106,10 @@ export const SetRow = memo(function SetRow({
         onLongPress={onLongPress}
         accessibilityRole="button"
         accessibilityLabel={`Set ${index + 1} options`}
-        hitSlop={8}
-        style={{ width: 28, alignItems: 'center' }}
+        hitSlop={10}
+        style={{ width: 26, alignItems: 'center' }}
       >
-        <Text variant="label" tone={typeLabel ? 'accent' : 'faint'} weight="semibold">
+        <Text variant="micro" tone={typeLabel ? 'accent' : 'faint'} weight="heavy" overline>
           {typeLabel || index + 1}
         </Text>
       </Pressable>
@@ -145,12 +148,12 @@ export const SetRow = memo(function SetRow({
         accessibilityState={{ checked: set.isCompleted }}
         accessibilityLabel={`Mark set ${index + 1} ${set.isCompleted ? 'not done' : 'done'}`}
         style={({ pressed }) => ({
-          width: theme.hitSlop,
-          height: theme.hitSlop,
+          width: 52,
+          height: 52,
           borderRadius: theme.radius.sm,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: set.isCompleted ? theme.colors.accent : theme.colors.surfaceRaised,
+          backgroundColor: set.isCompleted ? theme.colors.accent : 'transparent',
           borderWidth: 1,
           borderColor: set.isCompleted ? theme.colors.accent : theme.colors.border,
           opacity: pressed ? 0.7 : 1,
@@ -158,7 +161,7 @@ export const SetRow = memo(function SetRow({
       >
         <Text
           variant="callout"
-          weight="bold"
+          weight="heavy"
           style={{ color: set.isCompleted ? theme.colors.accentText : theme.colors.textFaint }}
         >
           ✓

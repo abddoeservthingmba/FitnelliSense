@@ -99,7 +99,21 @@ export const userProfiles = pgTable('user_profiles', {
   dateOfBirth: date('date_of_birth'),
   /** FR-AUTH-08: only the R2 object key is stored; the API presigns on read. */
   avatarR2Key: text('avatar_r2_key'),
-  defaultRestSecs: integer('default_rest_secs').notNull().default(90),
+  /**
+   * Onboarding's two questions about available time. Nullable because every
+   * onboarding step is skippable — an unanswered question stays unanswered
+   * rather than being invented as a default.
+   */
+  trainingDaysPerWeek: smallint('training_days_per_week'),
+  sessionMinutes: smallint('session_minutes'),
+  /**
+   * When onboarding was last shown — set whether the user answered or skipped.
+   * Answers alone cannot serve as the marker: someone who skips every question
+   * would then be asked again on every launch, forever.
+   */
+  onboardedAt: timestamp('onboarded_at', { withTimezone: true }),
+  /** Two minutes: the right default for the compound lifts most people log. */
+  defaultRestSecs: integer('default_rest_secs').notNull().default(120),
   /** FR-AI-06: opt-in, off by default. */
   aiEnabled: boolean('ai_enabled').notNull().default(false),
   ...timestamps,

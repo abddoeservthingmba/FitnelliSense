@@ -8,6 +8,20 @@
       "when": 1788196069072,
       "tag": "0000_initial_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788230172519,
+      "tag": "0001_onboarding_training_time",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788230453776,
+      "tag": "0002_onboarding_marker",
+      "breakpoints": true
     }
   ]
 }

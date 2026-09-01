@@ -13,6 +13,7 @@ import {
   palettes,
   radius,
   space,
+  tracking,
   duration,
   HIT_SLOP,
   type ColorScheme,
@@ -29,6 +30,7 @@ export interface Theme {
   radius: typeof radius;
   fontSize: typeof fontSize;
   fontWeight: typeof fontWeight;
+  tracking: typeof tracking;
   duration: typeof duration;
   hitSlop: number;
   layout: Layout;
@@ -57,6 +59,7 @@ export function ThemeProvider({ children }: { children: ReactNode }): ReactNode 
       radius,
       fontSize,
       fontWeight,
+      tracking,
       duration,
       hitSlop: HIT_SLOP,
       layout,

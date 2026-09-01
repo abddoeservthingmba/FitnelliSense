@@ -14,7 +14,7 @@ import { Button } from '../../src/components/Button';
 import { Card, Divider, Row, Stack } from '../../src/components/Card';
 import { Badge } from '../../src/components/Chip';
 import { Screen } from '../../src/components/Screen';
-import { StatTile } from '../../src/components/Section';
+import { Stat, StatRow } from '../../src/components/Section';
 import { Text } from '../../src/components/Text';
 import { ErrorState, LoadingState } from '../../src/components/StateViews';
 import { formatDuration, formatTime, formatWorkoutDate } from '../../src/lib/format';
@@ -53,11 +53,17 @@ export default function WorkoutDetailScreen() {
           </Text>
         </Stack>
 
-        <Row gap="sm">
-          <StatTile label="Volume" value={units.volume(detail.totalVolumeKg)} />
-          <StatTile label="Time" value={formatDuration(detail.durationSecs)} />
-          <StatTile label="Sets" value={String(detail.setCount)} />
-        </Row>
+        <StatRow>
+          <View style={{ flex: 1 }}>
+            <Stat value={units.volume(detail.totalVolumeKg)} label="Volume" size="small" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Stat value={formatDuration(detail.durationSecs)} label="Time" size="small" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Stat value={String(detail.setCount)} label="Sets" size="small" />
+          </View>
+        </StatRow>
 
         <Stack gap="md">
           {detail.exercises.map((exercise) => (

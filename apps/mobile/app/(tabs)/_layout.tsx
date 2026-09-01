@@ -6,7 +6,9 @@
  * else (NFR-U-04).
  */
 import { Redirect, Tabs } from 'expo-router';
+import { hasSeenOnboarding } from '@fi/shared';
 import { useAuth } from '../../src/auth/auth-context';
+import { useMe } from '../../src/api/hooks/use-profile';
 import { Text } from '../../src/components/Text';
 import { LoadingState } from '../../src/components/StateViews';
 import { useTheme } from '../../src/theme';
@@ -22,9 +24,18 @@ const TAB_GLYPHS = {
 export default function TabsLayout() {
   const { status } = useAuth();
   const theme = useTheme();
+  const me = useMe();
 
   if (status === 'restoring') return <LoadingState label="Getting things ready…" />;
   if (status === 'signedOut') return <Redirect href="/(auth)/sign-in" />;
+
+  // The gate lives here, not after sign-up, so it follows the account rather
+  // than the device: signing in on a second phone does not re-ask, and an
+  // account that never reached the end of onboarding still gets there.
+  if (me.isLoading) return <LoadingState label="Getting things ready…" />;
+  if (me.data && !hasSeenOnboarding(me.data.profile)) {
+    return <Redirect href="/onboarding" />;
+  }
 
   const icon =
     (name: keyof typeof TAB_GLYPHS) =>

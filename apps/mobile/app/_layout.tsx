@@ -51,6 +51,11 @@ function ThemedShell() {
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        {/* No header and no back gesture: leaving is "Skip", not a swipe. */}
+        <Stack.Screen
+          name="onboarding"
+          options={{ headerShown: false, gestureEnabled: false }}
+        />
         <Stack.Screen name="workout/active" options={{ title: 'Workout', headerBackTitle: 'Back' }} />
         <Stack.Screen name="workout/[id]" options={{ title: 'Workout' }} />
         <Stack.Screen name="exercise/[id]" options={{ title: 'Exercise' }} />

@@ -12,7 +12,7 @@ import { useAuth } from '../../src/auth/auth-context';
 import { Button } from '../../src/components/Button';
 import { Stack as VStack } from '../../src/components/Card';
 import { Screen } from '../../src/components/Screen';
-import { Text } from '../../src/components/Text';
+import { Overline, Text } from '../../src/components/Text';
 import { TextField } from '../../src/components/TextField';
 import { useTheme } from '../../src/theme';
 
@@ -52,7 +52,8 @@ export default function SignInScreen() {
     >
       <Screen scroll>
         <View style={{ paddingTop: theme.space.xxxl, gap: theme.space.xl }}>
-          <VStack gap="xs">
+          <VStack gap="sm">
+            <Overline>Fitness Intellisense</Overline>
             <Text variant="display">Welcome back</Text>
             <Text tone="muted">Pick up where your last session left off.</Text>
           </VStack>

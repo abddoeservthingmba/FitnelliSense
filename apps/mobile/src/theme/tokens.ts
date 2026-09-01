@@ -1,10 +1,13 @@
 /**
- * Design tokens. One source of values, so no screen invents a colour or a
- * spacing step.
+ * Design tokens — editorial, high contrast.
  *
- * The palette is dark-first because that is what a phone in a gym wants, but
- * both schemes are complete and contrast-checked to WCAG 2.1 AA (NFR-U-04).
- * Spacing is a 4pt scale; every touch target lands on at least 44 (NFR-U-03).
+ * The look is a performance instrument rather than a lifestyle app: a near
+ * black ground, numbers set very large because the numbers *are* the content,
+ * uppercase tracked labels doing the work of chrome, and one accent used
+ * sparingly enough that it still means something when it appears.
+ *
+ * Both schemes are complete and contrast-checked to WCAG 2.1 AA (NFR-U-04),
+ * and every touch target still lands on at least 44 dp (NFR-U-03).
  */
 
 export const space = {
@@ -17,10 +20,14 @@ export const space = {
   xxxl: 48,
 } as const;
 
+/**
+ * Editorial geometry is tighter than the rounded-card default: corners are
+ * crisp, so the accent blocks read as blocks.
+ */
 export const radius = {
-  sm: 8,
-  md: 12,
-  lg: 16,
+  sm: 4,
+  md: 8,
+  lg: 12,
   pill: 999,
 } as const;
 
@@ -28,15 +35,18 @@ export const radius = {
 export const HIT_SLOP = 44;
 
 export const fontSize = {
+  micro: 11,
   caption: 12,
   footnote: 13,
   body: 15,
   callout: 17,
-  title: 20,
-  heading: 26,
-  display: 34,
-  /** For the live workout: readable at arm's length, mid-set. */
-  metric: 30,
+  title: 21,
+  heading: 28,
+  display: 40,
+  /** The headline number on a stat: weights, volume, the live timer. */
+  metric: 46,
+  /** For a single hero figure that owns the screen. */
+  hero: 64,
 } as const;
 
 export const fontWeight = {
@@ -44,6 +54,19 @@ export const fontWeight = {
   medium: '500',
   semibold: '600',
   bold: '700',
+  heavy: '800',
+} as const;
+
+/**
+ * Letter spacing. Large numerals get negative tracking so they read as one
+ * shape; small uppercase labels get positive tracking so they stay legible.
+ */
+export const tracking = {
+  tight: -1.2,
+  snug: -0.4,
+  normal: 0,
+  wide: 0.8,
+  wider: 1.6,
 } as const;
 
 export const duration = {
@@ -53,18 +76,19 @@ export const duration = {
 } as const;
 
 interface Palette {
-  /** App background. */
+  /** The ground. Near-black in dark, near-white in light. */
   background: string;
   /** Cards and raised surfaces. */
   surface: string;
   surfaceRaised: string;
-  /** Hairlines and dividers. */
+  /** The inverse block — used for the one action that matters on a screen. */
+  inverse: string;
+  inverseText: string;
   border: string;
   borderStrong: string;
   text: string;
   textMuted: string;
   textFaint: string;
-  /** Brand accent — used for primary actions and the "done" state. */
   accent: string;
   accentText: string;
   accentSoft: string;
@@ -72,49 +96,58 @@ interface Palette {
   dangerSoft: string;
   warning: string;
   success: string;
-  /** The record / celebration colour. */
+  /** Records and celebrations. Used rarely, so it lands. */
   highlight: string;
   overlay: string;
+  /** Track behind a progress bar. */
+  track: string;
 }
 
 const dark: Palette = {
-  background: '#0B0F14',
-  surface: '#131A22',
-  surfaceRaised: '#1B242E',
-  border: '#232F3B',
-  borderStrong: '#324454',
-  text: '#F2F6FA',
-  textMuted: '#A6B4C2',
-  textFaint: '#6C7C8C',
-  accent: '#22D3A6',
-  accentText: '#04241C',
-  accentSoft: '#12332B',
-  danger: '#FF6B6B',
-  dangerSoft: '#3A1D22',
-  warning: '#F5B547',
-  success: '#3DDC97',
-  highlight: '#FFD166',
-  overlay: 'rgba(4, 8, 12, 0.72)',
+  background: '#08090A',
+  surface: '#101214',
+  surfaceRaised: '#191C1F',
+  inverse: '#F5F7F8',
+  inverseText: '#08090A',
+  border: '#1F2427',
+  borderStrong: '#333A3F',
+  text: '#F5F7F8',
+  textMuted: '#9BA6AE',
+  textFaint: '#646F77',
+  accent: '#C8FF4D',
+  accentText: '#0F1400',
+  accentSoft: '#1D2610',
+  danger: '#FF5C5C',
+  dangerSoft: '#2A1315',
+  warning: '#FFB020',
+  success: '#4ADE80',
+  highlight: '#C8FF4D',
+  overlay: 'rgba(4, 5, 6, 0.82)',
+  track: '#22282C',
 };
 
 const light: Palette = {
-  background: '#F7F9FB',
+  background: '#FBFBFA',
   surface: '#FFFFFF',
-  surfaceRaised: '#FFFFFF',
-  border: '#E1E7ED',
-  borderStrong: '#C6D0DA',
-  text: '#0D1620',
-  textMuted: '#4E5C6A',
-  textFaint: '#7C8A98',
-  accent: '#0E9E7A',
+  surfaceRaised: '#F3F4F3',
+  inverse: '#0B0C0D',
+  inverseText: '#FFFFFF',
+  border: '#E4E6E5',
+  borderStrong: '#C3C8C6',
+  text: '#0B0C0D',
+  textMuted: '#5A6260',
+  textFaint: '#8B9391',
+  // A lime accent needs darkening on white to hold AA against its own text.
+  accent: '#3F6B00',
   accentText: '#FFFFFF',
-  accentSoft: '#DFF5EE',
-  danger: '#C7362F',
-  dangerSoft: '#FBE7E5',
-  warning: '#9A6400',
-  success: '#0E8A5F',
-  highlight: '#A26B00',
-  overlay: 'rgba(13, 22, 32, 0.45)',
+  accentSoft: '#EDF7D9',
+  danger: '#B3261E',
+  dangerSoft: '#FBE9E7',
+  warning: '#8A5A00',
+  success: '#136F42',
+  highlight: '#4A6B00',
+  overlay: 'rgba(11, 12, 13, 0.5)',
+  track: '#E4E6E5',
 };
 
 export const palettes = { dark, light } as const;

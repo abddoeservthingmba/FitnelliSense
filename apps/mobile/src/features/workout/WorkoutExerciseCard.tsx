@@ -12,10 +12,9 @@ import { router } from 'expo-router';
 import type { WorkoutExercise } from '@fi/shared';
 import { Button } from '../../components/Button';
 import { Card, Divider, Row, Stack } from '../../components/Card';
-import { Text } from '../../components/Text';
+import { Overline, Text } from '../../components/Text';
 import { formatPrefillOrigin } from '../../lib/format';
 import { useUnits } from '../../lib/use-units';
-import { useTheme } from '../../theme';
 import { SetRow } from './SetRow';
 import type { PrefillSuggestion } from './use-prefill';
 
@@ -38,7 +37,6 @@ export const WorkoutExerciseCard = memo(function WorkoutExerciseCard({
   onDeleteSet,
   onRemove,
 }: WorkoutExerciseCardProps) {
-  const theme = useTheme();
   const units = useUnits();
 
   const completed = exercise.sets.filter((set) => set.isCompleted).length;
@@ -76,14 +74,14 @@ export const WorkoutExerciseCard = memo(function WorkoutExerciseCard({
 
         {/* Column headers, so the two bare number fields are unambiguous. */}
         <Row gap="sm">
-          <View style={{ width: 28 }} />
-          <Text variant="caption" tone="faint" center style={{ flex: 1 }}>
-            {units.label.toUpperCase()}
-          </Text>
-          <Text variant="caption" tone="faint" center style={{ flex: 1 }}>
-            REPS
-          </Text>
-          <View style={{ width: theme.hitSlop }} />
+          <View style={{ width: 26 }} />
+          <View style={{ flex: 1, alignItems: 'center' }}>
+            <Overline>{units.label}</Overline>
+          </View>
+          <View style={{ flex: 1, alignItems: 'center' }}>
+            <Overline>reps</Overline>
+          </View>
+          <View style={{ width: 52 }} />
         </Row>
 
         {exercise.sets.map((set, index) => (

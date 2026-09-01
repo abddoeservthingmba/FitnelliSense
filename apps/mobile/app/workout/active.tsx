@@ -22,9 +22,9 @@ import {
 } from '../../src/api/hooks/use-workout';
 import { useMe } from '../../src/api/hooks/use-profile';
 import { Button } from '../../src/components/Button';
-import { Card, Row, Stack } from '../../src/components/Card';
+import { Stack } from '../../src/components/Card';
 import { ActionBar, Screen } from '../../src/components/Screen';
-import { Text } from '../../src/components/Text';
+import { Rule, Stat, StatRow } from '../../src/components/Section';
 import { EmptyState, LoadingState, OfflineBanner } from '../../src/components/StateViews';
 import { ExercisePicker } from '../../src/features/routine/ExercisePicker';
 import { RestTimerBar } from '../../src/features/workout/RestTimerBar';
@@ -61,7 +61,8 @@ export default function ActiveWorkoutScreen() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [records, setRecords] = useState<PersonalRecordHit[] | null>(null);
 
-  const defaultRestSecs = me.data?.profile.defaultRestSecs ?? 90;
+  // Falls back to two minutes, matching the server default and onboarding.
+  const defaultRestSecs = me.data?.profile.defaultRestSecs ?? 120;
 
   /**
    * A mutation that could not reach the server is retried by the query client,
@@ -137,22 +138,23 @@ export default function ActiveWorkoutScreen() {
             reason={connectionProblem?.isUnavailable ? 'unavailable' : 'offline'}
           />
 
-          <Card>
-            <Row justify="space-between">
-              <View style={{ gap: 2 }}>
-                <Text variant="caption" tone="muted">
-                  Elapsed
-                </Text>
-                <Text variant="metric">{formatDuration(elapsed)}</Text>
+          {/* The session's two facts, set as large as they deserve. */}
+          <View style={{ gap: theme.space.md }}>
+            <StatRow>
+              <View style={{ flex: 1 }}>
+                <Stat size="large" value={formatDuration(elapsed)} label="elapsed" />
               </View>
-              <View style={{ gap: 2, alignItems: 'flex-end' }}>
-                <Text variant="caption" tone="muted">
-                  Sets done
-                </Text>
-                <Text variant="metric">{completedSets}</Text>
+              <View style={{ flex: 1 }}>
+                <Stat
+                  size="large"
+                  value={String(completedSets)}
+                  label="sets done"
+                  tone={completedSets > 0 ? 'accent' : 'default'}
+                />
               </View>
-            </Row>
-          </Card>
+            </StatRow>
+            <Rule />
+          </View>
 
           {workout.exercises.length === 0 ? (
             <EmptyState

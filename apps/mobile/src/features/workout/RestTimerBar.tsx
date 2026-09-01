@@ -1,15 +1,17 @@
 /**
- * The rest timer, as it appears above the action bar during a workout.
+ * The rest timer, above the action bar during a workout.
  *
- * It shows a countdown, a progress line, and the two controls people actually
- * use mid-session: add a little time, or skip. When it finishes it stays
- * visible for a moment in a "rest over" state rather than vanishing, so a
- * glance after the set still answers the question.
+ * Editorial treatment because this is the one thing read at arm's length,
+ * sweating, between sets: the countdown is the largest type in the app, tabular
+ * so it does not jitter, on a full-width meter. When it finishes the block
+ * inverts to the accent rather than disappearing — a glance a few seconds late
+ * still answers the question.
  */
 import { View } from 'react-native';
 import { Button } from '../../components/Button';
 import { Row } from '../../components/Card';
-import { Text } from '../../components/Text';
+import { Meter } from '../../components/Section';
+import { Overline, Text } from '../../components/Text';
 import { formatClock } from '../../lib/format';
 import { useTheme } from '../../theme';
 import { BACKGROUND_ALERTS_SUPPORTED, type RestTimer } from './use-rest-timer';
@@ -30,56 +32,42 @@ export function RestTimerBar({ timer }: { timer: RestTimer }) {
         finished ? 'Rest finished' : `Rest timer, ${Math.ceil(remaining)} seconds remaining`
       }
       style={{
-        backgroundColor: finished ? theme.colors.accentSoft : theme.colors.surfaceRaised,
+        backgroundColor: finished ? theme.colors.accent : theme.colors.surfaceRaised,
         borderRadius: theme.radius.md,
-        padding: theme.space.md,
-        gap: theme.space.sm,
+        overflow: 'hidden',
       }}
     >
-      <Row justify="space-between">
-        <View>
-          <Text variant="caption" tone="muted">
-            {finished ? 'Rest over' : 'Resting'}
-          </Text>
-          <Text variant="metric" tone={finished ? 'accent' : 'default'}>
-            {formatClock(remaining)}
-          </Text>
-        </View>
+      <View style={{ padding: theme.space.lg, gap: theme.space.sm }}>
+        <Row justify="space-between" align="flex-end">
+          <View style={{ gap: 2 }}>
+            <Overline tone={finished ? 'inverse' : 'faint'}>
+              {finished ? 'Rest over — go' : 'Resting'}
+            </Overline>
+            <Text variant="metric" tone={finished ? 'inverse' : 'default'}>
+              {formatClock(remaining)}
+            </Text>
+          </View>
 
-        <Row gap="sm">
-          <Button label="+30s" size="small" variant="secondary" onPress={() => timer.add(30)} />
-          <Button
-            label={finished ? 'Done' : 'Skip'}
-            size="small"
-            variant={finished ? 'primary' : 'ghost'}
-            onPress={timer.skip}
-            haptic
-          />
+          <Row gap="sm">
+            <Button label="+30s" size="small" variant="secondary" onPress={() => timer.add(30)} />
+            <Button
+              label={finished ? 'Done' : 'Skip'}
+              size="small"
+              variant="ghost"
+              onPress={timer.skip}
+              haptic
+            />
+          </Row>
         </Row>
-      </Row>
 
-      <View
-        style={{
-          height: 3,
-          borderRadius: 2,
-          backgroundColor: theme.colors.border,
-          overflow: 'hidden',
-        }}
-      >
-        <View
-          style={{
-            width: `${Math.min(100, Math.max(0, progress * 100))}%`,
-            height: '100%',
-            backgroundColor: theme.colors.accent,
-          }}
-        />
+        {!BACKGROUND_ALERTS_SUPPORTED && !finished ? (
+          <Text variant="caption" tone="faint">
+            Keep this tab open — the browser can’t alert you in the background.
+          </Text>
+        ) : null}
       </View>
 
-      {!BACKGROUND_ALERTS_SUPPORTED && !finished ? (
-        <Text variant="caption" tone="faint">
-          Keep this tab open — the browser can’t alert you in the background.
-        </Text>
-      ) : null}
+      <Meter progress={progress} tone={finished ? 'text' : 'accent'} height={4} />
     </View>
   );
 }

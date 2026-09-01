@@ -9,7 +9,7 @@ import { router } from 'expo-router';
 import { Button } from '../../src/components/Button';
 import { Card, Row, Stack } from '../../src/components/Card';
 import { Screen } from '../../src/components/Screen';
-import { Text } from '../../src/components/Text';
+import { Overline, Text } from '../../src/components/Text';
 import { EmptyState, ErrorState, LoadingState } from '../../src/components/StateViews';
 import { useRoutines } from '../../src/api/hooks/use-routines';
 import { useActiveWorkout, useStartWorkout } from '../../src/api/hooks/use-workout';
@@ -34,7 +34,10 @@ export default function RoutinesScreen() {
     <Screen scroll>
       <Stack gap="xl" style={{ paddingTop: theme.space.xl }}>
         <Row justify="space-between">
-          <Text variant="heading">Routines</Text>
+          <View style={{ gap: 2 }}>
+            <Overline>Templates</Overline>
+            <Text variant="heading">Routines</Text>
+          </View>
           <Button
             label="New"
             size="small"

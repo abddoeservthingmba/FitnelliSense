@@ -1,22 +1,30 @@
 /**
  * Profile and settings (FR-AUTH-07, FR-AUTH-09, FR-AUTH-10, FR-AI-06).
  *
- * Changes save immediately — there is no Save button to forget. Destructive
- * actions confirm, and say what will actually happen.
+ * Everything onboarding asked is editable here — §4's rule is that every
+ * default is overrideable, and a question answered once in a hurry should not
+ * be permanent. Changes save immediately; there is no Save button to forget.
+ * Destructive actions confirm, and say what will actually happen.
  */
 import { useState } from 'react';
 import { Alert, Platform, Switch, View } from 'react-native';
+import {
+  REST_SECONDS_OPTIONS,
+  SESSION_MINUTES_OPTIONS,
+  TRAINING_DAYS_OPTIONS,
+} from '@fi/shared';
 import { Button } from '../../src/components/Button';
-import { Card, Divider, Row, Stack } from '../../src/components/Card';
+import { Row, Stack } from '../../src/components/Card';
 import { Chip } from '../../src/components/Chip';
 import { Screen } from '../../src/components/Screen';
-import { Section } from '../../src/components/Section';
-import { Text } from '../../src/components/Text';
+import { Rule, Section, Stat, StatRow } from '../../src/components/Section';
+import { Overline, Text } from '../../src/components/Text';
 import { TextField } from '../../src/components/TextField';
 import { ErrorState, LoadingState } from '../../src/components/StateViews';
 import { useDeleteAccount, useMe, useUpdateProfile } from '../../src/api/hooks/use-profile';
 import { useAuth } from '../../src/auth/auth-context';
 import { API_BASE_URL } from '../../src/api/config';
+import { formatClock } from '../../src/lib/format';
 import { useUnits } from '../../src/lib/use-units';
 import { useTheme } from '../../src/theme';
 
@@ -45,6 +53,10 @@ export default function ProfileScreen() {
 
   const profile = me.data.profile;
   const bodyweightValue = bodyweight ?? units.toInput(profile.bodyweightKg);
+  const weeklyHours =
+    profile.trainingDaysPerWeek !== null && profile.sessionMinutes !== null
+      ? ((profile.trainingDaysPerWeek * profile.sessionMinutes) / 60).toFixed(1)
+      : null;
 
   const confirm = (title: string, message: string, onConfirm: () => void) => {
     if (Platform.OS === 'web') {
@@ -61,31 +73,111 @@ export default function ProfileScreen() {
 
   return (
     <Screen scroll>
-      <Stack gap="xl" style={{ paddingTop: theme.space.xl }}>
+      <Stack gap="xxl" style={{ paddingTop: theme.space.xl }}>
         <Stack gap="xs">
+          <Overline>{me.data.email}</Overline>
           <Text variant="heading">{profile.displayName}</Text>
-          <Text variant="caption" tone="muted">
-            {me.data.email}
-          </Text>
         </Stack>
 
+        {/* Onboarding's answers, read back as the plan they describe. */}
+        <StatRow>
+          <View style={{ flex: 1 }}>
+            <Stat
+              size="small"
+              value={profile.trainingDaysPerWeek === null ? '—' : `${profile.trainingDaysPerWeek}`}
+              label="days a week"
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Stat
+              size="small"
+              value={profile.sessionMinutes === null ? '—' : `${profile.sessionMinutes}m`}
+              label="per session"
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Stat size="small" value={weeklyHours === null ? '—' : `${weeklyHours}h`} label="a week" />
+          </View>
+        </StatRow>
+
         <Section title="Units">
-          <Row gap="sm">
-            <Chip
-              label="Kilograms"
-              selected={profile.units === 'metric'}
-              onPress={() => updateProfile.mutate({ units: 'metric' })}
-            />
-            <Chip
-              label="Pounds"
-              selected={profile.units === 'imperial'}
-              onPress={() => updateProfile.mutate({ units: 'imperial' })}
-            />
+          <Stack gap="sm">
+            <Row gap="sm">
+              <Chip
+                label="Kilograms"
+                selected={profile.units === 'metric'}
+                onPress={() => updateProfile.mutate({ units: 'metric' })}
+              />
+              <Chip
+                label="Pounds"
+                selected={profile.units === 'imperial'}
+                onPress={() => updateProfile.mutate({ units: 'imperial' })}
+              />
+            </Row>
+            <Text variant="caption" tone="faint">
+              Weights are stored in kilograms and converted for display, so switching never
+              changes what you logged.
+            </Text>
+          </Stack>
+        </Section>
+
+        <Section title="Experience">
+          <Row gap="sm" wrap>
+            {EXPERIENCE_OPTIONS.map((option) => (
+              <Chip
+                key={option.value}
+                label={option.label}
+                selected={profile.experience === option.value}
+                onPress={() => updateProfile.mutate({ experience: option.value })}
+              />
+            ))}
           </Row>
-          <Text variant="caption" tone="faint">
-            Weights are stored in kilograms and converted for display, so switching never
-            changes what you logged.
-          </Text>
+        </Section>
+
+        <Section title="Your week">
+          <Stack gap="lg">
+            <Stack gap="sm">
+              <Overline>Days each week</Overline>
+              <Row gap="sm" wrap>
+                {TRAINING_DAYS_OPTIONS.map((option) => (
+                  <Chip
+                    key={option}
+                    label={`${option} days`}
+                    selected={profile.trainingDaysPerWeek === option}
+                    onPress={() => updateProfile.mutate({ trainingDaysPerWeek: option })}
+                  />
+                ))}
+              </Row>
+            </Stack>
+
+            <Stack gap="sm">
+              <Overline>Time per session</Overline>
+              <Row gap="sm" wrap>
+                {SESSION_MINUTES_OPTIONS.map((option) => (
+                  <Chip
+                    key={option}
+                    label={`${option} min`}
+                    selected={profile.sessionMinutes === option}
+                    onPress={() => updateProfile.mutate({ sessionMinutes: option })}
+                  />
+                ))}
+              </Row>
+            </Stack>
+
+            <Stack gap="sm">
+              <Overline>Default rest between sets</Overline>
+              <Row gap="sm" wrap>
+                {REST_SECONDS_OPTIONS.map((option) => (
+                  <Chip
+                    key={option}
+                    label={formatClock(option)}
+                    selected={profile.defaultRestSecs === option}
+                    onPress={() => updateProfile.mutate({ defaultRestSecs: option })}
+                  />
+                ))}
+              </Row>
+            </Stack>
+          </Stack>
         </Section>
 
         <Section title="About you">
@@ -107,94 +199,68 @@ export default function ProfileScreen() {
               label={`Bodyweight (${units.label})`}
               value={bodyweightValue}
               onChangeText={setBodyweight}
-              onBlur={() =>
-                updateProfile.mutate({ bodyweightKg: units.fromInput(bodyweightValue) })
-              }
+              onBlur={() => updateProfile.mutate({ bodyweightKg: units.fromInput(bodyweightValue) })}
               keyboardType="decimal-pad"
               inputMode="decimal"
               placeholder="Optional"
             />
-            <Row gap="sm" wrap>
-              {EXPERIENCE_OPTIONS.map((option) => (
-                <Chip
-                  key={option.value}
-                  label={option.label}
-                  selected={profile.experience === option.value}
-                  onPress={() => updateProfile.mutate({ experience: option.value })}
-                />
-              ))}
-            </Row>
           </Stack>
-        </Section>
-
-        <Section title="Workout defaults">
-          <Row gap="sm" wrap>
-            {[60, 90, 120, 180].map((seconds) => (
-              <Chip
-                key={seconds}
-                label={`${seconds}s rest`}
-                selected={profile.defaultRestSecs === seconds}
-                onPress={() => updateProfile.mutate({ defaultRestSecs: seconds })}
-              />
-            ))}
-          </Row>
         </Section>
 
         {/* FR-AI-06 / FR-AI-07: off until explicitly enabled, and honest about
             not existing yet. */}
         <Section title="AI insights">
-          <Card>
-            <Row justify="space-between">
-              <View style={{ flex: 1, gap: 2, paddingRight: theme.space.md }}>
-                <Text variant="callout">Training insights</Text>
-                <Text variant="caption" tone="muted">
-                  Advisory only, and never applied automatically. Arriving in a later release —
-                  enabling this now only records your consent.
-                </Text>
-              </View>
-              <Switch
-                value={profile.aiEnabled}
-                onValueChange={(value) => updateProfile.mutate({ aiEnabled: value })}
-                accessibilityLabel="Enable AI insights"
-                trackColor={{ true: theme.colors.accent, false: theme.colors.border }}
-              />
-            </Row>
-          </Card>
+          <Row justify="space-between">
+            <View style={{ flex: 1, gap: 3, paddingRight: theme.space.md }}>
+              <Text variant="callout" weight="semibold">
+                Training insights
+              </Text>
+              <Text variant="caption" tone="muted">
+                Advisory only, and never applied automatically. Arriving in a later release —
+                enabling this now only records your consent.
+              </Text>
+            </View>
+            <Switch
+              value={profile.aiEnabled}
+              onValueChange={(value) => updateProfile.mutate({ aiEnabled: value })}
+              accessibilityLabel="Enable AI insights"
+              trackColor={{ true: theme.colors.accent, false: theme.colors.border }}
+            />
+          </Row>
         </Section>
 
         <Section title="Your data">
-          <Card padded={false}>
-            <View style={{ padding: theme.space.lg, gap: theme.space.md }}>
-              <Text variant="caption" tone="muted">
-                Everything you have logged, as JSON. Yours to keep, whenever you want it.
-              </Text>
-              <Button
-                label="Export my data"
-                variant="secondary"
-                onPress={() => {
-                  // FR-AUTH-09 / NFR-B-10: an authenticated GET the browser or
-                  // the OS can save directly.
-                  const url = `${API_BASE_URL}/me/export`;
-                  void import('expo-linking').then((Linking) => Linking.openURL(url));
-                }}
-              />
-              <Divider />
-              <Button label="Sign out" variant="ghost" onPress={() => void signOut()} />
-              <Button
-                label="Delete my account"
-                variant="danger"
-                onPress={() =>
-                  confirm(
-                    'Delete your account?',
-                    'Your workouts, routines and records are removed within 30 days. This cannot be undone.',
-                    () => {
-                      deleteAccount.mutate(undefined, { onSuccess: () => void signOut() });
-                    },
-                  )
-                }
-              />
-            </View>
-          </Card>
+          <Stack gap="md">
+            <Text variant="caption" tone="muted">
+              Everything you have logged, as JSON. Yours to keep, whenever you want it.
+            </Text>
+            <Button
+              label="Export my data"
+              variant="secondary"
+              onPress={() => {
+                // FR-AUTH-09 / NFR-B-10: an authenticated GET the browser or
+                // the OS can save directly.
+                void import('expo-linking').then((Linking) =>
+                  Linking.openURL(`${API_BASE_URL}/me/export`),
+                );
+              }}
+              fullWidth
+            />
+            <Rule />
+            <Button label="Sign out" variant="ghost" onPress={() => void signOut()} fullWidth />
+            <Button
+              label="Delete my account"
+              variant="danger"
+              onPress={() =>
+                confirm(
+                  'Delete your account?',
+                  'Your workouts, routines and records are removed within 30 days. This cannot be undone.',
+                  () => deleteAccount.mutate(undefined, { onSuccess: () => void signOut() }),
+                )
+              }
+              fullWidth
+            />
+          </Stack>
         </Section>
       </Stack>
     </Screen>

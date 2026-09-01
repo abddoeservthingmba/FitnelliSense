@@ -1,18 +1,22 @@
 /**
- * The one button. Variants cover every action in the app; nothing builds its
- * own Pressable with its own padding.
+ * The one button.
+ *
+ * Editorial hierarchy: the primary action is a solid inverse block with an
+ * uppercase tracked label — unmistakable, and there is only ever one per
+ * screen. `accent` is reserved for the single moment that deserves the lime.
+ * Everything else recedes to outline or bare text.
  *
  * NFR-U-03: the minimum height is a 44 dp touch target. NFR-U-05: every button
- * carries an accessibility role and a label. Loading state keeps the label so
- * the layout does not jump.
+ * carries a role and a label. The label stays visible while loading so the
+ * layout never jumps.
  */
-import { ActivityIndicator, Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, View } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { Platform } from 'react-native';
 import { Text } from './Text';
 import { useTheme, type Theme } from '../theme';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+export type ButtonVariant = 'primary' | 'accent' | 'secondary' | 'ghost' | 'danger';
 export type ButtonSize = 'small' | 'medium' | 'large';
 
 export interface ButtonProps {
@@ -22,7 +26,6 @@ export interface ButtonProps {
   size?: ButtonSize;
   disabled?: boolean;
   loading?: boolean;
-  /** Fills the available width — the default for a screen's primary action. */
   fullWidth?: boolean;
   /** Enhancement only; never the sole signal that something happened. */
   haptic?: boolean;
@@ -33,23 +36,32 @@ export interface ButtonProps {
 
 function colorsFor(theme: Theme, variant: ButtonVariant, disabled: boolean) {
   const map = {
-    primary: { background: theme.colors.accent, text: theme.colors.accentText, border: 'transparent' },
-    secondary: {
-      background: theme.colors.surfaceRaised,
-      text: theme.colors.text,
-      border: theme.colors.border,
+    primary: {
+      background: theme.colors.inverse,
+      text: theme.colors.inverseText,
+      border: 'transparent',
     },
-    ghost: { background: 'transparent', text: theme.colors.accent, border: 'transparent' },
-    danger: { background: theme.colors.dangerSoft, text: theme.colors.danger, border: 'transparent' },
+    accent: {
+      background: theme.colors.accent,
+      text: theme.colors.accentText,
+      border: 'transparent',
+    },
+    secondary: {
+      background: 'transparent',
+      text: theme.colors.text,
+      border: theme.colors.borderStrong,
+    },
+    ghost: { background: 'transparent', text: theme.colors.textMuted, border: 'transparent' },
+    danger: { background: 'transparent', text: theme.colors.danger, border: theme.colors.danger },
   } as const;
 
   const chosen = map[variant];
   return disabled
-    ? { ...chosen, background: theme.colors.surface, text: theme.colors.textFaint }
+    ? { background: theme.colors.surfaceRaised, text: theme.colors.textFaint, border: 'transparent' }
     : chosen;
 }
 
-const HEIGHTS: Record<ButtonSize, number> = { small: 44, medium: 48, large: 56 };
+const HEIGHTS: Record<ButtonSize, number> = { small: 44, medium: 50, large: 58 };
 
 export function Button({
   label,
@@ -67,10 +79,12 @@ export function Button({
   const theme = useTheme();
   const inactive = disabled || loading;
   const colors = colorsFor(theme, variant, inactive);
+  // Solid blocks carry the uppercase treatment; quiet actions stay sentence case.
+  const isBlock = variant === 'primary' || variant === 'accent';
 
   const handlePress = () => {
     if (haptic && Platform.OS !== 'web') {
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
     onPress();
   };
@@ -86,7 +100,7 @@ export function Button({
       style={({ pressed }) => [
         {
           minHeight: HEIGHTS[size],
-          paddingHorizontal: size === 'small' ? theme.space.md : theme.space.lg,
+          paddingHorizontal: size === 'small' ? theme.space.md : theme.space.xl,
           borderRadius: theme.radius.md,
           backgroundColor: colors.background,
           borderWidth: colors.border === 'transparent' ? 0 : 1,
@@ -95,7 +109,9 @@ export function Button({
           justifyContent: 'center',
           flexDirection: 'row',
           gap: theme.space.sm,
-          opacity: pressed ? 0.85 : 1,
+          // A press dims the block rather than scaling it — quieter, and it
+          // does not reflow anything around it.
+          opacity: pressed ? 0.72 : 1,
           ...(fullWidth ? { alignSelf: 'stretch' as const } : {}),
         },
         style,
@@ -104,8 +120,9 @@ export function Button({
       {loading ? <ActivityIndicator size="small" color={colors.text} /> : icon}
       <View>
         <Text
-          variant={size === 'large' ? 'callout' : 'body'}
-          weight="semibold"
+          variant={isBlock ? 'micro' : 'body'}
+          weight={isBlock ? 'heavy' : 'semibold'}
+          overline={isBlock}
           style={{ color: colors.text }}
         >
           {label}

@@ -17,7 +17,7 @@ import { ExerciseThumbnail } from '../../src/components/ExerciseMedia';
 import { Screen } from '../../src/components/Screen';
 import { ListRow } from '../../src/components/Section';
 import { EmptyState, ErrorState, LoadingState } from '../../src/components/StateViews';
-import { Text } from '../../src/components/Text';
+import { Overline, Text } from '../../src/components/Text';
 import { TextField } from '../../src/components/TextField';
 import { useDebounced } from '../../src/lib/use-debounced';
 import { useTheme } from '../../src/theme';
@@ -71,7 +71,10 @@ export default function ExercisesScreen() {
     <Screen padded={false}>
       <View style={{ paddingHorizontal: theme.space.lg, paddingTop: theme.space.lg, gap: theme.space.md }}>
         <Row justify="space-between">
-          <Text variant="heading">Exercises</Text>
+          <View style={{ gap: 2 }}>
+            <Overline>Library</Overline>
+            <Text variant="heading">Exercises</Text>
+          </View>
           <Button
             label="New"
             size="small"

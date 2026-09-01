@@ -27,6 +27,9 @@ export async function getMe(deps: ProfileDeps, userId: string): Promise<MeRespon
       experience: userProfiles.experience,
       bodyweightKg: userProfiles.bodyweightKg,
       dateOfBirth: userProfiles.dateOfBirth,
+      trainingDaysPerWeek: userProfiles.trainingDaysPerWeek,
+      sessionMinutes: userProfiles.sessionMinutes,
+      onboardedAt: userProfiles.onboardedAt,
       defaultRestSecs: userProfiles.defaultRestSecs,
       aiEnabled: userProfiles.aiEnabled,
       avatarR2Key: userProfiles.avatarR2Key,
@@ -54,6 +57,9 @@ export async function getMe(deps: ProfileDeps, userId: string): Promise<MeRespon
       experience: row.experience,
       bodyweightKg: row.bodyweightKg,
       dateOfBirth: row.dateOfBirth,
+      trainingDaysPerWeek: row.trainingDaysPerWeek,
+      sessionMinutes: row.sessionMinutes,
+      onboardedAt: row.onboardedAt?.toISOString() ?? null,
       defaultRestSecs: row.defaultRestSecs,
       aiEnabled: row.aiEnabled,
     },
@@ -74,6 +80,12 @@ export async function updateProfile(
   if (input.experience !== undefined) patch.experience = input.experience;
   if (input.bodyweightKg !== undefined) patch.bodyweightKg = input.bodyweightKg;
   if (input.dateOfBirth !== undefined) patch.dateOfBirth = input.dateOfBirth;
+  if (input.trainingDaysPerWeek !== undefined) {
+    patch.trainingDaysPerWeek = input.trainingDaysPerWeek;
+  }
+  if (input.sessionMinutes !== undefined) patch.sessionMinutes = input.sessionMinutes;
+  // The client asks to be marked; the server decides when that was.
+  if (input.markOnboarded) patch.onboardedAt = new Date();
   if (input.defaultRestSecs !== undefined) patch.defaultRestSecs = input.defaultRestSecs;
   if (input.aiEnabled !== undefined) patch.aiEnabled = input.aiEnabled;
   if (input.avatarR2Key !== undefined) patch.avatarR2Key = input.avatarR2Key;

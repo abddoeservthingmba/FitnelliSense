@@ -8,7 +8,7 @@ import { FlatList, View } from 'react-native';
 import { router } from 'expo-router';
 import { Card, Row, Stack } from '../../src/components/Card';
 import { Screen } from '../../src/components/Screen';
-import { Text } from '../../src/components/Text';
+import { Overline, Text } from '../../src/components/Text';
 import { EmptyState, ErrorState, LoadingState } from '../../src/components/StateViews';
 import { useWorkoutHistory } from '../../src/api/hooks/use-history';
 import { formatDuration, formatWorkoutDate } from '../../src/lib/format';
@@ -30,7 +30,10 @@ export default function HistoryScreen() {
   return (
     <Screen padded={false}>
       <View style={{ paddingHorizontal: theme.space.lg, paddingTop: theme.space.xl }}>
-        <Text variant="heading">History</Text>
+        <View style={{ gap: 2 }}>
+          <Overline>Everything you have logged</Overline>
+          <Text variant="heading">History</Text>
+        </View>
       </View>
 
       <FlatList

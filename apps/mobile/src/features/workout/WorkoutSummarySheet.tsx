@@ -12,7 +12,7 @@ import { ONE_RM_FORMULA_NAME } from '@fi/domain';
 import { Button } from '../../components/Button';
 import { Card, Row, Stack } from '../../components/Card';
 import { Text } from '../../components/Text';
-import { StatTile } from '../../components/Section';
+import { Stat, StatRow } from '../../components/Section';
 import { formatDuration, formatPrType } from '../../lib/format';
 import { useUnits } from '../../lib/use-units';
 import { useTheme } from '../../theme';
@@ -67,11 +67,17 @@ export function WorkoutSummarySheet({
             </Text>
           </Stack>
 
-          <Row gap="sm">
-            <StatTile label="Time" value={formatDuration(durationSecs)} />
-            <StatTile label="Volume" value={volumeLabel} />
-            <StatTile label="Sets" value={String(setCount)} />
-          </Row>
+          <StatRow>
+            <View style={{ flex: 1 }}>
+              <Stat value={formatDuration(durationSecs)} label="Time" size="small" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Stat value={volumeLabel} label="Volume" size="small" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Stat value={String(setCount)} label="Sets" size="small" />
+            </View>
+          </StatRow>
 
           {records.length > 0 ? (
             <Card>
