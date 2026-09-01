@@ -5,12 +5,15 @@
   "type": "module",
   "packageManager": "pnpm@10.34.5",
   "engines": {
-    "node": ">=20"
+    "// node": "Upper bound is deliberate. An open-ended >=20 let Render pick Node 26, which nothing here has been tested against; this keeps deploys on the major the repo is developed and CI-tested on.",
+    "node": ">=20 <25"
   },
   "scripts": {
     "dev:api": "pnpm --filter @fi/api dev",
     "dev:mobile": "pnpm --filter @fi/mobile start",
-    "build": "pnpm -r --filter \"./packages/*\" --filter @fi/api build",
+    "build": "pnpm --filter @fi/api build",
+    "start": "node apps/api/dist/index.js",
+    "migrate": "node apps/api/dist/migrate.js",
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
