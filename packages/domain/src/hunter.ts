@@ -10,7 +10,7 @@
  * XP is an append-only ledger in the database; this module owns the arithmetic
  * that turns work into XP and XP into a level.
  */
-import { type Dec, decToNumber } from './decimal.js';
+import { type Dec, decToNumber } from './decimal';
 
 // ------------------------------------------------------------------- levels --
 

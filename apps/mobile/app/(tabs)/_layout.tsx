@@ -15,6 +15,7 @@ import { useTheme } from '../../src/theme';
 
 const TAB_GLYPHS = {
   index: '◆',
+  hunter: '⬟',
   exercises: '☰',
   routines: '▤',
   history: '◷',
@@ -63,6 +64,10 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{ title: 'Home', tabBarIcon: icon('index'), headerShown: false }}
+      />
+      <Tabs.Screen
+        name="hunter"
+        options={{ title: 'Hunter', tabBarIcon: icon('hunter'), headerShown: false }}
       />
       <Tabs.Screen
         name="exercises"

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dec } from './decimal.js';
+import { dec } from './decimal';
 import {
   QUESTS_PER_DAY,
   QUEST_DEFINITIONS,
@@ -9,7 +9,7 @@ import {
   questProgressFrom,
   type QuestContext,
   type QuestKey,
-} from './quests.js';
+} from './quests';
 
 const experienced: QuestContext = {
   typicalSets: 18,

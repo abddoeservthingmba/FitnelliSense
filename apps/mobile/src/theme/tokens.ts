@@ -1,13 +1,18 @@
 /**
- * Design tokens — editorial, high contrast.
+ * Design tokens — the System.
  *
- * The look is a performance instrument rather than a lifestyle app: a near
- * black ground, numbers set very large because the numbers *are* the content,
- * uppercase tracked labels doing the work of chrome, and one accent used
- * sparingly enough that it still means something when it appears.
+ * A Solo Leveling notification window: near-black void, cyan light that looks
+ * like it is emitting rather than painted, hard corners, uppercase tracked
+ * labels, and numbers set large because the numbers are the whole point.
  *
- * Both schemes are complete and contrast-checked to WCAG 2.1 AA (NFR-U-04),
- * and every touch target still lands on at least 44 dp (NFR-U-03).
+ * Two rules keep it from becoming unusable in a gym:
+ *
+ * - **Cyan is light, not decoration.** It marks what is live, earned or
+ *   actionable. Everything inert stays in the greys, so the glow means
+ *   something when it appears.
+ * - **Contrast is not sacrificed to atmosphere.** Every text pairing here holds
+ *   WCAG 2.1 AA (NFR-U-04) and every touch target still lands on 44 dp
+ *   (NFR-U-03). A dark theme that cannot be read in daylight is a worse theme.
  */
 
 export const space = {
@@ -20,18 +25,14 @@ export const space = {
   xxxl: 48,
 } as const;
 
-/**
- * Editorial geometry is tighter than the rounded-card default: corners are
- * crisp, so the accent blocks read as blocks.
- */
+/** System windows are cut, not rounded. */
 export const radius = {
-  sm: 4,
-  md: 8,
-  lg: 12,
+  sm: 2,
+  md: 4,
+  lg: 6,
   pill: 999,
 } as const;
 
-/** Minimum interactive size, in dp (NFR-U-03). */
 export const HIT_SLOP = 44;
 
 export const fontSize = {
@@ -43,10 +44,9 @@ export const fontSize = {
   title: 21,
   heading: 28,
   display: 40,
-  /** The headline number on a stat: weights, volume, the live timer. */
   metric: 46,
-  /** For a single hero figure that owns the screen. */
-  hero: 64,
+  /** The level numeral, and the rank glyph. */
+  hero: 72,
 } as const;
 
 export const fontWeight = {
@@ -57,99 +57,132 @@ export const fontWeight = {
   heavy: '800',
 } as const;
 
-/**
- * Letter spacing. Large numerals get negative tracking so they read as one
- * shape; small uppercase labels get positive tracking so they stay legible.
- */
 export const tracking = {
-  tight: -1.2,
+  tight: -1.4,
   snug: -0.4,
   normal: 0,
-  wide: 0.8,
-  wider: 1.6,
+  wide: 1,
+  /** System labels. Wide enough to read as machine output. */
+  wider: 2.2,
 } as const;
 
 export const duration = {
   fast: 120,
-  base: 200,
-  slow: 320,
+  base: 240,
+  slow: 420,
+  /** The level-up window's entrance. Long enough to feel like an event. */
+  reveal: 700,
 } as const;
 
 interface Palette {
-  /** The ground. Near-black in dark, near-white in light. */
   background: string;
-  /** Cards and raised surfaces. */
+  /** A System window's fill. */
   surface: string;
   surfaceRaised: string;
-  /** The inverse block — used for the one action that matters on a screen. */
+  /** The panel behind a notification — deeper than the page. */
+  well: string;
   inverse: string;
   inverseText: string;
   border: string;
   borderStrong: string;
+  /** The glowing edge of an active window. */
+  borderGlow: string;
   text: string;
   textMuted: string;
   textFaint: string;
+  /** System cyan. Live, earned, actionable. */
   accent: string;
   accentText: string;
   accentSoft: string;
+  /** Monarch violet — rank S, monarch badges, the rarest moments. */
+  monarch: string;
+  monarchSoft: string;
   danger: string;
   dangerSoft: string;
   warning: string;
   success: string;
-  /** Records and celebrations. Used rarely, so it lands. */
+  /** Gold, for records and high-tier badges. */
   highlight: string;
   overlay: string;
-  /** Track behind a progress bar. */
   track: string;
 }
 
 const dark: Palette = {
-  background: '#08090A',
-  surface: '#101214',
-  surfaceRaised: '#191C1F',
-  inverse: '#F5F7F8',
-  inverseText: '#08090A',
-  border: '#1F2427',
-  borderStrong: '#333A3F',
-  text: '#F5F7F8',
-  textMuted: '#9BA6AE',
-  textFaint: '#646F77',
-  accent: '#C8FF4D',
-  accentText: '#0F1400',
-  accentSoft: '#1D2610',
-  danger: '#FF5C5C',
-  dangerSoft: '#2A1315',
-  warning: '#FFB020',
-  success: '#4ADE80',
-  highlight: '#C8FF4D',
-  overlay: 'rgba(4, 5, 6, 0.82)',
-  track: '#22282C',
+  background: '#04060B',
+  surface: '#0A1018',
+  surfaceRaised: '#111A26',
+  well: '#070C13',
+  inverse: '#E8F4FF',
+  inverseText: '#04060B',
+  border: '#16232F',
+  borderStrong: '#25394A',
+  borderGlow: '#2FD9FF',
+  text: '#E8F4FF',
+  textMuted: '#8FA6B8',
+  textFaint: '#5A7186',
+  accent: '#2FD9FF',
+  accentText: '#00131A',
+  accentSoft: '#0A2A36',
+  monarch: '#A970FF',
+  monarchSoft: '#1E1233',
+  danger: '#FF5C6E',
+  dangerSoft: '#2B0F16',
+  warning: '#FFB84D',
+  success: '#3DF5A5',
+  highlight: '#FFC94D',
+  overlay: 'rgba(2, 4, 8, 0.88)',
+  track: '#132030',
 };
 
+/**
+ * The System in daylight. The same structure, inverted — kept genuinely usable
+ * rather than a token gesture, because a phone in a bright gym is the common
+ * case and NFR-U-06 promises the system preference is followed.
+ */
 const light: Palette = {
-  background: '#FBFBFA',
+  background: '#F4F7FA',
   surface: '#FFFFFF',
-  surfaceRaised: '#F3F4F3',
-  inverse: '#0B0C0D',
+  surfaceRaised: '#EDF2F7',
+  well: '#E4EBF2',
+  inverse: '#06121C',
   inverseText: '#FFFFFF',
-  border: '#E4E6E5',
-  borderStrong: '#C3C8C6',
-  text: '#0B0C0D',
-  textMuted: '#5A6260',
-  textFaint: '#8B9391',
-  // A lime accent needs darkening on white to hold AA against its own text.
-  accent: '#3F6B00',
+  border: '#D3DEE8',
+  borderStrong: '#A9BDCE',
+  borderGlow: '#0077A3',
+  text: '#06121C',
+  textMuted: '#4A5F71',
+  textFaint: '#7B8FA1',
+  accent: '#0077A3',
   accentText: '#FFFFFF',
-  accentSoft: '#EDF7D9',
+  accentSoft: '#DDF1F9',
+  monarch: '#6A34C4',
+  monarchSoft: '#EEE6FB',
   danger: '#B3261E',
   dangerSoft: '#FBE9E7',
   warning: '#8A5A00',
-  success: '#136F42',
-  highlight: '#4A6B00',
-  overlay: 'rgba(11, 12, 13, 0.5)',
-  track: '#E4E6E5',
+  success: '#0E7A52',
+  highlight: '#8A6100',
+  overlay: 'rgba(6, 18, 28, 0.55)',
+  track: '#D3DEE8',
 };
 
 export const palettes = { dark, light } as const;
 export type ColorScheme = keyof typeof palettes;
 export type ThemeColors = Palette;
+
+/** Rank colours. S and the monarch tier get the violet; the rest climb the greys into cyan. */
+export const RANK_COLORS: Record<string, keyof ThemeColors> = {
+  E: 'textFaint',
+  D: 'textMuted',
+  C: 'text',
+  B: 'accent',
+  A: 'highlight',
+  S: 'monarch',
+};
+
+export const BADGE_TIER_COLORS: Record<string, keyof ThemeColors> = {
+  bronze: 'textMuted',
+  silver: 'text',
+  gold: 'highlight',
+  monarch: 'monarch',
+};

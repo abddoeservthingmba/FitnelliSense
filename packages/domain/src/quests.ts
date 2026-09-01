@@ -12,7 +12,7 @@
  * selection is a hash of `${userId}:${date}` — stable all day, different
  * tomorrow, different per person.
  */
-import { type Dec, decToNumber } from './decimal.js';
+import { type Dec, decToNumber } from './decimal';
 
 export type QuestKey =
   | 'complete_workout'

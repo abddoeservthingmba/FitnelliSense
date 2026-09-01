@@ -6,8 +6,8 @@
  * The definitions live here so the same rules decide what is earned, what is
  * shown as locked, and what the next one is.
  */
-import { type Dec, decToNumber } from './decimal.js';
-import { type Rank } from './hunter.js';
+import { type Dec, decToNumber } from './decimal';
+import { type Rank } from './hunter';
 
 export type BadgeKey =
   | 'first_blood'

@@ -62,6 +62,7 @@ function ThemedShell() {
         <Stack.Screen name="exercise/new" options={{ title: 'New exercise', presentation: 'modal' }} />
         <Stack.Screen name="routine/[id]" options={{ title: 'Routine' }} />
         <Stack.Screen name="progress/[exerciseId]" options={{ title: 'Progress' }} />
+        <Stack.Screen name="leaderboard" options={{ title: 'Ranking' }} />
       </Stack>
     </View>
   );

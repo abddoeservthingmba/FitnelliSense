@@ -29,6 +29,7 @@ export type TextTone =
   | 'accent'
   | 'danger'
   | 'highlight'
+  | 'monarch'
   | 'inverse';
 
 export interface TextProps extends RNTextProps {
@@ -108,6 +109,7 @@ export function Text({
     accent: theme.colors.accent,
     danger: theme.colors.danger,
     highlight: theme.colors.highlight,
+    monarch: theme.colors.monarch,
     inverse: theme.colors.inverseText,
   };
 

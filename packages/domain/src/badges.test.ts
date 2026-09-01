@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { dec } from './decimal.js';
+import { dec } from './decimal';
 import {
   BADGES_BY_KEY,
   BADGE_DEFINITIONS,
   badgeProgress,
   detectBadges,
   type BadgeContext,
-} from './badges.js';
+} from './badges';
 
 const empty: BadgeContext = {
   totalWorkouts: 0,

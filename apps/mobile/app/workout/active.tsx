@@ -8,7 +8,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Alert, Platform, View } from 'react-native';
 import { router } from 'expo-router';
-import type { PersonalRecordHit, WorkoutExercise } from '@fi/shared';
+import type { CompleteWorkoutResponse, WorkoutExercise } from '@fi/shared';
 import { ApiRequestError } from '../../src/api/client';
 import {
   useActiveWorkout,
@@ -30,6 +30,7 @@ import { ExercisePicker } from '../../src/features/routine/ExercisePicker';
 import { RestTimerBar } from '../../src/features/workout/RestTimerBar';
 import { WorkoutExerciseCard } from '../../src/features/workout/WorkoutExerciseCard';
 import { WorkoutSummarySheet } from '../../src/features/workout/WorkoutSummarySheet';
+import { LevelUpWindow } from '../../src/features/hunter/LevelUpWindow';
 import { usePrefill } from '../../src/features/workout/use-prefill';
 import { useRestTimer } from '../../src/features/workout/use-rest-timer';
 import { useElapsed } from '../../src/features/workout/use-elapsed';
@@ -59,7 +60,18 @@ export default function ActiveWorkoutScreen() {
   const elapsed = useElapsed(workout?.startedAt ?? null);
 
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [records, setRecords] = useState<PersonalRecordHit[] | null>(null);
+  const [finished, setFinished] = useState<CompleteWorkoutResponse | null>(null);
+  const [levelUpSeen, setLevelUpSeen] = useState(false);
+
+  /**
+   * The level-up window earns its interruption only when the session actually
+   * produced one. Celebrating routine work is how this stops meaning anything.
+   */
+  const reward = finished?.hunter;
+  const worthAnnouncing = Boolean(
+    reward && (reward.leveledUp || reward.rankedUp || reward.badgesEarned.length > 0),
+  );
+  const showLevelUp = worthAnnouncing && !levelUpSeen;
 
   // Falls back to two minutes, matching the server default and onboarding.
   const defaultRestSecs = me.data?.profile.defaultRestSecs ?? 120;
@@ -99,8 +111,9 @@ export default function ActiveWorkoutScreen() {
     completeWorkout.mutate(workoutId, {
       onSuccess: (result) => {
         timer.skip();
-        // Records are worth a moment; the summary sheet owns that moment.
-        setRecords(result.personalRecords);
+        // The summary sheet and the level-up window both read from this.
+        setLevelUpSeen(false);
+        setFinished(result);
       },
     });
   }, [completeWorkout, timer, workoutId]);
@@ -131,7 +144,7 @@ export default function ActiveWorkoutScreen() {
 
   return (
     <>
-      <Screen scroll footerSpace={records ? 0 : 190}>
+      <Screen scroll footerSpace={finished ? 0 : 190}>
         <Stack gap="lg" style={{ paddingTop: theme.space.md }}>
           <OfflineBanner
             visible={connectionProblem !== undefined}
@@ -203,7 +216,7 @@ export default function ActiveWorkoutScreen() {
         </Stack>
       </Screen>
 
-      {!records ? (
+      {!finished ? (
         <ActionBar>
           <RestTimerBar timer={timer} />
           <Button
@@ -233,9 +246,9 @@ export default function ActiveWorkoutScreen() {
       />
 
       <WorkoutSummarySheet
-        visible={records !== null}
+        visible={finished !== null && !showLevelUp}
         workoutId={workout.id}
-        records={records ?? []}
+        records={finished?.personalRecords ?? []}
         durationSecs={elapsed}
         setCount={completedSets}
         volumeLabel={units.volume(
@@ -246,9 +259,17 @@ export default function ActiveWorkoutScreen() {
             .toFixed(2),
         )}
         onClose={() => {
-          setRecords(null);
+          setFinished(null);
           router.replace('/(tabs)/history');
         }}
+      />
+
+      {/* The System speaks first, and only when something actually happened:
+          a workout that levelled nothing goes straight to the summary. */}
+      <LevelUpWindow
+        visible={showLevelUp}
+        reward={finished?.hunter ?? null}
+        onClose={() => setLevelUpSeen(true)}
       />
     </>
   );

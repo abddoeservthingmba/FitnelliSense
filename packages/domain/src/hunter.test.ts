@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dec } from './decimal.js';
+import { dec } from './decimal';
 import {
   MAX_LEVEL,
   STAT_LABELS,
@@ -11,7 +11,7 @@ import {
   workoutXp,
   xpForLevel,
   xpToNextLevel,
-} from './hunter.js';
+} from './hunter';
 
 describe('xpToNextLevel', () => {
   it('grows quadratically, so later levels demand accumulated work', () => {

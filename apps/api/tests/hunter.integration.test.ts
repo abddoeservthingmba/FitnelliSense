@@ -20,7 +20,7 @@ import {
   type TestClient,
   type TestContext,
   type TestUser,
-} from './helpers/harness.js';
+} from './helpers/harness';
 
 const TODAY = '2026-09-05';
 
