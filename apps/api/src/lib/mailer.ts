@@ -52,6 +52,44 @@ const RESEND_ENDPOINT = 'https://api.resend.com/emails';
  * details with it. This is written into the log, so it says only what went
  * wrong in kind.
  */
+/**
+ * The provider's machine-readable error code, or null.
+ *
+ * Only the `name`/`code` field is read. The accompanying `message` is not, and
+ * must not be: on a 403 it contains the recipient's address.
+ */
+async function providerErrorCode(response: Response): Promise<string | null> {
+  try {
+    const body: unknown = await response.json();
+    if (typeof body !== 'object' || body === null) return null;
+    const named = body as { name?: unknown; code?: unknown };
+    const value = typeof named.name === 'string' ? named.name : named.code;
+    if (typeof value !== 'string') return null;
+    // Bounded and stripped, so a hostile provider response cannot inject a
+    // newline into our log lines.
+    return value.replace(/[^a-z0-9_-]/gi, '').slice(0, 60);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * A sentence pointing at the usual cause, for the statuses that have one.
+ *
+ * This exists because the failure that actually happened in practice — a 403
+ * from the sandbox sender — is invisible from the status code alone, and the
+ * response body that would explain it cannot be logged.
+ */
+function hintFor(status: number, from: string): string {
+  if (status === 403 && from.includes('resend.dev')) {
+    return ' — the sandbox sender only delivers to the Resend account owner; verify a domain and set EMAIL_FROM to an address on it';
+  }
+  if (status === 401 || status === 403) return ' — check RESEND_API_KEY and EMAIL_FROM';
+  if (status === 422) return ' — EMAIL_FROM is probably not on a verified domain';
+  if (status === 429) return ' — provider rate limit';
+  return '';
+}
+
 function transportFailure(error: unknown): string {
   if (error instanceof Error && error.name === 'TimeoutError') {
     return 'the email provider did not respond in time';
@@ -98,12 +136,21 @@ export function createMailer(config: MailerConfig): Mailer {
         });
 
         if (!response.ok) {
-          // Their error body can quote the recipient address back, so only the
-          // status is kept. The status is what tells us whose fault it is.
+          // The status alone was not enough to diagnose a real 403: it took a
+          // database query and two log reads to work out that the sandbox
+          // sender only delivers to the account owner. Resend also returns a
+          // machine-readable `name` for the error, which is safe to log and
+          // says which of the many 403 causes it was.
+          //
+          // Their `message` field is NOT logged: it quotes the recipient
+          // address back (NFR-S-07).
+          const code = await providerErrorCode(response);
           return {
             sent: false,
             id: null,
-            failure: `provider rejected the message (HTTP ${response.status})`,
+            failure: `provider rejected the message (HTTP ${response.status}${
+              code === null ? '' : `, ${code}`
+            })${hintFor(response.status, config.from)}`,
           };
         }
 

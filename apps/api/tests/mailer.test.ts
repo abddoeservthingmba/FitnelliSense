@@ -91,3 +91,89 @@ describe('code emails', () => {
     expect(message.html).toContain('Verify your email address');
   });
 });
+
+describe('provider failures', () => {
+  /** A stand-in for Resend, so the failure paths are testable offline. */
+  const withResponse = (status: number, body: unknown) => {
+    const original = globalThis.fetch;
+    globalThis.fetch = (async () =>
+      new Response(JSON.stringify(body), {
+        status,
+        headers: { 'content-type': 'application/json' },
+      })) as typeof fetch;
+    return () => {
+      globalThis.fetch = original;
+    };
+  };
+
+  const send = (from: string) =>
+    createMailer({ apiKey: 're_test', from, timeoutMs: 1000 }).send({
+      to: 'someone@example.com',
+      subject: 's',
+      text: 't',
+      html: 'h',
+    });
+
+  it('names the sandbox restriction on a 403, the failure that actually bit', async () => {
+    // Resend's real 403 body quotes the account owner's address in `message`.
+    const restore = withResponse(403, {
+      statusCode: 403,
+      name: 'validation_error',
+      message: 'You can only send testing emails to your own address (owner@example.com)',
+    });
+    try {
+      const result = await send('Fitness Intellisense <onboarding@resend.dev>');
+      expect(result.sent).toBe(false);
+      expect(result.failure).toContain('403');
+      expect(result.failure).toContain('validation_error');
+      expect(result.failure).toContain('sandbox sender');
+      // NFR-S-07: the address in their message must never reach our logs.
+      expect(result.failure).not.toContain('owner@example.com');
+    } finally {
+      restore();
+    }
+  });
+
+  it('does not blame the sandbox when the sender is a real domain', async () => {
+    const restore = withResponse(403, { name: 'restricted_api_key' });
+    try {
+      const result = await send('Fitness Intellisense <no-reply@example.com>');
+      expect(result.failure).toContain('restricted_api_key');
+      expect(result.failure).not.toContain('sandbox');
+      expect(result.failure).toContain('RESEND_API_KEY');
+    } finally {
+      restore();
+    }
+  });
+
+  it('points at the verified-domain requirement on a 422', async () => {
+    const restore = withResponse(422, { name: 'validation_error' });
+    try {
+      expect((await send('a@b.com')).failure).toContain('verified domain');
+    } finally {
+      restore();
+    }
+  });
+
+  it('survives an error body that is not the shape we expect', async () => {
+    const restore = withResponse(500, 'not json at all');
+    try {
+      const result = await send('a@b.com');
+      expect(result.sent).toBe(false);
+      expect(result.failure).toContain('500');
+    } finally {
+      restore();
+    }
+  });
+
+  it('strips anything that could inject a newline into a log line', async () => {
+    const restore = withResponse(403, { name: 'bad\nname with spaces' });
+    try {
+      const result = await send('a@b.com');
+      expect(result.failure).not.toContain('\n');
+      expect(result.failure).toContain('badnamewithspaces');
+    } finally {
+      restore();
+    }
+  });
+});
