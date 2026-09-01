@@ -22,11 +22,13 @@ services:
     #
     # `--prod=false` is required because Render sets NODE_ENV=production, and
     # the build itself needs devDependencies (tsup, typescript).
-    buildCommand: corepack enable && pnpm install --frozen-lockfile --prod=false --filter @fi/api... && pnpm --filter @fi/api build
+    buildCommand: corepack enable && pnpm install --frozen-lockfile --prod=false --filter @fi/api... && pnpm --filter @fi/api build && node apps/api/dist/migrate.js
 
     # NFR-D-03: migrations are forward-only and run before the new code serves
-    # traffic, never as part of it.
-    preDeployCommand: node apps/api/dist/migrate.js
+    # traffic. Render only offers preDeployCommand on paid plans, so on free the
+    # migration is appended to buildCommand above instead — same ordering
+    # guarantee, one less moving part.
+    # preDeployCommand: node apps/api/dist/migrate.js
 
     startCommand: node apps/api/dist/index.js
 

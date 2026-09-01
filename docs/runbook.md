@@ -83,8 +83,14 @@ file whose media lacks a stated licence fails to parse (FR-MED-10).
 
 ## 4. Deploy
 
-**UNVERIFIED** — no environment has been provisioned yet. Q13 (domain) and Q15
-(Neon plan) are still open; see `adr/0002-infrastructure-tiers.md`.
+**Production is live** at https://fitnellisense.onrender.com (service
+`srv-dab6f9n40ujc739vl8u0`, free plan, Singapore). Q13 (custom domain) and Q15
+(Neon plan) remain open; see `adr/0002-infrastructure-tiers.md`.
+
+Two things differ from the blueprint because the free plan does not support
+pre-deploy commands: migrations run at the end of the **build** command
+instead, and there is no separate pre-deploy step. Build-time still satisfies
+NFR-D-03 — the schema advances before the new code serves traffic.
 
 ### API (Render)
 

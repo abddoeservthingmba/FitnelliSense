@@ -8,7 +8,9 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "android": { "buildType": "apk" },
+      "android": {
+        "buildType": "apk"
+      },
       "env": {
         "EXPO_PUBLIC_API_URL": "http://10.0.2.2:3000"
       }
@@ -20,7 +22,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api-staging.example.com"
+        "EXPO_PUBLIC_API_URL": "https://fitnellisense.onrender.com"
       }
     },
     "production": {
@@ -31,7 +33,7 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.example.com"
+        "EXPO_PUBLIC_API_URL": "https://fitnellisense.onrender.com"
       }
     }
   },
