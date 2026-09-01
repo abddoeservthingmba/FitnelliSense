@@ -94,16 +94,40 @@ NFR-D-03 — the schema advances before the new code serves traffic.
 
 ### API (Render)
 
-1. Connect the repository; root directory `apps/api`.
-2. Build: `pnpm install --frozen-lockfile && pnpm --filter @fi/api build`
-3. Start: `node dist/index.js`
-4. Environment: every key in `apps/api/.env.example`. `COMMIT_SHA` must be the
-   real commit — the process refuses to boot in production with `COMMIT_SHA=local`
-   (NFR-D-05).
-5. `CORS_ORIGINS` must list the exact web origins for that environment. A
-   wildcard outside development makes the process refuse to start (§12.3).
-6. Health check path: `/health`.
-7. Migrations run as a pre-deploy step: `node dist/migrate.js`.
+This is the live configuration, not an example. **Root directory is the
+repository root, not `apps/api`** — it is a pnpm workspace and the install has
+to run from the top.
+
+| Setting | Value |
+|---|---|
+| Root Directory | *(empty)* |
+| Build Command | `corepack enable && pnpm install --frozen-lockfile --prod=false --filter @fi/api... && pnpm --filter @fi/api build && node apps/api/dist/migrate.js` |
+| Start Command | `node apps/api/dist/index.js` |
+| Health Check Path | `/health` |
+
+Three parts of that build command each exist for a reason:
+
+- `--filter @fi/api...` installs the API and the two workspace packages it
+  depends on. Without it, the Expo app's dependency tree comes too — hundreds
+  of megabytes the server never uses.
+- `--prod=false` is required because Render sets `NODE_ENV=production`, under
+  which pnpm skips devDependencies. The build needs `tsup`, so without this it
+  fails on a missing binary with no obvious connection to the cause.
+- The trailing `migrate.js` is where migrations run, since the free plan has no
+  pre-deploy step.
+
+Environment: every key in `apps/api/.env.example`. Two notes:
+
+- **Leave `COMMIT_SHA` unset.** Config reads Render's `RENDER_GIT_COMMIT`
+  automatically, and NFR-D-05 refuses to boot a production build without one.
+- `CORS_ORIGINS` is an exact-match allowlist (§12.1). The Android app needs no
+  entry — native sends no `Origin` header (NFR-C-07). Add the web app's origin
+  when it is deployed.
+
+**If a deploy fails with a Yarn/Corepack error**, the Start Command is empty and
+Render has fallen back to its default `yarn start`. Yarn 1.x refuses to run any
+script when `packageManager` names pnpm, and reports it as
+`"yarn@pnpm@10.34.5"` — its own formatting, not a corrupted field.
 
 Production is promoted manually, never automatically on merge (§11.2).
 
@@ -123,16 +147,11 @@ Profiles live in `apps/mobile/eas.json`:
 | `preview` | **APK**, installable directly | `EXPO_PUBLIC_API_URL` in the profile | Internal testing on a real phone |
 | `production` | AAB | ditto | Play Store |
 
-**Before the first build**, two things are required and neither can be done
-from the repository:
-
-1. **An Expo account.** `eas login`, or set `EXPO_TOKEN` for CI. Then `eas init`
-   once, which writes `extra.eas.projectId` into `app.json` — commit that.
-2. **A deployed API URL.** Replace the `example.com` placeholders in
-   `eas.json` with the real hosts. An APK is useless without one: the app
-   refuses to start if a release build resolves to `localhost`, `127.0.0.1` or
-   `10.0.2.2` (see `apps/mobile/src/api/config.ts`), because the alternative is
-   an app that installs, opens, and then silently fails every request.
+The APK is built locally (see below), so no Expo account is needed. 
+points preview and production at the deployed API. A release build that
+resolves to ,  or  refuses to start (see
+), because the alternative is an app that
+installs, opens, and then silently fails every request.
 
 Then:
 
