@@ -77,10 +77,34 @@ const PG_CONNECTION_CODES = new Set([
   'CONNECT_TIMEOUT',
 ]);
 
+/**
+ * Finds the driver's own error inside whatever wrapped it.
+ *
+ * Drizzle raises a `DrizzleQueryError` and hangs the real `PostgresError` off
+ * `cause`, so reading `error.code` at the top level silently sees nothing —
+ * which quietly turned every mapping below into a no-op until a live database
+ * proved otherwise.
+ */
+function driverError(error: unknown): { code?: unknown; constraint_name?: unknown } | null {
+  let current: unknown = error;
+  for (let depth = 0; depth < 5; depth += 1) {
+    if (typeof current !== 'object' || current === null) return null;
+    const candidate = current as { code?: unknown; constraint_name?: unknown; cause?: unknown };
+    if (typeof candidate.code === 'string') return candidate;
+    current = candidate.cause;
+  }
+  return null;
+}
+
 function pgCode(error: unknown): string | null {
-  if (typeof error !== 'object' || error === null) return null;
-  const code = (error as { code?: unknown }).code;
+  const code = driverError(error)?.code;
   return typeof code === 'string' ? code : null;
+}
+
+/** The constraint a failed write violated, for callers that recognise one. */
+export function constraintName(error: unknown): string | null {
+  const name = driverError(error)?.constraint_name;
+  return typeof name === 'string' ? name : null;
 }
 
 export function isConnectionError(error: unknown): boolean {
@@ -112,8 +136,8 @@ export function fromDatabaseError(
   if (code === null) return new AppError('INTERNAL', 'Something went wrong', { cause: error });
   if (PG_CONNECTION_CODES.has(code)) return serviceUnavailable(error);
 
-  const constraint = (error as { constraint_name?: unknown }).constraint_name;
-  const mapped = typeof constraint === 'string' ? constraintMessages[constraint] : undefined;
+  const constraint = constraintName(error);
+  const mapped = constraint === null ? undefined : constraintMessages[constraint];
   if (mapped) return mapped;
 
   switch (code) {

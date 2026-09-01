@@ -35,7 +35,7 @@ import {
   workoutSets,
   workouts,
 } from '../db/schema';
-import { conflict, notFound } from '../lib/errors';
+import { conflict, constraintName, notFound } from '../lib/errors';
 import { newId } from '../lib/ids';
 import { decodeCursor, encodeCursor, takePage } from '../lib/cursor';
 import type { Database } from '../db/client';
@@ -345,11 +345,7 @@ export async function startWorkout(
   } catch (error) {
     // FR-WK-02 is enforced by a partial unique index, so the race is the
     // database's to lose, not ours.
-    if (
-      typeof error === 'object' &&
-      error !== null &&
-      (error as { constraint_name?: string }).constraint_name === ACTIVE_WORKOUT_CONSTRAINT
-    ) {
+    if (constraintName(error) === ACTIVE_WORKOUT_CONSTRAINT) {
       throw conflict('You already have a workout in progress');
     }
     throw error;
