@@ -167,6 +167,8 @@ export function useAddSet(workoutId: string | undefined) {
                     weightKg: input.weightKg ?? null,
                     reps: input.reps ?? null,
                     rpe: input.rpe ?? null,
+                    durationSecs: input.durationSecs ?? null,
+                    distanceM: input.distanceM ?? null,
                     isCompleted: input.isCompleted,
                     completedAt: input.completedAt ?? null,
                     notes: input.notes ?? null,

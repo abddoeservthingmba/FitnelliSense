@@ -44,9 +44,18 @@ const timestamps = {
 export const unitSystem = pgEnum('unit_system', ['metric', 'imperial']);
 export const experienceLevel = pgEnum('experience_level', ['beginner', 'intermediate', 'advanced']);
 export const muscleRole = pgEnum('muscle_role', ['primary', 'secondary']);
+/** Which numbers an exercise takes: weight and reps, or time and distance. */
+export const exerciseKind = pgEnum('exercise_kind', ['strength', 'cardio']);
 export const setType = pgEnum('set_type', ['normal', 'warmup', 'failure', 'drop']);
 export const workoutStatus = pgEnum('workout_status', ['in_progress', 'completed', 'discarded']);
-export const prType = pgEnum('pr_type', ['heaviest_weight', 'best_1rm', 'best_set_volume']);
+export const prType = pgEnum('pr_type', [
+  'heaviest_weight',
+  'best_1rm',
+  'best_set_volume',
+  'farthest_distance',
+  'longest_duration',
+  'best_pace',
+]);
 export const insightType = pgEnum('insight_type', [
   'plateau',
   'progression',
@@ -274,6 +283,8 @@ export const exercises = pgTable(
     userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
     slug: text('slug'),
+    /** FR-CAR-01: which numbers this takes. Existing rows default to strength. */
+    kind: exerciseKind('kind').notNull().default('strength'),
     description: text('description'),
     instructions: text('instructions'),
     equipmentId: smallint('equipment_id').references(() => equipment.id),
@@ -432,6 +443,12 @@ export const workoutSets = pgTable(
     weightKg: numeric('weight_kg', { precision: 6, scale: 2 }),
     reps: smallint('reps'),
     rpe: numeric('rpe', { precision: 3, scale: 1 }),
+    /**
+     * Cardio (FR-CAR-02). Whole seconds and whole metres, both independently
+     * optional: '20 minutes on the bike' and '5 km' are each a complete log.
+     */
+    durationSecs: integer('duration_secs'),
+    distanceM: integer('distance_m'),
     isCompleted: boolean('is_completed').notNull().default(false),
     completedAt: timestamp('completed_at', { withTimezone: true }),
     notes: text('notes'),
@@ -441,6 +458,14 @@ export const workoutSets = pgTable(
     check(
       'workout_sets_rpe_range',
       sql`${table.rpe} IS NULL OR (${table.rpe} >= 1 AND ${table.rpe} <= 10)`,
+    ),
+    // Bounds mirror durationSecsSchema and distanceMetresSchema in
+    // @fi/shared. If Zod were the looser of the two, a bad value would reach
+    // Postgres and come back a 500 instead of a 400.
+    check(
+      'workout_sets_cardio_range',
+      sql`(${table.durationSecs} IS NULL OR ${table.durationSecs} BETWEEN 0 AND 86400)
+      AND (${table.distanceM} IS NULL OR ${table.distanceM} BETWEEN 0 AND 1000000)`,
     ),
   ],
 );

@@ -43,6 +43,26 @@ export const slugSchema = z
   .max(80)
   .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'Must be a lowercase hyphenated slug');
 
+/**
+ * A cardio effort's duration, in whole seconds.
+ *
+ * Capped at 24 hours: anything longer is a typo or a forgotten stopwatch, and
+ * an unbounded value would let one set distort every total that includes it.
+ */
+export const durationSecsSchema = z.number().int().min(0).max(86_400, 'That is longer than a day');
+
+/**
+ * A cardio effort's distance, in whole metres.
+ *
+ * Capped at 1,000 km for the same reason. Metres rather than kilometres so the
+ * stored value is an integer — a 5.25 km run is 5250, with no decimal to round.
+ */
+export const distanceMetresSchema = z
+  .number()
+  .int()
+  .min(0)
+  .max(1_000_000, 'That is further than anyone runs in a session');
+
 export const positionSchema = z.number().int().min(0).max(999);
 export const repsSchema = z.number().int().min(0).max(1000);
 export const restSecsSchema = z.number().int().min(0).max(3600);

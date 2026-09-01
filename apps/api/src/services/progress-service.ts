@@ -18,18 +18,8 @@ import {
   type ProgressMetric,
   type SessionSets,
 } from '@fi/domain';
-import type {
-  PersonalRecord,
-  ProgressSeriesResponse,
-  ProgressSummaryResponse,
-} from '@fi/shared';
-import {
-  exercises,
-  personalRecords,
-  workoutExercises,
-  workoutSets,
-  workouts,
-} from '../db/schema';
+import type { PersonalRecord, ProgressSeriesResponse, ProgressSummaryResponse } from '@fi/shared';
+import { exercises, personalRecords, workoutExercises, workoutSets, workouts } from '../db/schema';
 import { notFound } from '../lib/errors';
 import type { Database } from '../db/client';
 

@@ -92,7 +92,11 @@ export const foodSchema = z.object({
   /** The manufacturer, where the source gives one. */
   brand: shortTextSchema.nullable(),
   /** EAN/UPC. Present only for products that carry one (FR-NUT-05). */
-  barcode: z.string().trim().regex(/^\d{8,14}$/).nullable(),
+  barcode: z
+    .string()
+    .trim()
+    .regex(/^\d{8,14}$/)
+    .nullable(),
   source: foodSourceSchema,
   /** Null for a catalogue food; set for a custom one, which is private to it. */
   userId: uuidSchema.nullable(),
@@ -111,7 +115,10 @@ export const foodSearchQuerySchema = z.object({
 });
 
 export const barcodeLookupParamsSchema = z.object({
-  barcode: z.string().trim().regex(/^\d{8,14}$/, 'That is not a barcode'),
+  barcode: z
+    .string()
+    .trim()
+    .regex(/^\d{8,14}$/, 'That is not a barcode'),
 });
 
 export const createFoodRequestSchema = z.object({

@@ -5,6 +5,8 @@ import { hunterRewardSchema } from './hunter';
 import {
   isoDateTimeSchema,
   noteTextSchema,
+  distanceMetresSchema,
+  durationSecsSchema,
   paginationSchema,
   positionSchema,
   positiveDecimalStringSchema,
@@ -22,6 +24,8 @@ export const workoutSetSchema = z.object({
   weightKg: positiveDecimalStringSchema.nullable(),
   reps: repsSchema.nullable(),
   rpe: rpeSchema.nullable(),
+  durationSecs: durationSecsSchema.nullable(),
+  distanceM: distanceMetresSchema.nullable(),
   isCompleted: z.boolean(),
   completedAt: isoDateTimeSchema.nullable(),
   notes: noteTextSchema.nullable(),
@@ -90,6 +94,15 @@ export const addSetRequestSchema = z.object({
   weightKg: positiveDecimalStringSchema.nullish(),
   reps: repsSchema.nullish(),
   rpe: rpeSchema.nullish(),
+  /**
+   * Cardio (FR-CAR-02). Both optional and independent: people log "20 minutes
+   * on the bike" with no distance, and "5 km" with no stopwatch.
+   *
+   * Whole seconds and whole metres. Neither needs a decimal — nobody logs a
+   * fraction of a second on a treadmill, and a metre is fine enough for a run.
+   */
+  durationSecs: durationSecsSchema.nullish(),
+  distanceM: distanceMetresSchema.nullish(),
   isCompleted: z.boolean().default(false),
   completedAt: isoDateTimeSchema.nullish(),
   notes: noteTextSchema.nullish(),
@@ -101,6 +114,8 @@ export const updateSetRequestSchema = z
     weightKg: positiveDecimalStringSchema.nullish(),
     reps: repsSchema.nullish(),
     rpe: rpeSchema.nullish(),
+    durationSecs: durationSecsSchema.nullish(),
+    distanceM: distanceMetresSchema.nullish(),
     isCompleted: z.boolean().optional(),
     completedAt: isoDateTimeSchema.nullish(),
     notes: noteTextSchema.nullish(),

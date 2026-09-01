@@ -23,7 +23,10 @@ import {
 import { notFound } from '../lib/errors';
 import type { Database } from '../db/client';
 
-export async function exportUserData(db: Database, userId: string): Promise<Record<string, unknown>> {
+export async function exportUserData(
+  db: Database,
+  userId: string,
+): Promise<Record<string, unknown>> {
   const [account] = await db
     .select({
       id: users.id,
@@ -50,7 +53,10 @@ export async function exportUserData(db: Database, userId: string): Promise<Reco
 
   const workoutIds = ownWorkouts.map((workout) => workout.id);
   const ownWorkoutExercises = workoutIds.length
-    ? await db.select().from(workoutExercises).where(inArray(workoutExercises.workoutId, workoutIds))
+    ? await db
+        .select()
+        .from(workoutExercises)
+        .where(inArray(workoutExercises.workoutId, workoutIds))
     : [];
 
   const workoutExerciseIds = ownWorkoutExercises.map((row) => row.id);
@@ -64,7 +70,10 @@ export async function exportUserData(db: Database, userId: string): Promise<Reco
   const ownRoutines = await db.select().from(routines).where(eq(routines.userId, userId));
   const routineIds = ownRoutines.map((routine) => routine.id);
   const ownRoutineExercises = routineIds.length
-    ? await db.select().from(routineExercises).where(inArray(routineExercises.routineId, routineIds))
+    ? await db
+        .select()
+        .from(routineExercises)
+        .where(inArray(routineExercises.routineId, routineIds))
     : [];
 
   return {

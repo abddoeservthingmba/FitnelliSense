@@ -1,6 +1,7 @@
 /** Exercise contracts — FR-EX-01..10. */
 import { z } from 'zod';
 import { muscleRoleSchema } from './enums';
+import { exerciseKindSchema } from './enums';
 import { mediaRefSchema } from './media';
 import {
   isoDateTimeSchema,
@@ -22,6 +23,8 @@ export const exerciseSummarySchema = z.object({
   name: shortTextSchema,
   slug: slugSchema.nullable(),
   equipmentId: z.number().int().nullable(),
+  /** Which numbers this exercise takes: weight and reps, or time and distance. */
+  kind: exerciseKindSchema,
   isUnilateral: z.boolean(),
   /** True for a user's own custom exercise, false for the seeded catalogue. */
   isCustom: z.boolean(),
@@ -58,10 +61,9 @@ const musclesSchema = z
   .refine((muscles) => muscles.some((muscle) => muscle.role === 'primary'), {
     message: 'Pick at least one primary muscle',
   })
-  .refine(
-    (muscles) => new Set(muscles.map((muscle) => muscle.muscleId)).size === muscles.length,
-    { message: 'Each muscle may only be listed once' },
-  );
+  .refine((muscles) => new Set(muscles.map((muscle) => muscle.muscleId)).size === muscles.length, {
+    message: 'Each muscle may only be listed once',
+  });
 
 export const createExerciseRequestSchema = z.object({
   /** Client-generated so the exercise exists offline the moment it is saved. */
@@ -70,6 +72,7 @@ export const createExerciseRequestSchema = z.object({
   description: noteTextSchema.nullish(),
   instructions: noteTextSchema.nullish(),
   equipmentId: z.number().int().nullish(),
+  kind: exerciseKindSchema.default('strength'),
   isUnilateral: z.boolean().default(false),
   muscles: musclesSchema,
 });

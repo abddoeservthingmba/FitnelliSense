@@ -17,6 +17,8 @@ import {
   recordKey,
   totalVolume,
   completedSetCount,
+  cardioTotals,
+  detectCardioPRs,
 } from '@fi/domain';
 import type {
   AddSetRequest,
@@ -192,6 +194,8 @@ export async function getWorkoutDetail(
         weightKg: set.weightKg,
         reps: set.reps,
         rpe: set.rpe === null ? null : Number(set.rpe),
+        durationSecs: set.durationSecs,
+        distanceM: set.distanceM,
         isCompleted: set.isCompleted,
         completedAt: set.completedAt?.toISOString() ?? null,
         notes: set.notes,
@@ -509,9 +513,7 @@ export async function updateSet(
     patch.isCompleted = input.isCompleted;
     // Completion time is derived unless the client supplies it, which it does
     // when replaying a set logged offline.
-    patch.completedAt = input.isCompleted
-      ? new Date(input.completedAt ?? Date.now())
-      : null;
+    patch.completedAt = input.isCompleted ? new Date(input.completedAt ?? Date.now()) : null;
   } else if (input.completedAt !== undefined) {
     patch.completedAt = input.completedAt ? new Date(input.completedAt) : null;
   }
@@ -553,6 +555,8 @@ async function attributedSets(db: Database, workoutId: string): Promise<Attribut
       setType: workoutSets.setType,
       weightKg: workoutSets.weightKg,
       reps: workoutSets.reps,
+      durationSecs: workoutSets.durationSecs,
+      distanceM: workoutSets.distanceM,
       isCompleted: workoutSets.isCompleted,
     })
     .from(workoutSets)
@@ -565,6 +569,8 @@ async function attributedSets(db: Database, workoutId: string): Promise<Attribut
     setType: row.setType,
     weightKg: decOrNull(row.weightKg),
     reps: row.reps,
+    durationSecs: row.durationSecs,
+    distanceM: row.distanceM,
     isCompleted: row.isCompleted,
   }));
 }
@@ -619,7 +625,8 @@ export async function completeWorkout(
   );
 
   const exerciseIds = [...new Set(sets.map((set) => set.exerciseId))];
-  const records = detectPRs(sets, await existingRecords(db, userId, exerciseIds));
+  const best = await existingRecords(db, userId, exerciseIds);
+  const records = [...detectPRs(sets, best), ...detectCardioPRs(sets, best)];
 
   await db.transaction(async (tx) => {
     await tx
@@ -667,6 +674,8 @@ export async function completeWorkout(
       distinctExercises: exerciseIds.length,
       durationMinutes: Math.round(durationSecs / 60),
       personalRecords: records.length,
+      // FR-CAR-05: time and distance from every completed set in the session.
+      cardio: cardioTotals(sets),
     },
     finishedAt.toISOString().slice(0, 10),
   );

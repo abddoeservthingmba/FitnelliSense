@@ -4,10 +4,25 @@
  */
 import { type Dec, gt } from './decimal';
 import { estimate1RM } from './one-rep-max';
-import { type AttributedSet, type Counting, type PrType } from './types';
+import {
+  type AttributedSet,
+  type Counting,
+  type PrType,
+  type StrengthPrType,
+} from './types';
 import { countsTowardVolume, setVolume } from './volume';
 
-export const PR_TYPES: readonly PrType[] = ['heaviest_weight', 'best_1rm', 'best_set_volume'];
+/**
+ * The records detected from strength sets.
+ *
+ * Deliberately not every PrType: cardio records come from time and distance,
+ * which this module never sees. See cardio.ts.
+ */
+export const PR_TYPES: readonly StrengthPrType[] = [
+  'heaviest_weight',
+  'best_1rm',
+  'best_set_volume',
+];
 
 /** The user's current best per exercise and type, as `${exerciseId}:${prType}`. */
 export type ExistingRecords = ReadonlyMap<string, Dec>;
@@ -26,8 +41,15 @@ export function recordKey(exerciseId: string, prType: PrType): string {
   return `${exerciseId}:${prType}`;
 }
 
-/** The candidate value for one set and one record type, or null if inapplicable. */
-function valueFor(set: Counting<AttributedSet>, prType: PrType): Dec | null {
+/**
+ * The candidate value for one set and one record type, or null if inapplicable.
+ *
+ * Takes `StrengthPrType`, not `PrType`. Widening it would make this switch
+ * non-exhaustive and force a `default` arm returning null — which would
+ * silently swallow a future record type that nobody remembered to handle. The
+ * narrow parameter turns that into a compile error instead.
+ */
+function valueFor(set: Counting<AttributedSet>, prType: StrengthPrType): Dec | null {
   switch (prType) {
     case 'heaviest_weight':
       return set.weightKg;

@@ -96,7 +96,10 @@ async function decorate(
   db: Database,
   rows: readonly (typeof exercises.$inferSelect)[],
 ): Promise<Map<string, { primaryMuscleIds: number[]; primaryMediaId: string | null }>> {
-  const decorated = new Map<string, { primaryMuscleIds: number[]; primaryMediaId: string | null }>();
+  const decorated = new Map<
+    string,
+    { primaryMuscleIds: number[]; primaryMediaId: string | null }
+  >();
   for (const row of rows) decorated.set(row.id, { primaryMuscleIds: [], primaryMediaId: null });
   if (rows.length === 0) return decorated;
 
@@ -139,6 +142,7 @@ function toSummary(
     name: row.name,
     slug: row.slug,
     equipmentId: row.equipmentId,
+    kind: row.kind,
     isUnilateral: row.isUnilateral,
     isCustom: row.userId !== null,
     primaryMuscleIds: extra.primaryMuscleIds,
@@ -158,7 +162,8 @@ export async function listExercises(
   if (query.scope === 'system') conditions.push(isNull(exercises.userId));
   if (!query.includeArchived) conditions.push(isNull(exercises.archivedAt));
   if (query.q) conditions.push(searchMatches(query.q));
-  if (query.equipmentId !== undefined) conditions.push(eq(exercises.equipmentId, query.equipmentId));
+  if (query.equipmentId !== undefined)
+    conditions.push(eq(exercises.equipmentId, query.equipmentId));
 
   const muscle = muscleFilter(query);
   if (muscle) conditions.push(muscle);
@@ -263,6 +268,7 @@ export async function createCustomExercise(
       description: input.description ?? null,
       instructions: input.instructions ?? null,
       equipmentId: input.equipmentId ?? null,
+      kind: input.kind,
       isUnilateral: input.isUnilateral,
     });
     await tx

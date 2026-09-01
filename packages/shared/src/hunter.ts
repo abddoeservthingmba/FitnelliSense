@@ -18,14 +18,7 @@ export const statKeySchema = z.enum(['strength', 'endurance', 'discipline']);
 export const xpSourceSchema = z.enum(['workout', 'quest', 'badge']);
 export const badgeTierSchema = z.enum(['bronze', 'silver', 'gold', 'monarch']);
 
-export const questUnitSchema = z.enum([
-  'workout',
-  'sets',
-  'kg',
-  'record',
-  'minutes',
-  'exercises',
-]);
+export const questUnitSchema = z.enum(['workout', 'sets', 'kg', 'record', 'minutes', 'exercises']);
 
 export const statsSchema = z.object({
   strength: z.number().int(),
@@ -38,6 +31,8 @@ export const xpBreakdownSchema = z.object({
   volume: z.number().int(),
   sets: z.number().int(),
   records: z.number().int(),
+  /** Minutes and metres (FR-CAR-05). Zero for a session with no cardio. */
+  cardio: z.number().int(),
   streakBonus: z.number().int(),
   streakMultiplier: z.number(),
   total: z.number().int(),

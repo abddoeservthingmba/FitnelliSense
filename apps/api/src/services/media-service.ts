@@ -27,8 +27,7 @@ type AssetRow = typeof mediaAssets.$inferSelect;
  */
 export function isRenderable(asset: Pick<AssetRow, 'state' | 'licence'>): boolean {
   return (
-    asset.state === 'active' &&
-    (RENDERABLE_LICENCES as readonly string[]).includes(asset.licence)
+    asset.state === 'active' && (RENDERABLE_LICENCES as readonly string[]).includes(asset.licence)
   );
 }
 

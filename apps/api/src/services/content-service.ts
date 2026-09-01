@@ -66,6 +66,7 @@ export async function exportCatalogue(db: Database): Promise<SeedCatalogue> {
       description: row.description,
       instructions: row.instructions,
       equipment: row.equipmentId === null ? null : (equipmentSlugById.get(row.equipmentId) ?? null),
+      kind: row.kind,
       isUnilateral: row.isUnilateral,
       primaryMuscles: links
         .filter((link) => link.role === 'primary')
@@ -300,6 +301,7 @@ export async function importCatalogue(
           description: seed.description ?? null,
           instructions: seed.instructions ?? null,
           equipmentId: equipmentId ?? null,
+          kind: seed.kind,
           isUnilateral: seed.isUnilateral,
           metadata: seed.movementPattern ? { movementPattern: seed.movementPattern } : {},
           updatedAt: now,
@@ -316,6 +318,7 @@ export async function importCatalogue(
           description: sql`excluded.description`,
           instructions: sql`excluded.instructions`,
           equipmentId: sql`excluded.equipment_id`,
+          kind: sql`excluded.kind`,
           isUnilateral: sql`excluded.is_unilateral`,
           metadata: sql`excluded.metadata`,
           updatedAt: now,

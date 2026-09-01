@@ -72,6 +72,7 @@ export async function adminExerciseRoutes(app: FastifyInstance): Promise<void> {
           name: row.name,
           slug: row.slug,
           equipmentId: row.equipmentId,
+          kind: row.kind,
           isUnilateral: row.isUnilateral,
           isCustom: false,
           primaryMuscleIds: [],
@@ -97,6 +98,7 @@ export async function adminExerciseRoutes(app: FastifyInstance): Promise<void> {
           description: request.body.description ?? null,
           instructions: request.body.instructions ?? null,
           equipmentId: request.body.equipmentId ?? null,
+          kind: request.body.kind,
           isUnilateral: request.body.isUnilateral,
         });
         await tx
@@ -279,6 +281,7 @@ async function detail(app: FastifyInstance, exerciseId: string) {
     name: row.name,
     slug: row.slug,
     equipmentId: row.equipmentId,
+    kind: row.kind,
     isUnilateral: row.isUnilateral,
     isCustom: false,
     primaryMuscleIds: muscleRows

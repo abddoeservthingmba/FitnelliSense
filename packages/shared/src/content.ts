@@ -7,7 +7,12 @@
  * exercise with unverifiable media (BRD §16.2 task 3).
  */
 import { z } from 'zod';
-import { licenceStatusSchema, mediaDeliverySchema, mediaKindSchema } from './enums';
+import {
+  exerciseKindSchema,
+  licenceStatusSchema,
+  mediaDeliverySchema,
+  mediaKindSchema,
+} from './enums';
 import { noteTextSchema, shortTextSchema, slugSchema } from './primitives';
 
 export const seedMediaSchema = z.object({
@@ -31,6 +36,8 @@ export const seedExerciseSchema = z.object({
   description: noteTextSchema.nullish(),
   instructions: noteTextSchema.nullish(),
   equipment: slugSchema.nullish(),
+  /** FR-CAR-01. Defaults to strength so existing seed files stay valid. */
+  kind: exerciseKindSchema.default('strength'),
   isUnilateral: z.boolean().default(false),
   primaryMuscles: z.array(slugSchema).min(1),
   secondaryMuscles: z.array(slugSchema).default([]),
@@ -40,9 +47,7 @@ export const seedExerciseSchema = z.object({
 
 export const seedTaxonomySchema = z.object({
   muscleGroups: z.array(z.object({ slug: slugSchema, name: shortTextSchema })),
-  muscles: z.array(
-    z.object({ slug: slugSchema, name: shortTextSchema, muscleGroup: slugSchema }),
-  ),
+  muscles: z.array(z.object({ slug: slugSchema, name: shortTextSchema, muscleGroup: slugSchema })),
   equipment: z.array(z.object({ slug: slugSchema, name: shortTextSchema })),
 });
 

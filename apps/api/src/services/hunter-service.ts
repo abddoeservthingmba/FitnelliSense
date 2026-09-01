@@ -29,6 +29,7 @@ import {
   rankForLevel,
   workoutXp,
   type BadgeContext,
+  type CardioTotals,
   type QuestKey,
   type Stats,
 } from '@fi/domain';
@@ -147,9 +148,7 @@ async function gatherFacts(db: Database, userId: string, today: string): Promise
     .limit(30);
 
   const volumes = sessions.map((session) => Number(session.volumeKg ?? 0));
-  const recent = sessions.filter(
-    (session) => session.startedAt.toISOString() >= thirtyDaysAgo,
-  );
+  const recent = sessions.filter((session) => session.startedAt.toISOString() >= thirtyDaysAgo);
 
   return {
     totalXp: Number(ledger?.total ?? 0),
@@ -354,11 +353,7 @@ function dailyQuestDefinition(key: QuestKey) {
  * Generation is idempotent: the unique index on (user, date, key) means a
  * concurrent second request cannot create duplicates.
  */
-export async function questBoard(
-  db: Database,
-  userId: string,
-  today: string,
-): Promise<QuestBoard> {
+export async function questBoard(db: Database, userId: string, today: string): Promise<QuestBoard> {
   const existing = await db
     .select()
     .from(dailyQuestsTable)
@@ -466,6 +461,8 @@ export interface SessionSummary {
   distinctExercises: number;
   durationMinutes: number;
   personalRecords: number;
+  /** FR-CAR-05. Zero for a session with no cardio in it. */
+  cardio: CardioTotals;
 }
 
 /**
@@ -491,6 +488,7 @@ export async function applyWorkout(
     personalRecords: session.personalRecords,
     // The streak already includes today, since the workout is complete.
     streakDays: before.currentStreak,
+    cardio: session.cardio,
   });
 
   // Make sure today's quests exist before crediting progress against them.

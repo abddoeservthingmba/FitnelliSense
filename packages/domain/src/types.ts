@@ -7,10 +7,24 @@ import { type Dec } from './decimal';
 
 export type SetType = 'normal' | 'warmup' | 'failure' | 'drop';
 
-export type PrType = 'heaviest_weight' | 'best_1rm' | 'best_set_volume';
+/**
+ * Every kind of personal record.
+ *
+ * The strength three and the cardio three sit in one union because they share a
+ * table and a key. They do **not** share detection: `PR_TYPES` in
+ * personal-records.ts lists only the strength ones, because `weight × reps`
+ * arithmetic cannot produce a distance, and `best_pace` is the sole record here
+ * where a lower value wins.
+ */
+export type StrengthPrType = 'heaviest_weight' | 'best_1rm' | 'best_set_volume';
+export type CardioPrType = 'farthest_distance' | 'longest_duration' | 'best_pace';
+export type PrType = StrengthPrType | CardioPrType;
 
 export interface LoggedSet {
   readonly setType: SetType;
+  /** Cardio (FR-CAR-02). Null on every strength set, which is most of them. */
+  readonly durationSecs?: number | null;
+  readonly distanceM?: number | null;
   readonly weightKg: Dec | null;
   readonly reps: number | null;
   readonly isCompleted: boolean;

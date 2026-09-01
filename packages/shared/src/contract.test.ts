@@ -69,8 +69,10 @@ describe('createExerciseRequestSchema', () => {
       }).success,
     ).toBe(false);
     expect(
-      createExerciseRequestSchema.safeParse({ ...base, muscles: [{ muscleId: 1, role: 'primary' }] })
-        .success,
+      createExerciseRequestSchema.safeParse({
+        ...base,
+        muscles: [{ muscleId: 1, role: 'primary' }],
+      }).success,
     ).toBe(true);
   });
 
@@ -112,9 +114,9 @@ describe('createMediaAssetRequestSchema', () => {
   };
 
   it('demands a location that matches the delivery mode (FR-MED-05)', () => {
-    expect(
-      createMediaAssetRequestSchema.safeParse({ ...base, delivery: 'r2_copy' }).success,
-    ).toBe(false);
+    expect(createMediaAssetRequestSchema.safeParse({ ...base, delivery: 'r2_copy' }).success).toBe(
+      false,
+    );
     expect(
       createMediaAssetRequestSchema.safeParse({
         ...base,

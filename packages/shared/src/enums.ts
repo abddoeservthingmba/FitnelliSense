@@ -9,7 +9,16 @@ export const experienceLevelSchema = z.enum(['beginner', 'intermediate', 'advanc
 export const muscleRoleSchema = z.enum(['primary', 'secondary']);
 export const setTypeSchema = z.enum(['normal', 'warmup', 'failure', 'drop']);
 export const workoutStatusSchema = z.enum(['in_progress', 'completed', 'discarded']);
-export const prTypeSchema = z.enum(['heaviest_weight', 'best_1rm', 'best_set_volume']);
+export const prTypeSchema = z.enum([
+  'heaviest_weight',
+  'best_1rm',
+  'best_set_volume',
+  // Cardio (FR-CAR-06). 'best_pace' is the only record in the system where a
+  // LOWER number wins, which every comparison against it has to allow for.
+  'farthest_distance',
+  'longest_duration',
+  'best_pace',
+]);
 export const insightTypeSchema = z.enum(['plateau', 'progression', 'imbalance', 'summary']);
 export const analysisStatusSchema = z.enum(['queued', 'processing', 'complete', 'failed']);
 export const mediaKindSchema = z.enum(['image', 'gif', 'video']);
@@ -57,3 +66,15 @@ export type MediaDelivery = z.infer<typeof mediaDeliverySchema>;
 export type MediaState = z.infer<typeof mediaStateSchema>;
 export type LicenceStatus = z.infer<typeof licenceStatusSchema>;
 export type ProgressMetric = z.infer<typeof progressMetricSchema>;
+
+/**
+ * What kind of work an exercise is, and therefore which numbers it takes.
+ *
+ * A treadmill set has no weight and no reps; a bench press has no distance.
+ * Without this the client cannot know which inputs to show, and the domain
+ * cannot know which arithmetic applies (FR-CAR-01).
+ */
+export const exerciseKindSchema = z.enum(['strength', 'cardio']);
+export type ExerciseKind = z.infer<typeof exerciseKindSchema>;
+
+export const CARDIO_PR_TYPES = ['farthest_distance', 'longest_duration', 'best_pace'] as const;

@@ -10,6 +10,7 @@
  * XP is an append-only ledger in the database; this module owns the arithmetic
  * that turns work into XP and XP into a level.
  */
+import { EMPTY_CARDIO, cardioXp, type CardioTotals } from './cardio';
 import { type Dec, decToNumber } from './decimal';
 
 // ------------------------------------------------------------------- levels --
@@ -113,6 +114,8 @@ export interface WorkoutXpInput {
   personalRecords: number;
   /** Consecutive-day streak *including* this session. */
   streakDays: number;
+  /** Cardio done in the session. Optional: most sessions have none. */
+  cardio?: CardioTotals;
 }
 
 export interface XpBreakdown {
@@ -121,6 +124,8 @@ export interface XpBreakdown {
   volume: number;
   sets: number;
   records: number;
+  /** Minutes and metres (FR-CAR-05). Zero for a session with no cardio. */
+  cardio: number;
   streakBonus: number;
   total: number;
   /** The multiplier the streak applied, for display as "×1.14". */
@@ -152,10 +157,13 @@ export function workoutXp(input: WorkoutXpInput): XpBreakdown {
   const volume = Math.floor((volumeKg / 100) * XP_PER_100KG);
   const setsXp = sets * XP_PER_SET;
   const recordsXp = records * XP_PER_RECORD;
+  // Cardio earns on minutes and metres. Without it a 10 km run would score the
+  // session bonus and nothing else, because every other term multiplies by a
+  // weight a treadmill set does not have.
+  const cardio = cardioXp(input.cardio ?? EMPTY_CARDIO);
 
-  const base = session + volume + setsXp + recordsXp;
-  const streakMultiplier =
-    1 + Math.min(streak, MAX_STREAK_DAYS_COUNTED) * STREAK_BONUS_PER_DAY;
+  const base = session + volume + setsXp + recordsXp + cardio;
+  const streakMultiplier = 1 + Math.min(streak, MAX_STREAK_DAYS_COUNTED) * STREAK_BONUS_PER_DAY;
   const streakBonus = Math.floor(base * (streakMultiplier - 1));
 
   return {
@@ -163,6 +171,7 @@ export function workoutXp(input: WorkoutXpInput): XpBreakdown {
     volume,
     sets: setsXp,
     records: recordsXp,
+    cardio,
     streakBonus,
     streakMultiplier: Math.round(streakMultiplier * 100) / 100,
     total: base + streakBonus,

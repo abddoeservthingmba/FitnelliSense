@@ -209,9 +209,7 @@ export async function foodByBarcode(
   const [cachedRow] = await deps.db
     .select()
     .from(foods)
-    .where(
-      and(eq(foods.barcode, barcode), or(isNull(foods.userId), eq(foods.userId, userId))),
-    )
+    .where(and(eq(foods.barcode, barcode), or(isNull(foods.userId), eq(foods.userId, userId))))
     .limit(1);
 
   if (cachedRow) return toFood(cachedRow);
@@ -285,9 +283,7 @@ export async function createEntry(
     const [row] = await deps.db
       .select()
       .from(foods)
-      .where(
-        and(eq(foods.id, input.foodId), or(isNull(foods.userId), eq(foods.userId, userId))),
-      )
+      .where(and(eq(foods.id, input.foodId), or(isNull(foods.userId), eq(foods.userId, userId))))
       .limit(1);
 
     // Another user's custom food is "not found", not "forbidden" (NFR-S-03).
@@ -346,11 +342,7 @@ export async function createEntry(
  * (FR-HS-12): a user's food entry must not fail because an XP row did not
  * insert.
  */
-async function awardNutritionXp(
-  deps: NutritionDeps,
-  userId: string,
-  date: string,
-): Promise<void> {
+async function awardNutritionXp(deps: NutritionDeps, userId: string, date: string): Promise<void> {
   try {
     await deps.db
       .insert(xpEvents)
@@ -415,10 +407,7 @@ export async function deleteEntry(
 // --------------------------------------------------------------------- day --
 
 /** FR-NUT-10. The estimate from the profile, with any overrides applied. */
-export async function targetsFor(
-  deps: NutritionDeps,
-  userId: string,
-): Promise<NutritionTargets> {
+export async function targetsFor(deps: NutritionDeps, userId: string): Promise<NutritionTargets> {
   const [profile] = await deps.db
     .select({
       bodyweightKg: userProfiles.bodyweightKg,

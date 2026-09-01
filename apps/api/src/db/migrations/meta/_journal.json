@@ -57,6 +57,13 @@
       "when": 1788270903462,
       "tag": "0007_nutrition_xp_source",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1788285443143,
+      "tag": "0008_cardio",
+      "breakpoints": true
     }
   ]
 }

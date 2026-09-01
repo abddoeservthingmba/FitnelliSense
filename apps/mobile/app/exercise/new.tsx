@@ -52,8 +52,12 @@ export default function NewExerciseScreen() {
         name: name.trim(),
         ...(instructions.trim() ? { instructions: instructions.trim() } : {}),
         ...(equipmentId === null ? {} : { equipmentId }),
+        // The custom-exercise form creates strength movements. Cardio comes
+        // from the seeded catalogue, which carries the equipment the app knows
+        // how to prompt for.
+        kind: 'strength' as const,
         isUnilateral: false,
-        muscles: [{ muscleId: primaryMuscleId, role: 'primary' }],
+        muscles: [{ muscleId: primaryMuscleId, role: 'primary' as const }],
       },
       {
         onSuccess: (created) => router.replace(`/exercise/${created.id}`),
