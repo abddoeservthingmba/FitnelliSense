@@ -18,4 +18,17 @@ export default defineConfig({
   clean: true,
   sourcemap: true,
   noExternal: [/^@fi\//],
+
+  /**
+   * The migration runner resolves its folder relative to its own file, so the
+   * SQL has to travel with the bundle: in `src` it sits beside `migrate.ts`,
+   * and in `dist` it must sit beside `migrate.js`. Without this the deployed
+   * build finds an empty folder and applies nothing — which fails loudly here,
+   * but would be far worse if it failed quietly.
+   */
+  async onSuccess() {
+    const { cp } = await import('node:fs/promises');
+    await cp('src/db/migrations', 'dist/migrations', { recursive: true });
+    console.log('Copied migrations into dist/migrations');
+  },
 });
