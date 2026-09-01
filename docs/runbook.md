@@ -147,13 +147,15 @@ Profiles live in `apps/mobile/eas.json`:
 | `preview` | **APK**, installable directly | `EXPO_PUBLIC_API_URL` in the profile | Internal testing on a real phone |
 | `production` | AAB | ditto | Play Store |
 
-The APK is built locally (see below), so no Expo account is needed. 
-points preview and production at the deployed API. A release build that
-resolves to ,  or  refuses to start (see
-), because the alternative is an app that
-installs, opens, and then silently fails every request.
+The APK is built locally (next section), so no Expo account is needed.
+`eas.json` points preview and production at the deployed API.
 
-Then:
+A release build that resolves to `localhost`, `127.0.0.1` or `10.0.2.2`
+refuses to start — see `apps/mobile/src/api/config.ts`. The alternative is an
+app that installs, opens, and then silently fails every request, with nothing
+on the device to explain why.
+
+The EAS cloud path needs an Expo account (`eas login`, then `eas init` once):
 
 ```bash
 cd apps/mobile
