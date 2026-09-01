@@ -12,8 +12,8 @@
       "**/*"
     ],
     "android": {
-      "package": "com.fitnessintellisense.app",
-      "versionCode": 6,
+      "package": "com.arise.fitness",
+      "versionCode": 7,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0B2547"
@@ -33,7 +33,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.fitnessintellisense.app"
+      "bundleIdentifier": "com.arise.fitness"
     },
     "web": {
       "bundler": "metro",

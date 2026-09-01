@@ -34,14 +34,16 @@ export function AriseMark({ size = 96 }: { size?: number }) {
         </LinearGradient>
       </Defs>
 
-      {/* The chevron. Round joins so the apex reads as drawn, not cut. */}
+      {/*
+        The A. Two subpaths with `evenodd`: the outer triangle, then the
+        counter, which is cut out rather than drawn. Same construction as the
+        launcher icon — outer form minus inner form, bounded below by the
+        crossbar — so the two marks cannot drift apart.
+      */}
       <Path
-        d="M28 78 L50 26 L72 78"
-        stroke="url(#ariseMark)"
-        strokeWidth={9}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
+        d="M50 17 L79 79 L21 79 Z M50 31 L57 55 L43 55 Z"
+        fill="url(#ariseMark)"
+        fillRule="evenodd"
       />
 
       {/* Corner brackets, from one table so the four cannot drift apart. */}
@@ -56,8 +58,8 @@ export function AriseMark({ size = 96 }: { size?: number }) {
           d={d}
           stroke={theme.colors.accent}
           strokeWidth={bracket}
-          strokeLinecap="round"
-          strokeLinejoin="round"
+          strokeLinecap="square"
+          strokeLinejoin="miter"
           fill="none"
           opacity={0.9}
         />
