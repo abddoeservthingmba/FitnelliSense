@@ -45,6 +45,47 @@ UPDATE users SET is_admin = true WHERE email = 'you@example.com';
 Sign in again afterwards — `isAdmin` is a claim inside the access token, so an
 existing token stays non-admin until it is reissued.
 
+### Running the integration tests
+
+**The integration suites `TRUNCATE` every table in the database
+`TEST_DATABASE_URL` names.** It must never be the same database as
+`DATABASE_URL`. Without the variable set, those suites skip and the unit tests
+still run — which is the safe default, not a degraded one.
+
+A separate database on the same Neon project is enough isolation and costs
+nothing:
+
+```bash
+# Once. Note the direct endpoint: CREATE DATABASE cannot run through the
+# transaction pooler, so strip "-pooler" from the host.
+psql "$(echo "$DATABASE_URL" | sed 's/-pooler\.//')" -c 'CREATE DATABASE fi_test'
+```
+
+Then set `TEST_DATABASE_URL` to the same string with the database name replaced
+(`/neondb?` → `/fi_test?`) and run `pnpm test`. The suite migrates it on the
+first run.
+
+### Email (verification and password reset)
+
+Email is optional configuration. With `RESEND_API_KEY` unset the API boots,
+logs `RESEND_API_KEY is not set …` once, and both code endpoints keep answering
+`202` while delivering nothing — the client reads `deliveryConfigured: false`
+and says so rather than sending the user to an empty inbox.
+
+To switch it on:
+
+1. resend.com → **API Keys** → **Create**. Set `RESEND_API_KEY`.
+2. resend.com → **Domains** → add and verify the sending domain, then set
+   `EMAIL_FROM` to an address on it, e.g. `Fitness Intellisense <no-reply@example.com>`.
+
+Until a domain is verified, Resend's sandbox sender (`onboarding@resend.dev`,
+the default) delivers **only to the Resend account owner's address**. That is
+enough to test the flow end to end and useless for real users, so do not ship
+without step 2.
+
+Codes last `OTP_TTL` (15m), allow five wrong guesses, and requesting a new one
+retires the previous one.
+
 ---
 
 ## 2. Migrations
@@ -59,7 +100,7 @@ pnpm db:migrate             # applies it
 ```
 
 Per NFR-D-03, a column change is spread across releases: add column → deploy code
-that writes it → backfill → remove the old column in a *later* release. Never
+that writes it → backfill → remove the old column in a _later_ release. Never
 drop and deploy in one step.
 
 Run against staging first (§11.2). Neon branching makes that cheap.
@@ -98,12 +139,12 @@ This is the live configuration, not an example. **Root directory is the
 repository root, not `apps/api`** — it is a pnpm workspace and the install has
 to run from the top.
 
-| Setting | Value |
-|---|---|
-| Root Directory | *(empty)* |
-| Build Command | `corepack enable && pnpm install --frozen-lockfile --prod=false --filter @fi/api... && pnpm --filter @fi/api build && node apps/api/dist/migrate.js` |
-| Start Command | `node apps/api/dist/index.js` |
-| Health Check Path | `/health` |
+| Setting           | Value                                                                                                                                                |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Root Directory    | _(empty)_                                                                                                                                            |
+| Build Command     | `corepack enable && pnpm install --frozen-lockfile --prod=false --filter @fi/api... && pnpm --filter @fi/api build && node apps/api/dist/migrate.js` |
+| Start Command     | `node apps/api/dist/index.js`                                                                                                                        |
+| Health Check Path | `/health`                                                                                                                                            |
 
 Three parts of that build command each exist for a reason:
 
@@ -141,11 +182,11 @@ Production is promoted manually, never automatically on merge (§11.2).
 
 Profiles live in `apps/mobile/eas.json`:
 
-| Profile | Output | Points at | Use |
-|---|---|---|---|
-| `development` | APK, dev client | `10.0.2.2:3000` (the emulator's host) | Daily work against a local API |
-| `preview` | **APK**, installable directly | `EXPO_PUBLIC_API_URL` in the profile | Internal testing on a real phone |
-| `production` | AAB | ditto | Play Store |
+| Profile       | Output                        | Points at                             | Use                              |
+| ------------- | ----------------------------- | ------------------------------------- | -------------------------------- |
+| `development` | APK, dev client               | `10.0.2.2:3000` (the emulator's host) | Daily work against a local API   |
+| `preview`     | **APK**, installable directly | `EXPO_PUBLIC_API_URL` in the profile  | Internal testing on a real phone |
+| `production`  | AAB                           | ditto                                 | Play Store                       |
 
 The APK is built locally (next section), so no Expo account is needed.
 `eas.json` points preview and production at the deployed API.
@@ -276,16 +317,16 @@ Start from the correlation ID. Every response carries `X-Request-Id`, every log
 line for that request carries it, and the error state in the app shows it to the
 user as a reference (NFR-O-04, NFR-O-05).
 
-| Symptom | Likely cause | Check |
-|---|---|---|
-| First request after idle is slow, then fine | Neon compute resuming (expected, R1) | `/health/deep` latency on the `database` dependency |
-| `SERVICE_UNAVAILABLE` from many endpoints | Postgres unreachable | `/health/deep` → `database: down`. The client treats this as offline (NFR-B-08) |
-| Exercise images missing, everything else fine | R2 unconfigured or unreachable | `/health/deep` → `r2: degraded`. Expected behaviour, not an incident (NFR-B-06) |
-| Web app fails, Android app fine | CORS — nearly always | Compare the browser's `Origin` against `CORS_ORIGINS`. Native sends no `Origin` and is not subject to CORS (NFR-C-07) |
-| Direct browser upload to R2 fails | Bucket CORS is configured separately from the API's | R2 bucket CORS policy (NFR-C-09) |
-| Process exits at boot with code 78 | Invalid configuration | The `ConfigError` message lists every offending key at once |
-| `409 CONFLICT` on starting a workout | The user already has one in progress | Expected (FR-WK-02). The client should offer to resume |
-| `409` on a repeated mutation | Same `Idempotency-Key`, different body | A client bug, not a server one (§10.2) |
+| Symptom                                       | Likely cause                                        | Check                                                                                                                 |
+| --------------------------------------------- | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| First request after idle is slow, then fine   | Neon compute resuming (expected, R1)                | `/health/deep` latency on the `database` dependency                                                                   |
+| `SERVICE_UNAVAILABLE` from many endpoints     | Postgres unreachable                                | `/health/deep` → `database: down`. The client treats this as offline (NFR-B-08)                                       |
+| Exercise images missing, everything else fine | R2 unconfigured or unreachable                      | `/health/deep` → `r2: degraded`. Expected behaviour, not an incident (NFR-B-06)                                       |
+| Web app fails, Android app fine               | CORS — nearly always                                | Compare the browser's `Origin` against `CORS_ORIGINS`. Native sends no `Origin` and is not subject to CORS (NFR-C-07) |
+| Direct browser upload to R2 fails             | Bucket CORS is configured separately from the API's | R2 bucket CORS policy (NFR-C-09)                                                                                      |
+| Process exits at boot with code 78            | Invalid configuration                               | The `ConfigError` message lists every offending key at once                                                           |
+| `409 CONFLICT` on starting a workout          | The user already has one in progress                | Expected (FR-WK-02). The client should offer to resume                                                                |
+| `409` on a repeated mutation                  | Same `Idempotency-Key`, different body              | A client bug, not a server one (§10.2)                                                                                |
 
 Logs never contain emails, tokens or request bodies (NFR-O-10). The user is
 identified by a salted hash of their id, so activity can be correlated without

@@ -16,6 +16,7 @@ import type { FastifyInstance, InjectOptions, LightMyRequestResponse } from 'fas
 import { buildApp } from '../../src/app';
 import { loadConfig, type Config } from '../../src/config';
 import { createDatabase, type DatabaseHandle } from '../../src/db/client';
+import type { Mailer, OutgoingEmail } from '../../src/lib/mailer';
 import { createStorage } from '../../src/lib/r2';
 
 export const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;
@@ -30,6 +31,49 @@ export interface TestContext {
   app: FastifyInstance;
   database: DatabaseHandle;
   config: Config;
+  /** The emails the app tried to send, so a code flow can be driven end to end. */
+  mailbox: Mailbox;
+}
+
+/**
+ * An in-memory mailer.
+ *
+ * The alternative — reading the code out of the database — would test the
+ * service and skip the part most likely to break: whether the code that
+ * reaches the *email* is the code the server will accept. So the test reads it
+ * from the message body, the way a person would.
+ */
+export interface Mailbox {
+  readonly sent: OutgoingEmail[];
+  /** The 6-digit code from the most recent message, or null if there is none. */
+  lastCode(): string | null;
+  clear(): void;
+}
+
+function createMailbox(): { mailer: Mailer; mailbox: Mailbox } {
+  const sent: OutgoingEmail[] = [];
+  return {
+    mailer: {
+      isConfigured: true,
+      send: async (message) => {
+        sent.push(message);
+        return { sent: true, id: `test-${sent.length}`, failure: null };
+      },
+    },
+    mailbox: {
+      sent,
+      lastCode: () => {
+        const last = sent.at(-1);
+        if (!last) return null;
+        // The template prints the code with a space in the middle.
+        const match = /(\d{3})\s?(\d{3})/.exec(last.text);
+        return match ? `${match[1]}${match[2]}` : null;
+      },
+      clear: () => {
+        sent.length = 0;
+      },
+    },
+  };
 }
 
 function testConfig(): Config {
@@ -54,10 +98,13 @@ export async function createTestContext(): Promise<TestContext> {
   await migrate(database.db, { migrationsFolder });
   await truncateAll(database);
 
+  const { mailer, mailbox } = createMailbox();
+
   const app = await buildApp({
     config,
     database,
     storage: createStorage(config),
+    mailer,
     tokens: {
       accessSecret: config.JWT_ACCESS_SECRET,
       refreshPepper: config.JWT_REFRESH_PEPPER,
@@ -68,7 +115,7 @@ export async function createTestContext(): Promise<TestContext> {
   });
   await app.ready();
 
-  return { app, database, config };
+  return { app, database, config, mailbox };
 }
 
 /** Between suites: same schema, no rows, sequences reset. */
@@ -78,7 +125,7 @@ export async function truncateAll(database: DatabaseHandle): Promise<void> {
       admin_audit_log, idempotency_keys, cv_analyses, ai_insights,
       body_measurements, personal_records, workout_sets, workout_exercises,
       workouts, routine_exercises, routines, exercise_media, exercise_muscles,
-      exercises, media_assets, password_reset_tokens, refresh_tokens,
+      exercises, media_assets, email_codes, refresh_tokens,
       user_profiles, users, muscles, muscle_groups, equipment
     restart identity cascade
   `);
@@ -158,7 +205,11 @@ export async function makeAdmin(context: TestContext, user: TestUser): Promise<T
  */
 export interface TestClient {
   get(url: string): Promise<LightMyRequestResponse>;
-  post(url: string, payload?: unknown, headers?: Record<string, string>): Promise<LightMyRequestResponse>;
+  post(
+    url: string,
+    payload?: unknown,
+    headers?: Record<string, string>,
+  ): Promise<LightMyRequestResponse>;
   patch(url: string, payload?: unknown): Promise<LightMyRequestResponse>;
   put(url: string, payload?: unknown): Promise<LightMyRequestResponse>;
   del(url: string): Promise<LightMyRequestResponse>;

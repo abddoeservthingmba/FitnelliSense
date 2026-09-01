@@ -7,17 +7,24 @@
 import { buildApp } from './app';
 import { ConfigError, loadConfig } from './config';
 import { createDatabase } from './db/client';
+import { createMailer } from './lib/mailer';
 import { createStorage } from './lib/r2';
 
 async function main(): Promise<void> {
   const config = loadConfig();
   const database = createDatabase(config);
   const storage = createStorage(config);
+  const mailer = createMailer({
+    apiKey: config.RESEND_API_KEY,
+    from: config.EMAIL_FROM,
+    timeoutMs: config.EMAIL_TIMEOUT_MS,
+  });
 
   const app = await buildApp({
     config,
     database,
     storage,
+    mailer,
     tokens: {
       accessSecret: config.JWT_ACCESS_SECRET,
       refreshPepper: config.JWT_REFRESH_PEPPER,
@@ -39,9 +46,19 @@ async function main(): Promise<void> {
 
   await app.listen({ port: config.PORT, host: config.HOST });
   app.log.info(
-    { port: config.PORT, commit: config.COMMIT_SHA, r2: config.r2Configured },
+    {
+      port: config.PORT,
+      commit: config.COMMIT_SHA,
+      r2: config.r2Configured,
+      email: config.emailConfigured,
+    },
     'api listening',
   );
+  // Worth saying once and loudly: without this, verification and password
+  // reset both accept requests and deliver nothing.
+  if (!config.emailConfigured) {
+    app.log.warn('RESEND_API_KEY is not set — verification and reset emails will not be sent');
+  }
 }
 
 main().catch((error: unknown) => {

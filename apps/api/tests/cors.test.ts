@@ -8,6 +8,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app';
+import { nullMailer } from '../src/lib/mailer';
 import { loadConfig } from '../src/config';
 import { createStorage } from '../src/lib/r2';
 import type { DatabaseHandle } from '../src/db/client';
@@ -48,6 +49,7 @@ describe('CORS', () => {
         accessTtlSecs: config.ACCESS_TOKEN_TTL,
         refreshTtlSecs: config.REFRESH_TOKEN_TTL,
       },
+      mailer: nullMailer,
       startedAt: new Date(),
     });
     await app.ready();

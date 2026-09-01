@@ -6,6 +6,7 @@ import fp from 'fastify-plugin';
 import type { FastifyInstance } from 'fastify';
 import type { Config } from '../config';
 import type { DatabaseHandle } from '../db/client';
+import type { Mailer } from '../lib/mailer';
 import type { Storage } from '../lib/r2';
 import type { TokenConfig } from '../lib/tokens';
 
@@ -14,6 +15,7 @@ export interface AppContext {
   readonly database: DatabaseHandle;
   readonly storage: Storage;
   readonly tokens: TokenConfig;
+  readonly mailer: Mailer;
   readonly startedAt: Date;
 }
 

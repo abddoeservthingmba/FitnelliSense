@@ -52,6 +52,11 @@ services:
         value: 30
       - key: GLOBAL_RATE_LIMIT_PER_MIN
         value: 300
+      # One-time codes for email verification and password reset.
+      - key: OTP_TTL
+        value: 15m
+      - key: EMAIL_TIMEOUT_MS
+        value: 8000
 
       # §12.1: an exact-match allowlist. Set this to the web app's real origin.
       # The Android app does not need to be listed — native sends no Origin
@@ -61,6 +66,14 @@ services:
 
       # Secrets, entered in the dashboard.
       - key: DATABASE_URL
+        sync: false
+
+      # Resend. Until this is set, verification and password-reset endpoints
+      # answer normally and deliver nothing — the API logs a warning at boot.
+      # EMAIL_FROM must be an address on a domain verified with Resend.
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
         sync: false
       - key: JWT_ACCESS_SECRET
         generateValue: true

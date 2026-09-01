@@ -42,11 +42,7 @@ const timestamps = {
 
 // ============ Enums ============
 export const unitSystem = pgEnum('unit_system', ['metric', 'imperial']);
-export const experienceLevel = pgEnum('experience_level', [
-  'beginner',
-  'intermediate',
-  'advanced',
-]);
+export const experienceLevel = pgEnum('experience_level', ['beginner', 'intermediate', 'advanced']);
 export const muscleRole = pgEnum('muscle_role', ['primary', 'secondary']);
 export const setType = pgEnum('set_type', ['normal', 'warmup', 'failure', 'drop']);
 export const workoutStatus = pgEnum('workout_status', ['in_progress', 'completed', 'discarded']);
@@ -145,16 +141,44 @@ export const refreshTokens = pgTable(
   ],
 );
 
-export const passwordResetTokens = pgTable('password_reset_tokens', {
-  id: uuid('id').primaryKey(),
-  userId: uuid('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  tokenHash: text('token_hash').notNull().unique(),
-  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-  usedAt: timestamp('used_at', { withTimezone: true }),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-});
+export const emailCodePurpose = pgEnum('email_code_purpose', ['verify_email', 'password_reset']);
+
+/**
+ * One-time codes emailed to a user (FR-AUTH-06).
+ *
+ * Replaces `password_reset_tokens`. The old table held a 256-bit token meant
+ * for a link; this holds a six-digit code meant to be typed, so it needs two
+ * things that table did not have: a purpose, and an attempt counter. See
+ * lib/otp.ts for why a short code is acceptable and what pays for it.
+ *
+ * The code is stored only as a peppered hash, so this table leaking does not
+ * hand over a password reset.
+ */
+export const emailCodes = pgTable(
+  'email_codes',
+  {
+    id: uuid('id').primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    purpose: emailCodePurpose('purpose').notNull(),
+    codeHash: text('code_hash').notNull(),
+    /** Counts wrong guesses; at lib/otp.ts MAX_ATTEMPTS the code is spent. */
+    attempts: smallint('attempts').notNull().default(0),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    usedAt: timestamp('used_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    // One live code per user per purpose: requesting a new one retires the
+    // old, so a partial unique index makes that an invariant rather than a
+    // convention the service has to remember.
+    uniqueIndex('email_codes_live')
+      .on(table.userId, table.purpose)
+      .where(sql`used_at IS NULL`),
+    index('idx_email_codes_lookup').on(table.userId, table.purpose),
+  ],
+);
 
 // ============ Taxonomy ============
 export const muscleGroups = pgTable('muscle_groups', {
@@ -404,7 +428,10 @@ export const workoutSets = pgTable(
   },
   (table) => [
     uniqueIndex('workout_sets_position').on(table.workoutExerciseId, table.position),
-    check('workout_sets_rpe_range', sql`${table.rpe} IS NULL OR (${table.rpe} >= 1 AND ${table.rpe} <= 10)`),
+    check(
+      'workout_sets_rpe_range',
+      sql`${table.rpe} IS NULL OR (${table.rpe} >= 1 AND ${table.rpe} <= 10)`,
+    ),
   ],
 );
 
@@ -428,7 +455,12 @@ export const personalRecords = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
-    index('idx_pr_user_ex').on(table.userId, table.exerciseId, table.prType, table.achievedAt.desc()),
+    index('idx_pr_user_ex').on(
+      table.userId,
+      table.exerciseId,
+      table.prType,
+      table.achievedAt.desc(),
+    ),
   ],
 );
 
@@ -508,7 +540,9 @@ export const adminAuditLog = pgTable(
     requestId: text('request_id'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index('idx_audit_entity').on(table.entityType, table.entityId, table.createdAt.desc())],
+  (table) => [
+    index('idx_audit_entity').on(table.entityType, table.entityId, table.createdAt.desc()),
+  ],
 );
 
 // ============ The Hunter System ============

@@ -93,20 +93,10 @@ export default function SignInScreen() {
             ) : null}
 
             {waking ? (
-
-
               <Text variant="caption" tone="muted" accessibilityRole="alert">
-
-
                 {WAKING_MESSAGE}
-
-
               </Text>
-
-
             ) : null}
-
-
 
             <Button
               label="Sign in"
@@ -118,7 +108,14 @@ export default function SignInScreen() {
             />
           </VStack>
 
-          <VStack gap="sm" style={{ alignItems: 'center' }}>
+          <VStack gap="md" style={{ alignItems: 'center' }}>
+            {/* Above "create an account", because someone who cannot get in
+                usually already has one. */}
+            <Link href="/(auth)/forgot-password" asChild>
+              <Text tone="accent" accessibilityRole="link">
+                Forgot your password?
+              </Text>
+            </Link>
             <Link href="/(auth)/sign-up" asChild>
               <Text tone="accent" accessibilityRole="link">
                 Create an account

@@ -7,7 +7,7 @@
  * again anywhere. Import is idempotent and keyed on slugs, so re-running it
  * updates rather than duplicates.
  */
-import { asc, eq, isNull, and } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { seedCatalogueSchema, type SeedCatalogue, type SeedExercise } from '@fi/shared';
 import {
   equipment,
@@ -164,72 +164,65 @@ async function upsertTaxonomy(
 }
 
 /**
- * Media is replaced wholesale for the exercise being imported. Assets are
- * created already verified, because the seed file's licence field is the
- * verification: the schema refuses `unknown`, so nothing unlicensed can reach
- * an `active` row (FR-MED-03, FR-MED-10).
+ * What identifies an asset as "the same file" across re-imports.
+ *
+ * Deliberately not `sourceUrl`. That works when the field names one file, but a
+ * whole dataset shares one source URL — every image then resolved to the same
+ * asset row, and the second frame of each exercise violated the
+ * (exercise_id, media_id) primary key.
  */
-async function replaceMedia(
-  db: Database,
-  exerciseId: string,
-  seed: SeedExercise,
-  verifiedBy: string | null,
-): Promise<number> {
-  await db.delete(exerciseMedia).where(eq(exerciseMedia.exerciseId, exerciseId));
-  if (seed.media.length === 0) return 0;
+function locationKey(item: SeedExercise['media'][number]): string {
+  return item.r2Key ? `r2:${item.r2Key}` : `url:${item.externalUrl ?? ''}`;
+}
 
-  const now = new Date();
-  for (const [index, item] of seed.media.entries()) {
-    const provenance = {
-      kind: item.kind,
-      delivery: item.delivery,
-      state: 'active' as const,
-      r2Key: item.r2Key ?? null,
-      externalUrl: item.externalUrl ?? null,
-      sourceUrl: item.sourceUrl,
-      sourceName: item.sourceName,
-      licence: item.licence,
-      licenceUrl: item.licenceUrl ?? null,
-      attributionText: item.attributionText ?? null,
-      requiresAttribution: item.requiresAttribution,
-      verifiedAt: now,
-      verifiedBy,
-      updatedAt: now,
-    };
+/**
+ * Every existing asset, keyed by location.
+ *
+ * Loaded once for the whole import rather than queried per media item. With 142
+ * media entries that was 142 round trips before anything was written, which on
+ * a remote Postgres is most of the import's wall-clock time.
+ */
+async function loadAssetIndex(db: Database): Promise<Map<string, string>> {
+  const rows = await db
+    .select({ id: mediaAssets.id, r2Key: mediaAssets.r2Key, externalUrl: mediaAssets.externalUrl })
+    .from(mediaAssets);
 
-    // Re-importing must not leak a new asset row for the same file every time,
-    // and assets cannot be deleted (ON DELETE RESTRICT), so an existing asset
-    // for the same *file* is updated in place.
-    //
-    // Keyed on the location, not `sourceUrl`. An earlier version used
-    // `sourceUrl`, which is fine when it names one file but collapses entirely
-    // when a whole dataset shares one source: every image resolved to the same
-    // asset row, and the second frame of each exercise then violated the
-    // (exercise_id, media_id) primary key.
-    const location = item.r2Key
-      ? eq(mediaAssets.r2Key, item.r2Key)
-      : eq(mediaAssets.externalUrl, item.externalUrl ?? '');
-
-    const [existingAsset] = await db
-      .select({ id: mediaAssets.id })
-      .from(mediaAssets)
-      .where(location)
-      .limit(1);
-
-    const mediaId = existingAsset?.id ?? newId();
-    if (existingAsset) {
-      await db.update(mediaAssets).set(provenance).where(eq(mediaAssets.id, mediaId));
-    } else {
-      await db.insert(mediaAssets).values({ id: mediaId, ...provenance });
-    }
-    await db.insert(exerciseMedia).values({
-      exerciseId,
-      mediaId,
-      position: index,
-      isPrimary: item.isPrimary || index === 0,
-    });
+  const index = new Map<string, string>();
+  for (const row of rows) {
+    index.set(row.r2Key ? `r2:${row.r2Key}` : `url:${row.externalUrl ?? ''}`, row.id);
   }
-  return seed.media.length;
+  return index;
+}
+
+/**
+ * The provenance record for one seed media entry (FR-MED-02).
+ *
+ * Assets are created already verified, because the seed file's licence field
+ * *is* the verification: the schema refuses `unknown`, so nothing unlicensed
+ * can reach an `active` row (FR-MED-03, FR-MED-10).
+ */
+function provenanceOf(
+  item: SeedExercise['media'][number],
+  verifiedBy: string | null,
+  now: Date,
+): typeof mediaAssets.$inferInsert {
+  return {
+    id: newId(),
+    kind: item.kind,
+    delivery: item.delivery,
+    state: 'active',
+    r2Key: item.r2Key ?? null,
+    externalUrl: item.externalUrl ?? null,
+    sourceUrl: item.sourceUrl,
+    sourceName: item.sourceName,
+    licence: item.licence,
+    licenceUrl: item.licenceUrl ?? null,
+    attributionText: item.attributionText ?? null,
+    requiresAttribution: item.requiresAttribution,
+    verifiedAt: now,
+    verifiedBy,
+    updatedAt: now,
+  };
 }
 
 export async function importCatalogue(
@@ -257,55 +250,166 @@ export async function importCatalogue(
     mediaAssets: 0,
   };
 
-  for (const seed of catalogue.exercises) {
+  /*
+   * The import runs in bulk phases rather than a loop of single-row
+   * statements.
+   *
+   * The catalogue is 169 exercises with 142 media entries. Done row by row that
+   * is well over 700 sequential round trips, and against a remote Postgres it
+   * took ninety seconds and eventually outran the test harness's hook timeout.
+   * The same work as a dozen statements is a few seconds, and `pnpm db:seed` is
+   * something the runbook asks people to run.
+   *
+   * Everything below is still idempotent and still keyed on slugs.
+   */
+  const now = new Date();
+  const assetIndex = await loadAssetIndex(db);
+  const existingBySlug = new Map(
+    (
+      await db
+        .select({ id: exercises.id, slug: exercises.slug })
+        .from(exercises)
+        .where(isNull(exercises.userId))
+    ).map((row) => [row.slug ?? '', row.id]),
+  );
+
+  // ---- resolve every id and validate every reference before writing anything.
+  const planned = catalogue.exercises.map((seed) => {
     const equipmentId = seed.equipment ? taxonomy.equipment.get(seed.equipment) : undefined;
     if (seed.equipment && equipmentId === undefined) {
       throw badRequest(`Exercise "${seed.slug}" names unknown equipment "${seed.equipment}"`);
     }
 
-    const [existing] = await db
-      .select({ id: exercises.id })
-      .from(exercises)
-      .where(and(eq(exercises.slug, seed.slug), isNull(exercises.userId)))
-      .limit(1);
+    const existingId = existingBySlug.get(seed.slug);
+    return { seed, id: existingId ?? newId(), isNew: existingId === undefined, equipmentId };
+  });
 
-    const exerciseId = existing?.id ?? newId();
-    const values = {
-      name: seed.name,
-      description: seed.description ?? null,
-      instructions: seed.instructions ?? null,
-      equipmentId: equipmentId ?? null,
-      isUnilateral: seed.isUnilateral,
-      metadata: seed.movementPattern ? { movementPattern: seed.movementPattern } : {},
-      updatedAt: new Date(),
-    };
+  stats.exercisesCreated = planned.filter((entry) => entry.isNew).length;
+  stats.exercisesUpdated = planned.length - stats.exercisesCreated;
 
-    if (existing) {
-      await db.update(exercises).set(values).where(eq(exercises.id, exerciseId));
-      stats.exercisesUpdated += 1;
-    } else {
-      await db.insert(exercises).values({ id: exerciseId, userId: null, slug: seed.slug, ...values });
-      stats.exercisesCreated += 1;
-    }
+  // ---- exercises: one upsert for the lot.
+  if (planned.length > 0) {
+    await db
+      .insert(exercises)
+      .values(
+        planned.map(({ seed, id, equipmentId }) => ({
+          id,
+          userId: null,
+          slug: seed.slug,
+          name: seed.name,
+          description: seed.description ?? null,
+          instructions: seed.instructions ?? null,
+          equipmentId: equipmentId ?? null,
+          isUnilateral: seed.isUnilateral,
+          metadata: seed.movementPattern ? { movementPattern: seed.movementPattern } : {},
+          updatedAt: now,
+        })),
+      )
+      // The unique index on slug is partial (WHERE user_id IS NULL), so the
+      // conflict target has to repeat that predicate — a bare `(slug)` target
+      // does not match a partial index and Postgres rejects it.
+      .onConflictDoUpdate({
+        target: exercises.slug,
+        targetWhere: isNull(exercises.userId),
+        set: {
+          name: sql`excluded.name`,
+          description: sql`excluded.description`,
+          instructions: sql`excluded.instructions`,
+          equipmentId: sql`excluded.equipment_id`,
+          isUnilateral: sql`excluded.is_unilateral`,
+          metadata: sql`excluded.metadata`,
+          updatedAt: now,
+        },
+      });
+  }
 
-    await db.delete(exerciseMuscles).where(eq(exerciseMuscles.exerciseId, exerciseId));
-    const links = [
+  const exerciseIds = planned.map((entry) => entry.id);
+
+  // ---- muscle links: replaced wholesale, in two statements.
+  await db.delete(exerciseMuscles).where(inArray(exerciseMuscles.exerciseId, exerciseIds));
+
+  const muscleLinks = planned.flatMap(({ seed, id }) =>
+    [
       ...seed.primaryMuscles.map((slug) => ({ slug, role: 'primary' as const })),
       ...seed.secondaryMuscles.map((slug) => ({ slug, role: 'secondary' as const })),
-    ];
-    for (const link of links) {
+    ].map((link) => {
       const muscleId = taxonomy.muscles.get(link.slug);
       if (muscleId === undefined) {
         throw badRequest(`Exercise "${seed.slug}" names unknown muscle "${link.slug}"`);
       }
-      await db
-        .insert(exerciseMuscles)
-        .values({ exerciseId, muscleId, role: link.role })
-        .onConflictDoNothing();
-    }
-
-    stats.mediaAssets += await replaceMedia(db, exerciseId, seed, options.verifiedBy ?? null);
+      return { exerciseId: id, muscleId, role: link.role };
+    }),
+  );
+  if (muscleLinks.length > 0) {
+    // The conflict clause still matters: a seed file may name a muscle twice.
+    await db.insert(exerciseMuscles).values(muscleLinks).onConflictDoNothing();
   }
+
+  // ---- media. Assets cannot be deleted (ON DELETE RESTRICT), so an existing
+  // asset for the same file is updated in place; re-importing must not leak a
+  // new row per run.
+  await db.delete(exerciseMedia).where(inArray(exerciseMedia.exerciseId, exerciseIds));
+
+  const newAssets: (typeof mediaAssets.$inferInsert)[] = [];
+  const updatedAssets: (typeof mediaAssets.$inferInsert)[] = [];
+  const mediaLinks: (typeof exerciseMedia.$inferInsert)[] = [];
+
+  for (const { seed, id } of planned) {
+    for (const [index, item] of seed.media.entries()) {
+      const key = locationKey(item);
+      const existingId = assetIndex.get(key);
+      const record = provenanceOf(item, options.verifiedBy ?? null, now);
+      const mediaId = existingId ?? record.id;
+
+      if (existingId === undefined) {
+        // Recorded immediately, so a second entry for the same file later in
+        // this same import reuses the row rather than colliding on the link.
+        assetIndex.set(key, mediaId);
+        newAssets.push(record);
+      } else {
+        updatedAssets.push({ ...record, id: existingId });
+      }
+
+      mediaLinks.push({
+        exerciseId: id,
+        mediaId,
+        position: index,
+        isPrimary: item.isPrimary || index === 0,
+      });
+    }
+  }
+
+  if (newAssets.length > 0) await db.insert(mediaAssets).values(newAssets);
+
+  if (updatedAssets.length > 0) {
+    // Refreshing an existing asset is an insert-on-conflict on its primary key,
+    // which is how a bulk update of differing values becomes one statement.
+    await db
+      .insert(mediaAssets)
+      .values(updatedAssets)
+      .onConflictDoUpdate({
+        target: mediaAssets.id,
+        set: {
+          kind: sql`excluded.kind`,
+          delivery: sql`excluded.delivery`,
+          state: sql`excluded.state`,
+          r2Key: sql`excluded.r2_key`,
+          externalUrl: sql`excluded.external_url`,
+          sourceUrl: sql`excluded.source_url`,
+          sourceName: sql`excluded.source_name`,
+          licence: sql`excluded.licence`,
+          licenceUrl: sql`excluded.licence_url`,
+          attributionText: sql`excluded.attribution_text`,
+          requiresAttribution: sql`excluded.requires_attribution`,
+          verifiedAt: now,
+          verifiedBy: sql`excluded.verified_by`,
+          updatedAt: now,
+        },
+      });
+  }
+
+  if (mediaLinks.length > 0) await db.insert(exerciseMedia).values(mediaLinks);
+  stats.mediaAssets = mediaLinks.length;
 
   return stats;
 }

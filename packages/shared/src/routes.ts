@@ -14,6 +14,8 @@ export const routes = {
     logout: '/auth/logout',
     passwordResetRequest: '/auth/password-reset/request',
     passwordResetConfirm: '/auth/password-reset/confirm',
+    verifyEmailRequest: '/auth/verify-email/request',
+    verifyEmailConfirm: '/auth/verify-email/confirm',
   },
   me: {
     root: '/me',

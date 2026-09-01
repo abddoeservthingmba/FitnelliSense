@@ -50,7 +50,24 @@ export const envSchema = z
     JWT_REFRESH_PEPPER: z.string().min(32, 'Use at least 32 characters'),
     ACCESS_TOKEN_TTL: durationSecs('15m'),
     REFRESH_TOKEN_TTL: durationSecs('30d'),
-    PASSWORD_RESET_TTL: durationSecs('60m'),
+    /**
+     * One-time codes are short-lived by design — 15 minutes is long enough to
+     * switch to a mail app and back, and short enough to bound brute force.
+     */
+    OTP_TTL: durationSecs('15m'),
+
+    /**
+     * Email. Absent, the API still boots and the auth endpoints still answer
+     * 202; nothing is delivered and the log says so (see lib/mailer.ts).
+     */
+    RESEND_API_KEY: z.string().default(''),
+    /**
+     * Must be an address on a domain verified with the provider. Resend's
+     * shared sandbox sender only delivers to the account owner, which is fine
+     * for a first test and useless for real users.
+     */
+    EMAIL_FROM: z.string().default('Fitness Intellisense <onboarding@resend.dev>'),
+    EMAIL_TIMEOUT_MS: z.coerce.number().int().min(500).max(30_000).default(8000),
 
     CORS_ORIGINS: originListSchema,
 
@@ -91,6 +108,8 @@ export interface Config extends Env {
   readonly isTest: boolean;
   /** NFR-S-04: R2 is optional locally; media degrades to placeholders without it. */
   readonly r2Configured: boolean;
+  /** False until an API key is set; verification emails then go nowhere. */
+  readonly emailConfigured: boolean;
 }
 
 export class ConfigError extends Error {
@@ -122,5 +141,6 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): Config {
     isDevelopment: env.NODE_ENV === 'development',
     isTest: env.NODE_ENV === 'test',
     r2Configured: Boolean(env.R2_ACCOUNT_ID && env.R2_ACCESS_KEY_ID && env.R2_BUCKET),
+    emailConfigured: Boolean(env.RESEND_API_KEY),
   };
 }

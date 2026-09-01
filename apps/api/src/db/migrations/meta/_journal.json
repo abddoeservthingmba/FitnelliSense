@@ -29,6 +29,20 @@
       "when": 1788256954804,
       "tag": "0003_hunter_system",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788265184507,
+      "tag": "0004_email_codes",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788265201271,
+      "tag": "0005_drop_password_reset_tokens",
+      "breakpoints": true
     }
   ]
 }

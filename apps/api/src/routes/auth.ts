@@ -7,6 +7,7 @@
 import { z } from 'zod';
 import {
   authResponseSchema,
+  codeRequestResponseSchema,
   loginRequestSchema,
   logoutRequestSchema,
   passwordResetConfirmSchema,
@@ -15,7 +16,11 @@ import {
   registerRequestSchema,
   routes,
   tokenPairSchema,
+  verificationStatusSchema,
+  verifyEmailConfirmSchema,
 } from '@fi/shared';
+import { passwordResetEmail, verificationEmail } from '../lib/mailer';
+import { currentUser } from '../plugins/auth';
 import * as authService from '../services/auth-service';
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
@@ -24,12 +29,39 @@ const acceptedSchema = z.object({ ok: z.literal(true) });
 
 export async function authRoutes(app: FastifyInstance): Promise<void> {
   const typed = app.withTypeProvider<ZodTypeProvider>();
-  const { config, database, tokens } = app.ctx;
+  const { config, database, mailer, tokens } = app.ctx;
 
   const deps: authService.AuthDeps = {
     db: database.db,
     tokens,
-    passwordResetTtlSecs: config.PASSWORD_RESET_TTL,
+    otpTtlSecs: config.OTP_TTL,
+  };
+
+  const codeMinutes = Math.max(1, Math.round(config.OTP_TTL / 60));
+
+  /**
+   * Sends a code email and logs the outcome.
+   *
+   * Delivery failure is logged, not raised: the endpoints answer 202 whatever
+   * happens, because the alternative leaks whether an address is registered
+   * and turns a provider outage into a login-shaped error. The log line carries
+   * the reason and the user id — never the address, the code, or the body
+   * (NFR-S-07).
+   */
+  const deliver = async (
+    request: {
+      log: { info: (o: object, m: string) => void; warn: (o: object, m: string) => void };
+    },
+    event: string,
+    userId: string,
+    message: Parameters<typeof mailer.send>[0],
+  ): Promise<void> => {
+    const result = await mailer.send(message);
+    if (result.sent) {
+      request.log.info({ event, userId, messageId: result.id }, 'code email sent');
+    } else {
+      request.log.warn({ event, userId, failure: result.failure }, 'code email not sent');
+    }
   };
 
   const authLimit = {
@@ -55,7 +87,10 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
   typed.post(
     routes.auth.login,
-    { config: authLimit, schema: { body: loginRequestSchema, response: { 200: authResponseSchema } } },
+    {
+      config: authLimit,
+      schema: { body: loginRequestSchema, response: { 200: authResponseSchema } },
+    },
     async (request) => authService.login(deps, request.body),
   );
 
@@ -84,21 +119,27 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     routes.auth.passwordResetRequest,
     {
       config: authLimit,
-      schema: { body: passwordResetRequestSchema, response: { 202: acceptedSchema } },
+      schema: { body: passwordResetRequestSchema, response: { 202: codeRequestResponseSchema } },
     },
     async (request, reply) => {
       const reset = await authService.createPasswordReset(deps, request.body.email);
 
-      // Q11: no email provider is chosen yet. Until one is, the token is logged
-      // in development only and the response is identical either way, so the
-      // endpoint never reveals whether the address is registered.
-      if (reset && config.isDevelopment) {
-        request.log.warn(
-          { event: 'auth.password_reset', resetToken: reset.token },
-          'password reset token issued (development only)',
+      // An unknown address produces no code and no email, but exactly the same
+      // response. That is the whole point of answering 202 here.
+      if (reset) {
+        await deliver(
+          request,
+          'auth.password_reset',
+          reset.userId,
+          passwordResetEmail(request.body.email, reset.code, codeMinutes),
         );
       }
-      return reply.status(202).send({ ok: true as const });
+
+      return reply.status(202).send({
+        ok: true as const,
+        deliveryConfigured: mailer.isConfigured,
+        expiresInSeconds: config.OTP_TTL,
+      });
     },
   );
 
@@ -111,6 +152,60 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     async (request) => {
       await authService.confirmPasswordReset(deps, request.body);
       return { ok: true as const };
+    },
+  );
+
+  // ------------------------------------------------- email verification --
+
+  /**
+   * Verification is authenticated: you prove you hold the account, then prove
+   * you hold the address. That ordering is why there is no email in the body —
+   * a caller cannot request a code for someone else's address.
+   *
+   * The decision on record is that an unverified account stays fully
+   * functional and is reminded rather than blocked, so nothing here gates
+   * anything; `emailVerified` is a fact the client displays.
+   */
+  typed.post(
+    routes.auth.verifyEmailRequest,
+    {
+      config: authLimit,
+      preHandler: app.requireUser,
+      schema: { response: { 202: codeRequestResponseSchema } },
+    },
+    async (request, reply) => {
+      const userId = currentUser(request).id;
+      const issued = await authService.createEmailVerification(deps, userId);
+
+      // Null means already verified. Reported as success, because it is.
+      if (issued) {
+        await deliver(
+          request,
+          'auth.verify_email',
+          userId,
+          verificationEmail(issued.email, issued.code, codeMinutes),
+        );
+      }
+
+      return reply.status(202).send({
+        ok: true as const,
+        deliveryConfigured: mailer.isConfigured,
+        expiresInSeconds: config.OTP_TTL,
+      });
+    },
+  );
+
+  typed.post(
+    routes.auth.verifyEmailConfirm,
+    {
+      config: authLimit,
+      preHandler: app.requireUser,
+      schema: { body: verifyEmailConfirmSchema, response: { 200: verificationStatusSchema } },
+    },
+    async (request) => {
+      const userId = currentUser(request).id;
+      await authService.confirmEmailVerification(deps, userId, request.body.code);
+      return authService.verificationStatus(deps, userId);
     },
   );
 }

@@ -8,11 +8,8 @@
  */
 import { useState } from 'react';
 import { Alert, Platform, Switch, View } from 'react-native';
-import {
-  REST_SECONDS_OPTIONS,
-  SESSION_MINUTES_OPTIONS,
-  TRAINING_DAYS_OPTIONS,
-} from '@fi/shared';
+import { router } from 'expo-router';
+import { REST_SECONDS_OPTIONS, SESSION_MINUTES_OPTIONS, TRAINING_DAYS_OPTIONS } from '@fi/shared';
 import { Button } from '../../src/components/Button';
 import { Row, Stack } from '../../src/components/Card';
 import { Chip } from '../../src/components/Chip';
@@ -61,7 +58,10 @@ export default function ProfileScreen() {
 
   const confirm = (title: string, message: string, onConfirm: () => void) => {
     if (Platform.OS === 'web') {
-      if (typeof globalThis.confirm === 'function' && globalThis.confirm(`${title}\n\n${message}`)) {
+      if (
+        typeof globalThis.confirm === 'function' &&
+        globalThis.confirm(`${title}\n\n${message}`)
+      ) {
         onConfirm();
       }
       return;
@@ -100,9 +100,39 @@ export default function ProfileScreen() {
             />
           </View>
           <View style={{ flex: 1 }}>
-            <Stat size="small" value={weeklyHours === null ? '—' : `${weeklyHours}h`} label="a week" />
+            <Stat
+              size="small"
+              value={weeklyHours === null ? '—' : `${weeklyHours}h`}
+              label="a week"
+            />
           </View>
         </StatRow>
+
+        {/* The banner on Home can be dismissed, so verification needs a
+            permanent home. Shown either way, because "verified" is worth
+            being able to confirm. */}
+        <Section title="Email">
+          <Stack gap="sm">
+            <Row gap="sm" style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+              <Stack gap="xs" style={{ flex: 1 }}>
+                <Text>{me.data.email}</Text>
+                <Text variant="caption" tone={me.data.emailVerified ? 'accent' : 'muted'}>
+                  {me.data.emailVerified
+                    ? 'Verified'
+                    : 'Not verified — everything still works, but we cannot help you recover your password.'}
+                </Text>
+              </Stack>
+            </Row>
+            {me.data.emailVerified ? null : (
+              <Button
+                label="Verify this address"
+                variant="secondary"
+                onPress={() => router.push('/verify-email')}
+                fullWidth
+              />
+            )}
+          </Stack>
+        </Section>
 
         <Section title="Units">
           <Stack gap="sm">
@@ -119,8 +149,8 @@ export default function ProfileScreen() {
               />
             </Row>
             <Text variant="caption" tone="faint">
-              Weights are stored in kilograms and converted for display, so switching never
-              changes what you logged.
+              Weights are stored in kilograms and converted for display, so switching never changes
+              what you logged.
             </Text>
           </Stack>
         </Section>
@@ -203,7 +233,9 @@ export default function ProfileScreen() {
               label={`Bodyweight (${units.label})`}
               value={bodyweightValue}
               onChangeText={setBodyweight}
-              onBlur={() => updateProfile.mutate({ bodyweightKg: units.fromInput(bodyweightValue) })}
+              onBlur={() =>
+                updateProfile.mutate({ bodyweightKg: units.fromInput(bodyweightValue) })
+              }
               keyboardType="decimal-pad"
               inputMode="decimal"
               placeholder="Optional"

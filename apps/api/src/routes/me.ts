@@ -96,7 +96,10 @@ export async function meRoutes(app: FastifyInstance): Promise<void> {
     { preHandler: app.requireUser, schema: { response: { 200: z.looseObject({}) } } },
     async (request, reply) => {
       const data = await exportUserData(database.db, currentUser(request).id);
-      reply.header('Content-Disposition', 'attachment; filename="fitness-intellisense-export.json"');
+      reply.header(
+        'Content-Disposition',
+        'attachment; filename="fitness-intellisense-export.json"',
+      );
       return data;
     },
   );
@@ -112,7 +115,7 @@ export async function meRoutes(app: FastifyInstance): Promise<void> {
       const deps: authService.AuthDeps = {
         db: database.db,
         tokens,
-        passwordResetTtlSecs: config.PASSWORD_RESET_TTL,
+        otpTtlSecs: config.OTP_TTL,
       };
       await authService.revokeAllForUser(deps, user.id);
       await profileService.markAccountDeleted(profileDeps, user.id);

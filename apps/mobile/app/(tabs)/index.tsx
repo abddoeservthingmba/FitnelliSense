@@ -14,6 +14,7 @@ import { Screen } from '../../src/components/Screen';
 import { ListRow, Rule, Section, Stat, StatRow } from '../../src/components/Section';
 import { Overline, Text } from '../../src/components/Text';
 import { ErrorState, LoadingState } from '../../src/components/StateViews';
+import { VerifyReminder } from '../../src/features/account/VerifyReminder';
 import { TierStrip } from '../../src/features/hunter/TierStrip';
 import { useActiveWorkout, useStartWorkout } from '../../src/api/hooks/use-workout';
 import { useProgressSummary } from '../../src/api/hooks/use-history';
@@ -56,6 +57,8 @@ export default function HomeScreen() {
           </Stack>
           {/* Rank and level, straight after the name. */}
           <TierStrip />
+          {/* Only while unverified, and only until dismissed. */}
+          <VerifyReminder />
         </Stack>
 
         {/* The one block on the screen: whatever the next action is. */}
@@ -149,7 +152,11 @@ export default function HomeScreen() {
                   />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Stat size="small" value={units.volume(stats.volume30dKg)} label="30-day volume" />
+                  <Stat
+                    size="small"
+                    value={units.volume(stats.volume30dKg)}
+                    label="30-day volume"
+                  />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Stat

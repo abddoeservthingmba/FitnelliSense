@@ -46,9 +46,49 @@ export const authResponseSchema = z.object({
 
 export const passwordResetRequestSchema = z.object({ email: emailSchema });
 
+/**
+ * Six digits, spaces and dashes tolerated.
+ *
+ * People paste codes out of an email and the paste brings the formatting with
+ * it. Stripping it here rather than rejecting the input means a valid code is
+ * never refused for how it was copied.
+ */
+export const otpCodeSchema = z
+  .string()
+  .trim()
+  .transform((value) => value.replace(/[\s-]/g, ''))
+  .pipe(z.string().regex(/^\d{6}$/, 'Enter the 6-digit code from your email'));
+
+/**
+ * Reset takes the email as well as the code, and not for convenience: the code
+ * is only six digits, so it must be looked up within one account rather than
+ * across all of them.
+ */
 export const passwordResetConfirmSchema = z.object({
-  token: z.string().min(20).max(500),
+  email: emailSchema,
+  code: otpCodeSchema,
   password: passwordSchema,
+});
+
+/** Asking for a verification code needs no body — the caller is authenticated. */
+export const verifyEmailConfirmSchema = z.object({ code: otpCodeSchema });
+
+/** What a code request reports back, so the UI can say what happened. */
+export const codeRequestResponseSchema = z.object({
+  ok: z.literal(true),
+  /**
+   * False when no email provider is configured. The UI needs to distinguish
+   * "check your inbox" from "this cannot be delivered yet"; it says nothing
+   * about whether the address exists.
+   */
+  deliveryConfigured: z.boolean(),
+  /** How long the code lasts, so the screen need not hardcode it. */
+  expiresInSeconds: z.number().int(),
+});
+
+export const verificationStatusSchema = z.object({
+  email: emailSchema,
+  emailVerified: z.boolean(),
 });
 
 /** The claims the API signs. Deliberately minimal — no email, no name. */
@@ -66,3 +106,6 @@ export type TokenPair = z.infer<typeof tokenPairSchema>;
 export type AuthResponse = z.infer<typeof authResponseSchema>;
 export type AccessTokenClaims = z.infer<typeof accessTokenClaimsSchema>;
 export type PasswordResetConfirm = z.infer<typeof passwordResetConfirmSchema>;
+export type VerifyEmailConfirm = z.infer<typeof verifyEmailConfirmSchema>;
+export type CodeRequestResponse = z.infer<typeof codeRequestResponseSchema>;
+export type VerificationStatus = z.infer<typeof verificationStatusSchema>;

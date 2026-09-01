@@ -52,17 +52,24 @@ function ThemedShell() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         {/* No header and no back gesture: leaving is "Skip", not a swipe. */}
+        <Stack.Screen name="onboarding" options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen
-          name="onboarding"
-          options={{ headerShown: false, gestureEnabled: false }}
+          name="workout/active"
+          options={{ title: 'Workout', headerBackTitle: 'Back' }}
         />
-        <Stack.Screen name="workout/active" options={{ title: 'Workout', headerBackTitle: 'Back' }} />
         <Stack.Screen name="workout/[id]" options={{ title: 'Workout' }} />
         <Stack.Screen name="exercise/[id]" options={{ title: 'Exercise' }} />
-        <Stack.Screen name="exercise/new" options={{ title: 'New exercise', presentation: 'modal' }} />
+        <Stack.Screen
+          name="exercise/new"
+          options={{ title: 'New exercise', presentation: 'modal' }}
+        />
         <Stack.Screen name="routine/[id]" options={{ title: 'Routine' }} />
         <Stack.Screen name="progress/[exerciseId]" options={{ title: 'Progress' }} />
         <Stack.Screen name="leaderboard" options={{ title: 'Ranking' }} />
+        <Stack.Screen
+          name="verify-email"
+          options={{ title: 'Verify email', presentation: 'modal' }}
+        />
       </Stack>
     </View>
   );
