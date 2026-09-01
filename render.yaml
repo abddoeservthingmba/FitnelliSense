@@ -1,0 +1,59 @@
+# Render Blueprint — the API service (BRD §11.1).
+#
+# One deployable, native build, no Docker (NFR-D-08). Point Render at this file
+# ("New → Blueprint") and it creates the service; the three secrets marked
+# `sync: false` are entered once in the dashboard and never live in the repo
+# (NFR-S-08).
+services:
+  - type: web
+    name: fitness-intellisense-api
+    runtime: node
+    plan: free
+    region: singapore # closest to the Neon branch in ap-southeast-1
+    branch: main
+
+    # pnpm workspace: install from the root, build only the API. tsup bundles
+    # the workspace packages in and leaves node_modules external, so the
+    # deployed artefact is `apps/api/dist` plus the root node_modules.
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @fi/api build
+
+    # NFR-D-03: migrations are forward-only and run before the new code serves
+    # traffic, never as part of it.
+    preDeployCommand: node apps/api/dist/migrate.js
+
+    startCommand: node apps/api/dist/index.js
+
+    # NFR-O-06: Render polls this, and it is shallow and safe to poll (NFR-O-02).
+    healthCheckPath: /health
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # NFR-D-05: the running commit must always be recoverable from /health.
+      # Render sets RENDER_GIT_COMMIT; config.ts falls back to it.
+      - key: LOG_LEVEL
+        value: info
+      - key: DATABASE_POOL_MAX
+        value: 5 # free tier is a single small instance; do not exhaust Neon
+      - key: MEDIA_URL_TTL_SECONDS
+        value: 900
+      - key: AUTH_RATE_LIMIT_PER_MIN
+        value: 10
+      - key: ADMIN_RATE_LIMIT_PER_MIN
+        value: 30
+      - key: GLOBAL_RATE_LIMIT_PER_MIN
+        value: 300
+
+      # §12.1: an exact-match allowlist. Set this to the web app's real origin.
+      # The Android app does not need to be listed — native sends no Origin
+      # header and is not subject to CORS (NFR-C-07).
+      - key: CORS_ORIGINS
+        sync: false
+
+      # Secrets, entered in the dashboard.
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_PEPPER
+        generateValue: true

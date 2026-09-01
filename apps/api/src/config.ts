@@ -104,7 +104,15 @@ export class ConfigError extends Error {
 }
 
 export function loadConfig(source: NodeJS.ProcessEnv = process.env): Config {
-  const result = envSchema.safeParse(source);
+  // Render injects the deployed commit as RENDER_GIT_COMMIT. Accepting it
+  // saves wiring COMMIT_SHA by hand on every deploy, and NFR-D-05 makes the
+  // commit non-optional in production.
+  const withPlatformDefaults =
+    source.COMMIT_SHA || !source.RENDER_GIT_COMMIT
+      ? source
+      : { ...source, COMMIT_SHA: source.RENDER_GIT_COMMIT };
+
+  const result = envSchema.safeParse(withPlatformDefaults);
   if (!result.success) throw new ConfigError(result.error.issues);
 
   const env = result.data;

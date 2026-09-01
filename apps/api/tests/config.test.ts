@@ -48,6 +48,21 @@ describe('loadConfig', () => {
     ).toThrow(ConfigError);
   });
 
+  it('accepts the deployed commit from the platform (NFR-D-05)', () => {
+    const config = loadConfig({
+      ...valid,
+      NODE_ENV: 'production',
+      CORS_ORIGINS: 'https://app.example.com',
+      RENDER_GIT_COMMIT: 'abc1234',
+    });
+    expect(config.COMMIT_SHA).toBe('abc1234');
+  });
+
+  it('prefers an explicit commit over the platform’s', () => {
+    const config = loadConfig({ ...valid, COMMIT_SHA: 'explicit', RENDER_GIT_COMMIT: 'platform' });
+    expect(config.COMMIT_SHA).toBe('explicit');
+  });
+
   it('rejects short signing secrets', () => {
     expect(() => loadConfig({ ...valid, JWT_ACCESS_SECRET: 'too-short' })).toThrow(ConfigError);
   });
