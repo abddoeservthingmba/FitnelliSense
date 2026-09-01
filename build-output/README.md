@@ -42,7 +42,7 @@ package is permanent.
 ## The check that matters before every release
 
 ```bash
-apksigner verify --print-certs build-output/FitnessIntellisense-*.apk
+apksigner verify --print-certs build-output/ARISE-*.apk
 ```
 
 The certificate digest **must** equal the value in the table above. If it
@@ -57,17 +57,21 @@ it is equal.
 ## Publishing a release
 
 ```bash
-# 1. Build (see docs/runbook.md → Deploy for the full environment)
-cd apps/mobile && npx expo prebuild --platform android --no-install
-cd android && gradle assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
-
-# 2. Copy out and record the hash
-cp app/build/outputs/apk/release/app-release.apk \
-   ../../../build-output/FitnessIntellisense-<version>.apk
-sha256sum ../../../build-output/FitnessIntellisense-<version>.apk
-
-# 3. Attach it to a GitHub Release tagged v<version>
+# 1. Bump expo.version and expo.android.versionCode in apps/mobile/app.json
+# 2. Build. --clean is required after any NATIVE change: a new dependency, an
+#    app.json plugin edit, a package rename. Without it you get a stale build
+#    that looks fine and is not.
+pnpm apk            # or: pnpm apk --clean
+# 3. Verify the certificate against the table above
+# 4. Add a row to the version log
+# 5. Attach build-output/ARISE-<version>.apk to a GitHub Release tagged v<version>
 ```
+
+`pnpm apk` handles prebuild, Gradle, signing and the copy into `build-output/`,
+and prints the size and SHA-256. It refuses to run without
+`apps/mobile/credentials/keystore.env`, because Gradle otherwise falls back to
+the **debug** key without saying so, and the resulting APK cannot install over
+anything.
 
 ## ABIs
 
