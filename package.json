@@ -6,7 +6,8 @@
   "packageManager": "pnpm@10.34.5",
   "engines": {
     "// node": "Upper bound is deliberate. An open-ended >=20 let Render pick Node 26, which nothing here has been tested against; this keeps deploys on the major the repo is developed and CI-tested on.",
-    "node": ">=20 <25"
+    "node": ">=20 <25",
+    "pnpm": ">=10 <11"
   },
   "scripts": {
     "dev:api": "pnpm --filter @fi/api dev",
