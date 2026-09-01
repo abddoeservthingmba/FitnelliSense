@@ -15,7 +15,14 @@ services:
     # pnpm workspace: install from the root, build only the API. tsup bundles
     # the workspace packages in and leaves node_modules external, so the
     # deployed artefact is `apps/api/dist` plus the root node_modules.
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @fi/api build
+    #
+    # `--filter @fi/api...` installs the API and the two workspace packages it
+    # depends on, and nothing else — the Expo app's dependencies are hundreds of
+    # megabytes the server has no use for.
+    #
+    # `--prod=false` is required because Render sets NODE_ENV=production, and
+    # the build itself needs devDependencies (tsup, typescript).
+    buildCommand: corepack enable && pnpm install --frozen-lockfile --prod=false --filter @fi/api... && pnpm --filter @fi/api build
 
     # NFR-D-03: migrations are forward-only and run before the new code serves
     # traffic, never as part of it.
