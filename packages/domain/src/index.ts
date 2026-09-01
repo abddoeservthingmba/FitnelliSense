@@ -16,3 +16,4 @@ export * from './hunter';
 export * from './quests';
 export * from './badges';
 export * from './nutrition';
+export * from './password-strength';

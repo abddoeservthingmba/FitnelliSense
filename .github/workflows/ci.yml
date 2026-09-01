@@ -1,5 +1,16 @@
 # NFR-M-05 / NFR-D-04: typecheck, lint and tests on every pull request. A red
 # build cannot reach staging.
+#
+# Two things here are deliberate and easy to break by "tidying":
+#
+# 1. `pnpm/action-setup` has NO `version:` input. The version comes from the
+#    `packageManager` field in package.json. Specifying both makes the action
+#    fail outright — "Multiple versions of pnpm specified" — which is exactly
+#    how this workflow was broken in every job on every run.
+#
+# 2. Node comes from `.node-version`, the same file Render reads, rather than a
+#    literal here. CI was testing Node 20 while production ran 24; a version
+#    written in two places is a version that will disagree.
 name: CI
 
 on:
@@ -11,10 +22,6 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  # The unit job needs no database; the integration job overrides this.
-  NODE_VERSION: '20'
-
 jobs:
   quality:
     name: Typecheck, lint, unit tests
@@ -22,13 +29,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # No `version:` — see the note at the top of this file.
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
 
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version-file: .node-version
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
@@ -39,7 +45,16 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      - name: Formatting
+        # Reports only. The repo predates Prettier being enforced, so failing
+        # the build on it would block every change until a mass reformat —
+        # which would bury real diffs. Enforce it once the backlog is cleared.
+        continue-on-error: true
+        run: pnpm format:check
+
       - name: Unit and contract tests
+        # No TEST_DATABASE_URL here, so the integration suites skip by design
+        # and this job stays fast. The `integration` job below runs them.
         run: pnpm test
 
       - name: Domain coverage must stay at 100% (NFR-M-04)
@@ -48,12 +63,33 @@ jobs:
       - name: API builds
         run: pnpm --filter @fi/api build
 
+  security:
+    name: Dependency advisories
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Advisories in production dependencies
+        # A new advisory can land in a transitive dependency on any given day,
+        # through no change of ours. Failing the build on that would mean a red
+        # main branch caused by someone else's publish, so this reports and does
+        # not block. Read it; do not ignore it.
+        continue-on-error: true
+        run: pnpm audit --audit-level moderate
+
   integration:
     name: API integration tests
     runs-on: ubuntu-latest
     services:
       postgres:
-        # The schema needs citext and pg_trgm, both in the official image.
+        # The schema needs citext and pg_trgm; migration 0000 creates both, and
+        # the official image ships them.
         image: postgres:16
         env:
           POSTGRES_USER: postgres
@@ -71,12 +107,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
 
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version-file: .node-version
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
@@ -84,6 +118,8 @@ jobs:
       - name: Run integration suites against a real Postgres
         working-directory: apps/api
         env:
+          # These suites TRUNCATE every table in this database. It is a
+          # throwaway service container, which is the only safe kind of target.
           TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fitness_test
         run: pnpm vitest run
 
@@ -94,16 +130,17 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
 
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version-file: .node-version
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
 
       - name: Assert allowed and disallowed origins behave differently
+        # Also covered by `quality`, kept as its own check so the CORS
+        # requirement is visible by name in the checks list. NFR-C-01 makes a
+        # wildcard origin undeployable; this is what proves it still is.
         working-directory: apps/api
         run: pnpm vitest run tests/cors.test.ts

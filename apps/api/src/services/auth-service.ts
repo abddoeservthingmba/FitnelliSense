@@ -7,8 +7,9 @@
 import { and, eq, gt, isNull } from 'drizzle-orm';
 import type { TokenPair } from '@fi/shared';
 import { emailCodes, refreshTokens, userProfiles, users } from '../db/schema';
-import { conflict, unauthenticated } from '../lib/errors';
+import { badRequest, conflict, unauthenticated } from '../lib/errors';
 import { newId } from '../lib/ids';
+import { checkPassword } from '@fi/domain';
 import { generateCode, hashCode, MAX_ATTEMPTS } from '../lib/otp';
 import { hashPassword, verifyPassword } from '../lib/passwords';
 import {
@@ -59,10 +60,32 @@ async function issuePair(
   };
 }
 
+/**
+ * Rejects a password that is weak despite clearing the length floor.
+ *
+ * Enforced here rather than in the Zod schema because the check needs the
+ * user's email and name to catch `sam.carter1234`, and because `@fi/shared` and
+ * `@fi/domain` are deliberately independent of each other — putting domain
+ * logic in a schema would couple them.
+ *
+ * Raised as a validation error with `path: 'password'` so the client renders it
+ * against the field the user must change, not as a banner.
+ */
+function assertPasswordUsable(password: string, identity: readonly string[]): void {
+  const problem = checkPassword(password, identity);
+  if (problem) {
+    throw badRequest('That password is not strong enough', [
+      { path: 'password', message: problem.message },
+    ]);
+  }
+}
+
 export async function register(
   deps: AuthDeps,
   input: { email: string; password: string; displayName: string },
 ): Promise<AuthResult> {
+  assertPasswordUsable(input.password, [input.email, input.displayName]);
+
   const passwordHash = await hashPassword(input.password);
   const userId = newId();
 
@@ -348,6 +371,10 @@ export async function confirmPasswordReset(
   // An unknown address is rejected with the same message as a wrong code, so
   // this endpoint cannot be used to test whether an address is registered.
   if (!user) throw unauthenticated(CODE_REJECTED);
+
+  // Checked before the code is spent, so a rejected password does not cost the
+  // user their one-time code and force them to request another.
+  assertPasswordUsable(input.password, [input.email]);
 
   await consumeCode(deps, user.id, 'password_reset', input.code);
 
