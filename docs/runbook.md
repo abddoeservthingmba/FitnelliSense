@@ -83,6 +83,20 @@ the default) delivers **only to the Resend account owner's address**. That is
 enough to test the flow end to end and useless for real users, so do not ship
 without step 2.
 
+**Current state (2026-09-01):** `RESEND_API_KEY` and `EMAIL_FROM` are set on
+Render and production reports `deliveryConfigured: true`. `EMAIL_FROM` is still
+the **sandbox sender**, so codes reach only the Resend account owner — step 2 is
+outstanding. Note that Render's single-env-var API updates the stored config
+without restarting the process: a `POST /v1/services/{id}/deploys` is needed
+afterwards, or the running instance keeps the old environment and
+`deliveryConfigured` stays `false` while the dashboard shows the key set.
+
+The key is a **send-only restricted key**, which is the right scope — it cannot
+list or modify domains. A quick way to tell a valid restricted key from a bad
+one without emailing anybody: `GET https://api.resend.com/domains` returns
+`restricted_api_key` for a valid send-only key and `invalid_api_key` for a bad
+one.
+
 Codes last `OTP_TTL` (15m), allow five wrong guesses, and requesting a new one
 retires the previous one.
 
