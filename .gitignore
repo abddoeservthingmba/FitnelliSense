@@ -24,3 +24,10 @@ Thumbs.db
 
 android/
 ios/
+
+# Android signing key. Losing it means never being able to update the app;
+# committing it means anyone can publish as you. Back it up outside the repo.
+apps/mobile/credentials/
+
+# Built APKs — artefacts, not source.
+build-output/

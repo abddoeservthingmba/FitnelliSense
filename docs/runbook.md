@@ -136,6 +136,57 @@ pnpm build:apk          # cloud build; prints a download link when it finishes
 pnpm build:apk:local    # same, on this machine — needs a JDK and the Android SDK
 ```
 
+#### Building the APK with no Expo account
+
+`expo prebuild` plus Gradle needs no Expo account at all. The toolchain used
+here lives at `I:\android-toolchain` and is self-contained — nothing was
+installed system-wide:
+
+```bash
+export JAVA_HOME="I:\\android-toolchain\\jdk-17.0.20.1+1"
+export ANDROID_HOME="I:/android-toolchain/sdk"
+export ANDROID_KEYSTORE_PATH="I:/Fitness Intellisense/apps/mobile/credentials/release.keystore"
+export ANDROID_KEYSTORE_PASSWORD=...      # not in the repo
+export ANDROID_KEY_ALIAS=fitness-intellisense
+export EXPO_PUBLIC_API_URL="https://<the deployed API>"
+
+cd apps/mobile
+npx expo prebuild --platform android --no-install --clean
+printf 'sdk.dir=I:/android-toolchain/sdk\n' > android/local.properties
+cd android
+"/i/android-toolchain/gradle-9.3.1/bin/gradle.bat" assembleRelease --no-daemon \
+  -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+```
+
+The APK lands in `android/app/build/outputs/apk/release/`.
+
+Three things about this environment that will bite anyone repeating it:
+
+1. **Kaspersky Endpoint Security intercepts TLS on this machine.** Its CA has
+   to be imported into the JDK's truststore or every Gradle download fails with
+   `PKIX path building failed`. Extract it with
+   `openssl s_client -connect services.gradle.org:443 -showcerts` and import it
+   with `keytool -importcert -cacerts`. This is also why `npx expo install`
+   fails here with "self-signed certificate in certificate chain".
+2. **The Gradle wrapper cannot download Gradle** — its CDN times out from the
+   JVM even though `curl` reaches it. A standalone Gradle distribution is used
+   instead of `./gradlew`.
+3. **Architectures are restricted to `arm64-v8a,armeabi-v7a`**, which halves the
+   APK (101 MB → 58 MB) by dropping the x86 slices. Real phones are covered;
+   **an x86 emulator is not**. Drop the flag if you need one.
+
+Minification stays off. ProGuard on React Native breaks reflection-based code
+in ways that only appear at runtime, and there is no device here to verify
+against — the architecture split is the bigger win and carries no such risk.
+Revisit with a device and a pass through `docs/qa.md`.
+
+#### The signing key
+
+`apps/mobile/credentials/release.keystore` is generated, gitignored, and **not
+backed up anywhere**. Losing it means never being able to ship an update to an
+already-installed app; leaking it means someone else can publish as you. Copy
+it somewhere safe before the first Play Store release, along with its password.
+
 The CORS allowlist does **not** need the app's origin: native Android sends no
 `Origin` header and is not subject to CORS (NFR-C-07). Only the web build's
 origin belongs in `CORS_ORIGINS`.
