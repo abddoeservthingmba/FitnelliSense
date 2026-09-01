@@ -269,6 +269,25 @@ backed up anywhere**. Losing it means never being able to ship an update to an
 already-installed app; leaking it means someone else can publish as you. Copy
 it somewhere safe before the first Play Store release, along with its password.
 
+Its password and alias live in `apps/mobile/credentials/keystore.env`, which the
+build script sources. That file is gitignored too, so **the keystore and that
+one file are both single points of failure** — back up the whole `credentials/`
+directory to a password manager or encrypted store, not just the keystore.
+
+Key details, for identifying it later:
+
+```
+alias:       fitness-intellisense
+algorithm:   SHA256withRSA
+valid until: 2054-01-17
+```
+
+If the password is ever lost, there is no recovery: a keystore cannot be
+unlocked or re-keyed. The fallback is a new keystore, which changes the signing
+identity — Android then refuses to install over the existing app, so users must
+uninstall first. For this project that costs only the signed-in session, since
+all real data is server-side; for a Play Store app it would be fatal.
+
 The CORS allowlist does **not** need the app's origin: native Android sends no
 `Origin` header and is not subject to CORS (NFR-C-07). Only the web build's
 origin belongs in `CORS_ORIGINS`.
