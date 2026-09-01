@@ -109,8 +109,44 @@ Production is promoted manually, never automatically on merge (§11.2).
 
 ### Android (EAS)
 
-Profiles `development`, `preview` (internal testing) and `production`. Play Store
-submission is a Phase 3 exit item, not earlier.
+Profiles live in `apps/mobile/eas.json`:
+
+| Profile | Output | Points at | Use |
+|---|---|---|---|
+| `development` | APK, dev client | `10.0.2.2:3000` (the emulator's host) | Daily work against a local API |
+| `preview` | **APK**, installable directly | `EXPO_PUBLIC_API_URL` in the profile | Internal testing on a real phone |
+| `production` | AAB | ditto | Play Store |
+
+**Before the first build**, two things are required and neither can be done
+from the repository:
+
+1. **An Expo account.** `eas login`, or set `EXPO_TOKEN` for CI. Then `eas init`
+   once, which writes `extra.eas.projectId` into `app.json` — commit that.
+2. **A deployed API URL.** Replace the `example.com` placeholders in
+   `eas.json` with the real hosts. An APK is useless without one: the app
+   refuses to start if a release build resolves to `localhost`, `127.0.0.1` or
+   `10.0.2.2` (see `apps/mobile/src/api/config.ts`), because the alternative is
+   an app that installs, opens, and then silently fails every request.
+
+Then:
+
+```bash
+cd apps/mobile
+pnpm build:apk          # cloud build; prints a download link when it finishes
+pnpm build:apk:local    # same, on this machine — needs a JDK and the Android SDK
+```
+
+The CORS allowlist does **not** need the app's origin: native Android sends no
+`Origin` header and is not subject to CORS (NFR-C-07). Only the web build's
+origin belongs in `CORS_ORIGINS`.
+
+App icons are generated, not committed as opaque binaries:
+
+```bash
+pnpm icons   # regenerates assets/ from scripts/generate-icons.mjs
+```
+
+Play Store submission is a Phase 3 exit item, not earlier.
 
 ---
 

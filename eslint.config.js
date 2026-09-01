@@ -44,6 +44,13 @@ export default tseslint.config(
     rules: { 'no-console': 'off' },
   },
   {
+    // Build-time scripts run under Node, not in the app or the browser.
+    files: ['**/scripts/**/*.{js,mjs,ts}'],
+    languageOptions: {
+      globals: { Buffer: 'readonly', console: 'readonly', process: 'readonly' },
+    },
+  },
+  {
     // Metro and Babel configs are CommonJS by contract — the toolchain loads
     // them with `require`, so they cannot be ES modules.
     files: ['apps/mobile/metro.config.js', 'apps/mobile/babel.config.js'],

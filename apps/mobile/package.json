@@ -9,7 +9,10 @@
     "web": "expo start --web",
     "build:web": "expo export --platform web",
     "typecheck": "tsc --noEmit",
-    "test": "echo \"Golden path is covered by the API suite and E2E (§14.3)\" && exit 0"
+    "test": "echo \"Golden path is covered by the API suite and E2E (§14.3)\" && exit 0",
+    "icons": "node scripts/generate-icons.mjs",
+    "build:apk": "eas build --platform android --profile preview",
+    "build:apk:local": "eas build --platform android --profile preview --local"
   },
   "dependencies": {
     "@expo/metro-runtime": "~57.0.14",

@@ -7,15 +7,24 @@
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "assetBundlePatterns": ["**/*"],
+    "icon": "./assets/icon.png",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "android": {
       "package": "com.fitnessintellisense.app",
       "versionCode": 1,
       "adaptiveIcon": {
-        "backgroundColor": "#0B0F14"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#08090A"
       },
-      "edgeToEdgeEnabled": true,
-      "permissions": ["POST_NOTIFICATIONS", "VIBRATE"]
+      "permissions": [
+        "POST_NOTIFICATIONS",
+        "VIBRATE"
+      ],
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "ios": {
       "supportsTablet": true,
@@ -31,14 +40,19 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#0B0F14",
-          "dark": { "backgroundColor": "#0B0F14" }
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "backgroundColor": "#08090A",
+          "dark": {
+            "backgroundColor": "#08090A"
+          }
         }
       ],
       [
         "expo-notifications",
         {
-          "color": "#22D3A6"
+          "color": "#C8FF4D"
         }
       ]
     ],
