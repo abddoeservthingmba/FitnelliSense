@@ -49,6 +49,12 @@ done
 
 cd "$MOBILE"
 
+# Read while the working directory IS the mobile package, using a relative
+# path. Node on Windows cannot resolve the /i/... form this shell produces, so
+# an absolute path here fails after the build has already succeeded — which is
+# the most annoying possible moment for it to fail.
+VERSION="$(node -p "require('./app.json').expo.version")"
+
 echo "==> prebuild ${CLEAN:-(incremental)}"
 # shellcheck disable=SC2086
 npx expo prebuild --platform android --no-install $CLEAN
@@ -62,7 +68,6 @@ cd android
 "$GRADLE" assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
 
 APK="$MOBILE/android/app/build/outputs/apk/release/app-release.apk"
-VERSION="$(node -p "require('$MOBILE/app.json').expo.version")"
 DEST="$ROOT/build-output/ARISE-$VERSION.apk"
 
 mkdir -p "$ROOT/build-output"
@@ -70,12 +75,9 @@ cp "$APK" "$DEST"
 
 echo
 echo "==> $DEST"
-node -e "
-  const c = require('crypto'), fs = require('fs');
-  const bytes = fs.readFileSync('$DEST');
-  console.log('size   ', bytes.length, 'bytes');
-  console.log('sha256 ', c.createHash('sha256').update(bytes).digest('hex'));
-"
+# `sha256sum` and `stat`, not Node, for the same path-handling reason.
+stat -c 'size    %s bytes' "$DEST"
+sha256sum "$DEST" | awk '{print "sha256  " $1}'
 echo
 echo "Verify the signing certificate before sharing it. It MUST match the"
 echo "digest in build-output/README.md, or existing installs cannot update:"
