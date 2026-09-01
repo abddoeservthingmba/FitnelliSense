@@ -32,6 +32,7 @@ export async function getMe(deps: ProfileDeps, userId: string): Promise<MeRespon
       onboardedAt: userProfiles.onboardedAt,
       defaultRestSecs: userProfiles.defaultRestSecs,
       aiEnabled: userProfiles.aiEnabled,
+      leaderboardOptIn: userProfiles.leaderboardOptIn,
       avatarR2Key: userProfiles.avatarR2Key,
     })
     .from(users)
@@ -62,6 +63,7 @@ export async function getMe(deps: ProfileDeps, userId: string): Promise<MeRespon
       onboardedAt: row.onboardedAt?.toISOString() ?? null,
       defaultRestSecs: row.defaultRestSecs,
       aiEnabled: row.aiEnabled,
+      leaderboardOptIn: row.leaderboardOptIn,
     },
     avatarUrl,
   };
@@ -88,6 +90,7 @@ export async function updateProfile(
   if (input.markOnboarded) patch.onboardedAt = new Date();
   if (input.defaultRestSecs !== undefined) patch.defaultRestSecs = input.defaultRestSecs;
   if (input.aiEnabled !== undefined) patch.aiEnabled = input.aiEnabled;
+  if (input.leaderboardOptIn !== undefined) patch.leaderboardOptIn = input.leaderboardOptIn;
   if (input.avatarR2Key !== undefined) patch.avatarR2Key = input.avatarR2Key;
 
   await deps.db.update(userProfiles).set(patch).where(eq(userProfiles.userId, userId));

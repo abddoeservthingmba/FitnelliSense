@@ -25,6 +25,8 @@ export const profileSchema = z.object({
   defaultRestSecs: restSecsSchema,
   /** FR-AI-06 / FR-AI-07: off until the user opts in. */
   aiEnabled: z.boolean(),
+  /** Appearing on the leaderboard publishes training stats; off by default. */
+  leaderboardOptIn: z.boolean(),
 });
 
 export const meResponseSchema = z.object({

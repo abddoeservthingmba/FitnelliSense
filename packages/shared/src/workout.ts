@@ -1,6 +1,7 @@
 /** Workout contracts — FR-WK-01..12. */
 import { z } from 'zod';
 import { prTypeSchema, setTypeSchema, workoutStatusSchema } from './enums';
+import { hunterRewardSchema } from './hunter';
 import {
   isoDateTimeSchema,
   noteTextSchema,
@@ -123,6 +124,12 @@ export const personalRecordHitSchema = z.object({
 export const completeWorkoutResponseSchema = z.object({
   workout: workoutSummarySchema,
   personalRecords: z.array(personalRecordHitSchema),
+  /**
+   * What the session did to the Hunter System. Returned here rather than
+   * fetched afterwards, so the summary and the level-up are one moment instead
+   * of a surprise on the next screen.
+   */
+  hunter: hunterRewardSchema,
 });
 
 /**

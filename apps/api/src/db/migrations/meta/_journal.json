@@ -22,6 +22,13 @@
       "when": 1788230453776,
       "tag": "0002_onboarding_marker",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788256954804,
+      "tag": "0003_hunter_system",
+      "breakpoints": true
     }
   ]
 }

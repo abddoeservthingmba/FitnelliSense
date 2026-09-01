@@ -38,6 +38,7 @@ import {
 import { conflict, constraintName, notFound } from '../lib/errors';
 import { newId } from '../lib/ids';
 import { decodeCursor, encodeCursor, takePage } from '../lib/cursor';
+import { applyWorkout } from './hunter-service';
 import type { Database } from '../db/client';
 
 const ACTIVE_WORKOUT_CONSTRAINT = 'idx_one_active_workout';
@@ -652,11 +653,30 @@ export async function completeWorkout(
   const names = await exerciseNames(db, exerciseIds);
   const summary = await getWorkoutDetail(db, userId, workoutId);
 
+  // The Hunter System is credited here, inside completion, so the summary and
+  // any level-up are one moment rather than a discovery on the next screen.
+  // Every write it performs is idempotent, because completion itself can be
+  // replayed by the offline outbox (NFR-R-03).
+  const hunter = await applyWorkout(
+    db,
+    userId,
+    {
+      workoutId,
+      volumeKg: decToString(volume),
+      completedSets: completedSetCount(sets),
+      distinctExercises: exerciseIds.length,
+      durationMinutes: Math.round(durationSecs / 60),
+      personalRecords: records.length,
+    },
+    finishedAt.toISOString().slice(0, 10),
+  );
+
   return {
     workout: {
       ...summary,
       setCount: completedSetCount(sets),
     },
+    hunter,
     personalRecords: records.map((record) => ({
       exerciseId: record.exerciseId,
       exerciseName: names.get(record.exerciseId) ?? 'Exercise',

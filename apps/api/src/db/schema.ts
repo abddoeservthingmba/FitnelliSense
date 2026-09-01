@@ -116,6 +116,12 @@ export const userProfiles = pgTable('user_profiles', {
   defaultRestSecs: integer('default_rest_secs').notNull().default(120),
   /** FR-AI-06: opt-in, off by default. */
   aiEnabled: boolean('ai_enabled').notNull().default(false),
+  /**
+   * Appearing on the leaderboard publishes name, level, rank, XP, volume and
+   * streak to other users. Workout data is health-adjacent (R2), so this is
+   * off until deliberately turned on.
+   */
+  leaderboardOptIn: boolean('leaderboard_opt_in').notNull().default(false),
   ...timestamps,
 });
 
@@ -503,6 +509,79 @@ export const adminAuditLog = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index('idx_audit_entity').on(table.entityType, table.entityId, table.createdAt.desc())],
+);
+
+// ============ The Hunter System ============
+export const xpSource = pgEnum('xp_source', ['workout', 'quest', 'badge']);
+
+/**
+ * An append-only XP ledger rather than a running total on the user.
+ *
+ * A total would be a number nobody could audit: if it ever drifted from the
+ * work behind it there would be no way to tell, and no way to rebuild it. From
+ * a ledger, a level is a sum — and the unique index makes awarding twice for
+ * the same workout impossible rather than merely unlikely.
+ */
+export const xpEvents = pgTable(
+  'xp_events',
+  {
+    id: uuid('id').primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    source: xpSource('source').notNull(),
+    amount: integer('amount').notNull(),
+    /** The workout id, quest id or badge key this XP came from. */
+    referenceId: text('reference_id'),
+    /** The itemisation, kept so the UI can show why the XP was awarded. */
+    breakdown: jsonb('breakdown'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index('idx_xp_user').on(table.userId, table.createdAt.desc()),
+    // One award per source per reference. Replayed workout completions and
+    // double-tapped quest claims both land here and become no-ops.
+    uniqueIndex('idx_xp_once_per_reference')
+      .on(table.userId, table.source, table.referenceId)
+      .where(sql`reference_id is not null`),
+    check('xp_amount_positive', sql`${table.amount} > 0`),
+  ],
+);
+
+export const dailyQuests = pgTable(
+  'daily_quests',
+  {
+    id: uuid('id').primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    /** The user's local date, supplied by the client — a day is a local fact. */
+    questDate: date('quest_date').notNull(),
+    questKey: text('quest_key').notNull(),
+    target: integer('target').notNull(),
+    progress: integer('progress').notNull().default(0),
+    xp: integer('xp').notNull(),
+    completedAt: timestamp('completed_at', { withTimezone: true }),
+    /** Separate from completion: the user taps to collect, which is the payoff. */
+    claimedAt: timestamp('claimed_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('idx_quest_per_day').on(table.userId, table.questDate, table.questKey),
+    index('idx_quest_user_date').on(table.userId, table.questDate.desc()),
+  ],
+);
+
+export const userBadges = pgTable(
+  'user_badges',
+  {
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    badgeKey: text('badge_key').notNull(),
+    earnedAt: timestamp('earned_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.userId, table.badgeKey] })],
 );
 
 // ============ Idempotency (NFR-R-03) ============
