@@ -103,10 +103,14 @@ gets `HTTP 403`. This is the failure that actually happened in practice, and it
 cost an hour: the log now names it outright instead of leaving a bare status
 code.
 
-**Current state (2026-09-01):** `RESEND_API_KEY` and `EMAIL_FROM` are set on
-Render with the sandbox sender, so production reports
-`deliveryConfigured: true` while only the Resend account owner receives
-anything. Switching to Brevo, or verifying a domain, is outstanding.
+**Current state (2026-09-01):** **Brevo is live and delivering.**
+`BREVO_API_KEY` is set on Render with `EMAIL_FROM` on the verified Gmail
+sender, and a real password-reset code was accepted for an arbitrary recipient
+(Brevo message id `…@smtp-relay.mailin.fr`, no failure). `RESEND_API_KEY` is
+still set and acts as the automatic fallback if the Brevo key is ever removed.
+
+Outstanding: a verified domain. Until then the From is a `gmail.com` address, so
+DMARC alignment fails and some codes will be filtered as spam.
 
 Two traps worth knowing:
 
