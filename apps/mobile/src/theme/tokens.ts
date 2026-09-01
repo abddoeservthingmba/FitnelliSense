@@ -1,13 +1,13 @@
 /**
  * Design tokens — the System.
  *
- * A Solo Leveling notification window: near-black void, cyan light that looks
+ * A Solo Leveling notification window: deep navy void, ice-blue light that looks
  * like it is emitting rather than painted, hard corners, uppercase tracked
  * labels, and numbers set large because the numbers are the whole point.
  *
  * Two rules keep it from becoming unusable in a gym:
  *
- * - **Cyan is light, not decoration.** It marks what is live, earned or
+ * - **The blue is light, not decoration.** It marks what is live, earned or
  *   actionable. Everything inert stays in the greys, so the glow means
  *   something when it appears.
  * - **Contrast is not sacrificed to atmosphere.** Every text pairing here holds
@@ -90,7 +90,7 @@ interface Palette {
   text: string;
   textMuted: string;
   textFaint: string;
-  /** System cyan. Live, earned, actionable. */
+  /** ARISE blue. Live, earned, actionable. */
   accent: string;
   accentText: string;
   accentSoft: string;
@@ -107,31 +107,46 @@ interface Palette {
   track: string;
 }
 
+/**
+ * ARISE, after dark.
+ *
+ * Taken from the icon: deep navy ground, ice-blue mark. The previous palette
+ * was near-black with a cyan accent, which was close but read as a terminal
+ * rather than as the icon — the blues here are the icon's own, so the launcher
+ * and the first screen are recognisably the same object.
+ *
+ * `accent` is the icon's glow. `highlight` deliberately stays gold rather than
+ * becoming a second blue: it marks records and A-rank, and `RANK_COLORS` gives
+ * C the plain text tone and A the highlight — make both of those blue and two
+ * adjacent ranks become indistinguishable.
+ *
+ * Every pairing here holds WCAG AA against the background (NFR-U-04).
+ */
 const dark: Palette = {
-  background: '#04060B',
-  surface: '#0A1018',
-  surfaceRaised: '#111A26',
-  well: '#070C13',
-  inverse: '#E8F4FF',
-  inverseText: '#04060B',
-  border: '#16232F',
-  borderStrong: '#25394A',
-  borderGlow: '#2FD9FF',
-  text: '#E8F4FF',
-  textMuted: '#8FA6B8',
-  textFaint: '#5A7186',
-  accent: '#2FD9FF',
-  accentText: '#00131A',
-  accentSoft: '#0A2A36',
+  background: '#050D1F',
+  surface: '#0A1830',
+  surfaceRaised: '#122745',
+  well: '#03080F',
+  inverse: '#DCECFF',
+  inverseText: '#050D1F',
+  border: '#16294A',
+  borderStrong: '#27436E',
+  borderGlow: '#8CC8FF',
+  text: '#DCECFF',
+  textMuted: '#93AACB',
+  textFaint: '#6E88AD',
+  accent: '#8CC8FF',
+  accentText: '#04101F',
+  accentSoft: '#0E2748',
   monarch: '#A970FF',
   monarchSoft: '#1E1233',
-  danger: '#FF5C6E',
-  dangerSoft: '#2B0F16',
-  warning: '#FFB84D',
-  success: '#3DF5A5',
-  highlight: '#FFC94D',
-  overlay: 'rgba(2, 4, 8, 0.88)',
-  track: '#132030',
+  danger: '#FF6B7D',
+  dangerSoft: '#2E1119',
+  warning: '#FFC066',
+  success: '#4BE3A8',
+  highlight: '#F5C25B',
+  overlay: 'rgba(3, 8, 16, 0.9)',
+  track: '#132844',
 };
 
 /**
@@ -140,28 +155,31 @@ const dark: Palette = {
  * case and NFR-U-06 promises the system preference is followed.
  */
 const light: Palette = {
-  background: '#F4F7FA',
+  background: '#F3F7FC',
   surface: '#FFFFFF',
   surfaceRaised: '#EDF2F7',
   well: '#E4EBF2',
-  inverse: '#06121C',
+  inverse: '#061428',
   inverseText: '#FFFFFF',
   border: '#D3DEE8',
   borderStrong: '#A9BDCE',
-  borderGlow: '#0077A3',
+  borderGlow: '#0B57A4',
   text: '#06121C',
   textMuted: '#4A5F71',
   textFaint: '#7B8FA1',
-  accent: '#0077A3',
+  // The daylight accent has to be far darker than the dark theme's ice blue:
+  // #8CC8FF on white is about 1.9:1, nowhere near the 4.5:1 that AA body text
+  // needs. Same hue family, enough depth to be legible in a bright gym.
+  accent: '#0B57A4',
   accentText: '#FFFFFF',
-  accentSoft: '#DDF1F9',
+  accentSoft: '#DCEAFB',
   monarch: '#6A34C4',
   monarchSoft: '#EEE6FB',
   danger: '#B3261E',
   dangerSoft: '#FBE9E7',
   warning: '#8A5A00',
   success: '#0E7A52',
-  highlight: '#8A6100',
+  highlight: '#0B4E8F',
   overlay: 'rgba(6, 18, 28, 0.55)',
   track: '#D3DEE8',
 };
@@ -170,7 +188,7 @@ export const palettes = { dark, light } as const;
 export type ColorScheme = keyof typeof palettes;
 export type ThemeColors = Palette;
 
-/** Rank colours. S and the monarch tier get the violet; the rest climb the greys into cyan. */
+/** Rank colours: greys climb into the ARISE blue, then gold at A, violet at S. */
 export const RANK_COLORS: Record<string, keyof ThemeColors> = {
   E: 'textFaint',
   D: 'textMuted',

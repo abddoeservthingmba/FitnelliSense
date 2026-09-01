@@ -55,7 +55,7 @@ export default function SignInScreen() {
       <Screen scroll>
         <View style={{ paddingTop: theme.space.xxxl, gap: theme.space.xl }}>
           <VStack gap="sm">
-            <Overline>Fitness Intellisense</Overline>
+            <Overline>ARISE</Overline>
             <Text variant="display">Welcome back</Text>
             <Text tone="muted">Pick up where your last session left off.</Text>
           </VStack>

@@ -67,7 +67,7 @@ export default function SignUpScreen() {
       <Screen scroll>
         <View style={{ paddingTop: theme.space.xxxl, gap: theme.space.xl }}>
           <VStack gap="sm">
-            <Overline>Fitness Intellisense</Overline>
+            <Overline>ARISE</Overline>
             <Text variant="display">Start training</Text>
             <Text tone="muted">Three fields. You can change everything else later.</Text>
           </VStack>
