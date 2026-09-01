@@ -51,10 +51,21 @@ export default tseslint.config(
     },
   },
   {
-    // Metro and Babel configs are CommonJS by contract — the toolchain loads
-    // them with `require`, so they cannot be ES modules.
-    files: ['apps/mobile/metro.config.js', 'apps/mobile/babel.config.js'],
-    languageOptions: { globals: { module: 'writable', require: 'readonly', __dirname: 'readonly' } },
+    // Metro, Babel and Expo config plugins are CommonJS by contract — the
+    // toolchain loads them with `require`, so they cannot be ES modules.
+    files: [
+      'apps/mobile/metro.config.js',
+      'apps/mobile/babel.config.js',
+      'apps/mobile/plugins/**/*.js',
+    ],
+    languageOptions: {
+      globals: {
+        module: 'writable',
+        require: 'readonly',
+        __dirname: 'readonly',
+        process: 'readonly',
+      },
+    },
     rules: { '@typescript-eslint/no-require-imports': 'off', 'no-undef': 'off' },
   },
   prettier,
