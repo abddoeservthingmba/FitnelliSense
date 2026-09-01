@@ -1,16 +1,18 @@
 /**
  * Exercise detail (J1 step 5, FR-EX-02, FR-EX-04, FR-MED-07).
  *
- * The instructions are the substance: v1 ships without demonstration media, so
- * the text has to carry the page, and the media slot degrades to a labelled
- * placeholder rather than an empty frame.
+ * The page answers, in order: what does this movement look like, what does it
+ * work, how do I do it. The demonstration leads because it is the fastest
+ * answer of the three — but only 71 of the 169 catalogue exercises have one, so
+ * the instructions still have to carry the page on their own, and the media
+ * slot degrades to a labelled placeholder rather than an empty frame.
  */
 import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
 import { Button } from '../../src/components/Button';
 import { Card, Row, Stack } from '../../src/components/Card';
 import { Badge } from '../../src/components/Chip';
-import { ExerciseHero } from '../../src/components/ExerciseMedia';
+import { MovementDemo } from '../../src/components/MovementDemo';
 import { Screen } from '../../src/components/Screen';
 import { Section } from '../../src/components/Section';
 import { MuscleMap } from '../../src/features/exercise/MuscleMap';
@@ -70,13 +72,17 @@ export default function ExerciseDetailScreen() {
           </Row>
         </Stack>
 
+        {/* Two frames alternating — start position to end position. Tap to
+            pause on either one. */}
+        <Section title="The movement">
+          <MovementDemo media={detail.media} name={detail.name} />
+        </Section>
+
         {/* The diagram answers "what does this work" faster than the lists
-            below it, so it comes first. */}
+            below it, so it comes before them. */}
         <Section title="What it works">
           <MuscleMap muscles={mappedMuscles} />
         </Section>
-
-        <ExerciseHero mediaId={detail.primaryMediaId} name={detail.name} />
 
         {detail.instructions ? (
           <Section title="How to do it">

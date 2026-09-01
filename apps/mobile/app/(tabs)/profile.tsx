@@ -21,6 +21,7 @@ import { Rule, Section, Stat, StatRow } from '../../src/components/Section';
 import { Overline, Text } from '../../src/components/Text';
 import { TextField } from '../../src/components/TextField';
 import { ErrorState, LoadingState } from '../../src/components/StateViews';
+import { TierStrip } from '../../src/features/hunter/TierStrip';
 import { useDeleteAccount, useMe, useUpdateProfile } from '../../src/api/hooks/use-profile';
 import { useAuth } from '../../src/auth/auth-context';
 import { API_BASE_URL } from '../../src/api/config';
@@ -74,9 +75,12 @@ export default function ProfileScreen() {
   return (
     <Screen scroll>
       <Stack gap="xxl" style={{ paddingTop: theme.space.xl }}>
-        <Stack gap="xs">
-          <Overline>{me.data.email}</Overline>
-          <Text variant="heading">{profile.displayName}</Text>
+        <Stack gap="md">
+          <Stack gap="xs">
+            <Overline>{me.data.email}</Overline>
+            <Text variant="heading">{profile.displayName}</Text>
+          </Stack>
+          <TierStrip />
         </Stack>
 
         {/* Onboarding's answers, read back as the plan they describe. */}

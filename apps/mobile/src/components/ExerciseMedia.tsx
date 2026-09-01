@@ -88,50 +88,6 @@ export function ExerciseThumbnail({
   );
 }
 
-/** The large form used on an exercise detail page, with attribution below it. */
-export function ExerciseHero({ mediaId, name }: { mediaId: string | null; name: string }) {
-  const theme = useTheme();
-  const { data } = useResolvedMedia(mediaId);
-
-  if (!data) {
-    return (
-      <View
-        style={{
-          height: 180,
-          borderRadius: theme.radius.lg,
-          backgroundColor: theme.colors.surface,
-          borderWidth: 1,
-          borderColor: theme.colors.border,
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: theme.space.sm,
-        }}
-      >
-        <Placeholder name={name} size={72} />
-        <Text variant="caption" tone="faint">
-          Follow the written instructions below
-        </Text>
-      </View>
-    );
-  }
-
-  return (
-    <View style={{ gap: theme.space.xs }}>
-      <Image
-        source={{ uri: data.url }}
-        accessibilityLabel={`Illustration of ${name}`}
-        style={{
-          height: 200,
-          borderRadius: theme.radius.lg,
-          backgroundColor: theme.colors.surface,
-        }}
-        resizeMode="cover"
-      />
-      {data.requiresAttribution && data.attribution ? (
-        <Text variant="caption" tone="faint">
-          {data.attribution.text} · {data.attribution.sourceName} ({data.attribution.licence})
-        </Text>
-      ) : null}
-    </View>
-  );
-}
+// The large detail-page form lives in `MovementDemo`, which animates the two
+// frames rather than showing one of them. A single-image hero was the same
+// component with less in it, so it is not kept here as well.

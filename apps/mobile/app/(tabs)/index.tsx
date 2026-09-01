@@ -14,6 +14,7 @@ import { Screen } from '../../src/components/Screen';
 import { ListRow, Rule, Section, Stat, StatRow } from '../../src/components/Section';
 import { Overline, Text } from '../../src/components/Text';
 import { ErrorState, LoadingState } from '../../src/components/StateViews';
+import { TierStrip } from '../../src/features/hunter/TierStrip';
 import { useActiveWorkout, useStartWorkout } from '../../src/api/hooks/use-workout';
 import { useProgressSummary } from '../../src/api/hooks/use-history';
 import { useMe } from '../../src/api/hooks/use-profile';
@@ -48,9 +49,13 @@ export default function HomeScreen() {
   return (
     <Screen scroll>
       <Stack gap="xxl" style={{ paddingTop: theme.space.xl }}>
-        <Stack gap="xs">
-          <Overline>{greeting()}</Overline>
-          <Text variant="heading">{me.data?.profile.displayName ?? 'Welcome'}</Text>
+        <Stack gap="md">
+          <Stack gap="xs">
+            <Overline>{greeting()}</Overline>
+            <Text variant="heading">{me.data?.profile.displayName ?? 'Welcome'}</Text>
+          </Stack>
+          {/* Rank and level, straight after the name. */}
+          <TierStrip />
         </Stack>
 
         {/* The one block on the screen: whatever the next action is. */}

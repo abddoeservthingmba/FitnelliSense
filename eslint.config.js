@@ -47,7 +47,13 @@ export default tseslint.config(
     // Build-time scripts run under Node, not in the app or the browser.
     files: ['**/scripts/**/*.{js,mjs,ts}'],
     languageOptions: {
-      globals: { Buffer: 'readonly', console: 'readonly', process: 'readonly' },
+      globals: {
+        Buffer: 'readonly',
+        console: 'readonly',
+        process: 'readonly',
+        // Global since Node 18; the media importer fetches its dataset.
+        fetch: 'readonly',
+      },
     },
   },
   {

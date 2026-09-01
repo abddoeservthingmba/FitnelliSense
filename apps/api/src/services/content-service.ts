@@ -199,11 +199,21 @@ async function replaceMedia(
 
     // Re-importing must not leak a new asset row for the same file every time,
     // and assets cannot be deleted (ON DELETE RESTRICT), so an existing asset
-    // for the same source is updated in place.
+    // for the same *file* is updated in place.
+    //
+    // Keyed on the location, not `sourceUrl`. An earlier version used
+    // `sourceUrl`, which is fine when it names one file but collapses entirely
+    // when a whole dataset shares one source: every image resolved to the same
+    // asset row, and the second frame of each exercise then violated the
+    // (exercise_id, media_id) primary key.
+    const location = item.r2Key
+      ? eq(mediaAssets.r2Key, item.r2Key)
+      : eq(mediaAssets.externalUrl, item.externalUrl ?? '');
+
     const [existingAsset] = await db
       .select({ id: mediaAssets.id })
       .from(mediaAssets)
-      .where(eq(mediaAssets.sourceUrl, item.sourceUrl))
+      .where(location)
       .limit(1);
 
     const mediaId = existingAsset?.id ?? newId();
