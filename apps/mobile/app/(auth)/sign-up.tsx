@@ -106,8 +106,8 @@ export default function SignUpScreen() {
               <Text tone="danger" accessibilityRole="alert">
                 {error.code === 'CONFLICT'
                   ? 'There is already an account with that email.'
-                  : error.isOffline
-                    ? 'You appear to be offline. Try again once you have a connection.'
+                  : error.isTransient
+                    ? `${error.connectionMessage} Try again in a moment.`
                     : error.message}
               </Text>
             ) : null}

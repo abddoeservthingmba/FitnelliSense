@@ -83,8 +83,8 @@ export default function SignInScreen() {
 
             {error && !error.details.length ? (
               <Text tone="danger" accessibilityRole="alert">
-                {error.isOffline
-                  ? 'You appear to be offline. Try again once you have a connection.'
+                {error.isTransient
+                  ? `${error.connectionMessage} Try again in a moment.`
                   : error.message}
               </Text>
             ) : null}

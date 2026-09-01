@@ -63,10 +63,17 @@ export default function ActiveWorkoutScreen() {
 
   const defaultRestSecs = me.data?.profile.defaultRestSecs ?? 90;
 
-  /** Any mutation failing while offline is retried by the query client. */
-  const offline = [addSet, updateSet, deleteSet, addExercise].some(
-    (mutation) => mutation.error instanceof ApiRequestError && mutation.error.isOffline,
-  );
+  /**
+   * A mutation that could not reach the server is retried by the query client,
+   * so this only decides what the banner says — never whether logging carries
+   * on (NFR-B-07).
+   */
+  const connectionProblem = [addSet, updateSet, deleteSet, addExercise]
+    .map((mutation) => mutation.error)
+    .find(
+      (error): error is ApiRequestError =>
+        error instanceof ApiRequestError && error.isTransient,
+    );
 
   const confirmDiscard = useCallback(() => {
     if (!workoutId) return;
@@ -125,7 +132,10 @@ export default function ActiveWorkoutScreen() {
     <>
       <Screen scroll footerSpace={records ? 0 : 190}>
         <Stack gap="lg" style={{ paddingTop: theme.space.md }}>
-          <OfflineBanner visible={offline} />
+          <OfflineBanner
+            visible={connectionProblem !== undefined}
+            reason={connectionProblem?.isUnavailable ? 'unavailable' : 'offline'}
+          />
 
           <Card>
             <Row justify="space-between">

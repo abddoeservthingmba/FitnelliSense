@@ -24,9 +24,32 @@ export class ApiRequestError extends Error {
     this.name = 'ApiRequestError';
   }
 
-  /** True when the request never reached the API (NFR-B-07). */
+  /** The request never left the device — genuinely no connection (NFR-B-07). */
   get isOffline(): boolean {
-    return this.code === 'OFFLINE' || this.code === 'SERVICE_UNAVAILABLE';
+    return this.code === 'OFFLINE';
+  }
+
+  /** The API answered, but its database is unreachable (NFR-B-08). */
+  get isUnavailable(): boolean {
+    return this.code === 'SERVICE_UNAVAILABLE';
+  }
+
+  /**
+   * NFR-B-08 asks the client to *behave* the same for both — keep working
+   * locally, retry, never surface a hard failure. It does not ask us to say
+   * the same thing: "you're offline" is untrue when the connection is fine and
+   * the server is the one struggling, and it sends the user to check their
+   * wifi for no reason.
+   */
+  get isTransient(): boolean {
+    return this.isOffline || this.isUnavailable;
+  }
+
+  /** The one place this distinction is turned into words. */
+  get connectionMessage(): string {
+    if (this.isOffline) return 'You appear to be offline.';
+    if (this.isUnavailable) return 'The server is briefly unavailable.';
+    return this.message;
   }
 
   get isAuthFailure(): boolean {

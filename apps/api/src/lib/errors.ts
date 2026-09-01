@@ -89,6 +89,17 @@ export function isConnectionError(error: unknown): boolean {
 }
 
 /**
+ * Whether this came from the database driver at all. Postgres error codes are
+ * five characters (`23505`); the driver also raises its own socket-level codes,
+ * which the connection set above covers.
+ */
+export function isDatabaseError(error: unknown): boolean {
+  const code = pgCode(error);
+  if (code === null) return false;
+  return /^[0-9A-Z]{5}$/.test(code) || PG_CONNECTION_CODES.has(code);
+}
+
+/**
  * Maps a database failure onto the error vocabulary. `constraintMessages` lets
  * a caller name the constraint it expects, so a unique-violation reads as
  * "you already have a workout in progress" rather than a generic conflict.
@@ -113,6 +124,10 @@ export function fromDatabaseError(
     case PG_CHECK_VIOLATION:
       return badRequest('That value is not allowed');
     default:
+      // Everything else — including `28P01`, a rejected database password — is
+      // a 500 on purpose. NFR-B-08's 503 means "try again shortly", and bad
+      // credentials will not fix themselves; saying otherwise sends the client
+      // into a retry loop and hides a configuration error.
       return new AppError('INTERNAL', 'Something went wrong', { cause: error });
   }
 }

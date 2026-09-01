@@ -9,7 +9,7 @@ import { ZodError } from 'zod';
 import { hasZodFastifySchemaValidationErrors, isResponseSerializationError } from 'fastify-type-provider-zod';
 import type { ApiError } from '@fi/shared';
 import { httpStatusFor } from '@fi/shared';
-import { AppError, isConnectionError, serviceUnavailable } from '../lib/errors';
+import { AppError, fromDatabaseError, isDatabaseError } from '../lib/errors';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 function envelope(error: AppError, requestId: string): ApiError {
@@ -36,7 +36,11 @@ function fromZodError(error: ZodError): AppError {
 export function toAppError(error: unknown): AppError {
   if (error instanceof AppError) return error;
   if (error instanceof ZodError) return fromZodError(error);
-  if (isConnectionError(error)) return serviceUnavailable(error);
+
+  // A raw Postgres error that no service chose to interpret still gets its
+  // proper status: a unique violation is a 409, an unreachable database is a
+  // 503 (NFR-B-08), and only a genuinely unexpected one is a 500.
+  if (isDatabaseError(error)) return fromDatabaseError(error);
 
   if (hasZodFastifySchemaValidationErrors(error)) {
     return new AppError('VALIDATION_ERROR', 'Some of that could not be accepted', {

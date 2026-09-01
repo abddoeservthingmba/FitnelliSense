@@ -63,14 +63,21 @@ export function EmptyState({
  */
 export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
   const theme = useTheme();
-  const offline = error instanceof ApiRequestError && error.isOffline;
+  const failure = error instanceof ApiRequestError ? error : null;
 
-  const title = offline ? 'You’re offline' : 'That didn’t load';
-  const body = offline
+  // Three different situations, three different things to say. Only the first
+  // is the user's to act on.
+  const title = failure?.isOffline
+    ? 'You’re offline'
+    : failure?.isUnavailable
+      ? 'Back in a moment'
+      : 'That didn’t load';
+
+  const body = failure?.isOffline
     ? 'Your workouts are safe. This will load as soon as you’re back online.'
-    : error instanceof ApiRequestError
-      ? error.message
-      : 'Something went wrong on our side.';
+    : failure?.isUnavailable
+      ? 'The server is waking up or briefly unavailable. Nothing you logged is lost.'
+      : (failure?.message ?? 'Something went wrong on our side.');
 
   return (
     <Stack gap="md" style={{ padding: theme.space.xl, alignItems: 'center' }}>
@@ -94,7 +101,14 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
  * The unobtrusive indicator NFR-B-07 asks for: shown while a workout continues
  * against the local cache, rather than an error that interrupts logging.
  */
-export function OfflineBanner({ visible, pending }: { visible: boolean; pending?: number }) {
+export function OfflineBanner({
+  visible,
+  reason = 'offline',
+}: {
+  visible: boolean;
+  /** Which side of the connection is at fault; the reassurance is the same. */
+  reason?: 'offline' | 'unavailable';
+}) {
   const theme = useTheme();
   if (!visible) return null;
 
@@ -109,9 +123,9 @@ export function OfflineBanner({ visible, pending }: { visible: boolean; pending?
       }}
     >
       <Text variant="caption" tone="danger">
-        {pending && pending > 0
-          ? `Offline — ${pending} change${pending === 1 ? '' : 's'} will sync automatically.`
-          : 'Offline — your workout is being saved on this device.'}
+        {reason === 'offline'
+          ? 'Offline — keep logging. Your sets are saved here and will sync.'
+          : 'Server unreachable — keep logging. Your sets are saved here and will sync.'}
       </Text>
     </View>
   );
