@@ -14,10 +14,12 @@ import type {
   UpdateExerciseRequest,
 } from '@fi/shared';
 import {
+  equipment,
   exerciseMedia,
   exerciseMuscles,
   exercises,
   mediaAssets,
+  muscleGroups,
   muscles,
 } from '../db/schema';
 import { conflict, notFound } from '../lib/errors';
@@ -34,14 +36,37 @@ function visibleTo(userId: string): SQL {
 }
 
 /**
- * FR-EX-05: partial, case-insensitive match. `ILIKE` uses the trigram index
- * for the contains case, which is what a 500-row library needs and no more
- * (§3.3.1 — no Elasticsearch).
+ * FR-EX-05 asks for a name match, but a name match alone fails the way people
+ * actually search: "arms", "shoulders", "dumbbell" are the words that come to
+ * mind, and none of them appear in an exercise name. So the query also matches
+ * the taxonomy — muscle, muscle group and equipment — and an exercise counts as
+ * a hit on any of them.
+ *
+ * `ILIKE` uses the trigram index for the contains case, which is all a
+ * 500-row library needs (§3.3.1 — no Elasticsearch).
  */
-function nameMatches(query: string): SQL | undefined {
+function searchMatches(query: string): SQL | undefined {
   const trimmed = query.trim();
   if (!trimmed) return undefined;
-  return ilike(exercises.name, `%${trimmed}%`);
+  const pattern = `%${trimmed}%`;
+
+  const byMuscleOrGroup = exists(
+    sql`(select 1 from ${exerciseMuscles}
+          join ${muscles} on ${muscles.id} = ${exerciseMuscles.muscleId}
+          join ${muscleGroups} on ${muscleGroups.id} = ${muscles.muscleGroupId}
+         where ${exerciseMuscles.exerciseId} = ${exercises.id}
+           and (${muscles.name} ilike ${pattern} or ${muscleGroups.name} ilike ${pattern}))`,
+  );
+
+  const byEquipment = exists(
+    sql`(select 1 from ${equipment}
+         where ${equipment.id} = ${exercises.equipmentId}
+           and ${equipment.name} ilike ${pattern})`,
+  );
+
+  const predicate = or(ilike(exercises.name, pattern), byMuscleOrGroup, byEquipment);
+  if (!predicate) throw new Error('unreachable: search predicate');
+  return predicate;
 }
 
 function muscleFilter(input: { muscleId?: number; muscleGroupId?: number }): SQL | undefined {
@@ -132,7 +157,7 @@ export async function listExercises(
   if (query.scope === 'custom') conditions.push(eq(exercises.userId, userId));
   if (query.scope === 'system') conditions.push(isNull(exercises.userId));
   if (!query.includeArchived) conditions.push(isNull(exercises.archivedAt));
-  if (query.q) conditions.push(nameMatches(query.q));
+  if (query.q) conditions.push(searchMatches(query.q));
   if (query.equipmentId !== undefined) conditions.push(eq(exercises.equipmentId, query.equipmentId));
 
   const muscle = muscleFilter(query);

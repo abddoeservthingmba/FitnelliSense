@@ -16,6 +16,7 @@ import { Stack as VStack } from '../../src/components/Card';
 import { Screen } from '../../src/components/Screen';
 import { Overline, Text } from '../../src/components/Text';
 import { TextField } from '../../src/components/TextField';
+import { useSlowRequest, WAKING_MESSAGE } from '../../src/lib/use-slow-request';
 import { useTheme } from '../../src/theme';
 
 export default function SignUpScreen() {
@@ -27,6 +28,7 @@ export default function SignUpScreen() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<ApiRequestError | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const waking = useSlowRequest(submitting);
 
   // The same schema the API validates against — one rule, not two (NFR-M-02).
   const passwordProblem =
@@ -112,6 +114,22 @@ export default function SignUpScreen() {
                     : error.message}
               </Text>
             ) : null}
+
+            {waking ? (
+
+
+              <Text variant="caption" tone="muted" accessibilityRole="alert">
+
+
+                {WAKING_MESSAGE}
+
+
+              </Text>
+
+
+            ) : null}
+
+
 
             <Button
               label="Create account"

@@ -13,6 +13,7 @@ import { Badge } from '../../src/components/Chip';
 import { ExerciseHero } from '../../src/components/ExerciseMedia';
 import { Screen } from '../../src/components/Screen';
 import { Section } from '../../src/components/Section';
+import { MuscleMap } from '../../src/features/exercise/MuscleMap';
 import { Text } from '../../src/components/Text';
 import { ErrorState, LoadingState } from '../../src/components/StateViews';
 import { useExercise, useTaxonomy } from '../../src/api/hooks/use-catalogue';
@@ -37,6 +38,15 @@ export default function ExerciseDetailScreen() {
   const musclesById = new Map(taxonomy.data?.muscles.map((muscle) => [muscle.id, muscle]) ?? []);
   const equipment = taxonomy.data?.equipment.find((item) => item.id === detail.equipmentId);
 
+  // The diagram is keyed on slugs; the exercise carries ids. The taxonomy
+  // already has both, so the translation happens here rather than in the API.
+  const mappedMuscles = detail.muscles
+    .map((muscle) => {
+      const slug = musclesById.get(muscle.muscleId)?.slug;
+      return slug ? { slug, role: muscle.role } : null;
+    })
+    .filter((entry): entry is { slug: string; role: 'primary' | 'secondary' } => entry !== null);
+
   const named = (role: 'primary' | 'secondary') =>
     detail.muscles
       .filter((muscle) => muscle.role === role)
@@ -59,6 +69,12 @@ export default function ExerciseDetailScreen() {
             {detail.archivedAt ? <Badge label="Archived" tone="danger" /> : null}
           </Row>
         </Stack>
+
+        {/* The diagram answers "what does this work" faster than the lists
+            below it, so it comes first. */}
+        <Section title="What it works">
+          <MuscleMap muscles={mappedMuscles} />
+        </Section>
 
         <ExerciseHero mediaId={detail.primaryMediaId} name={detail.name} />
 

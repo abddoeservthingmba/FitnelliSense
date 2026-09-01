@@ -176,6 +176,38 @@ describeIntegration('golden path', () => {
     expect(derived.json<{ exercises: unknown[] }>().exercises).toHaveLength(1);
   });
 
+  /**
+   * FR-EX-05 says "search by name", but nobody searches that way. People type
+   * the body part or the equipment, and a name-only match returns nothing for
+   * every one of those words.
+   */
+  it('finds exercises by muscle, muscle group and equipment, not just name', async () => {
+    const namesFor = async (term: string): Promise<string[]> => {
+      const response = await api.get(`/api/v1/exercises?q=${encodeURIComponent(term)}&limit=50`);
+      expect(response.statusCode).toBe(200);
+      return response.json<{ items: ExerciseSummary[] }>().items.map((item) => item.name);
+    };
+
+    // A muscle group: no exercise is called "Shoulders".
+    const shoulders = await namesFor('shoulders');
+    expect(shoulders.length).toBeGreaterThan(10);
+    expect(shoulders).toContain('Arnold Press');
+
+    // A specific muscle.
+    const lats = await namesFor('latissimus');
+    expect(lats).toContain('Pull-Up');
+
+    // Equipment.
+    const dumbbell = await namesFor('dumbbell');
+    expect(dumbbell).toContain('Bulgarian Split Squat');
+
+    // And a plain name match still works.
+    expect(await namesFor('bench press')).toContain('Barbell Bench Press');
+
+    // Nonsense still returns nothing, rather than everything.
+    expect(await namesFor('zzzznotathing')).toHaveLength(0);
+  });
+
   it('keeps one account out of another account’s data (NFR-S-03)', async () => {
     const stranger = client(ctx.app, await registerUser(ctx.app));
     const mine = await api.post('/api/v1/routines', {

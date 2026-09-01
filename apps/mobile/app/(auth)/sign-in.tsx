@@ -14,6 +14,7 @@ import { Stack as VStack } from '../../src/components/Card';
 import { Screen } from '../../src/components/Screen';
 import { Overline, Text } from '../../src/components/Text';
 import { TextField } from '../../src/components/TextField';
+import { useSlowRequest, WAKING_MESSAGE } from '../../src/lib/use-slow-request';
 import { useTheme } from '../../src/theme';
 
 export default function SignInScreen() {
@@ -24,6 +25,7 @@ export default function SignInScreen() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<ApiRequestError | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const waking = useSlowRequest(submitting);
 
   const canSubmit = email.trim().length > 0 && password.length > 0 && !submitting;
 
@@ -89,6 +91,22 @@ export default function SignInScreen() {
                   : error.message}
               </Text>
             ) : null}
+
+            {waking ? (
+
+
+              <Text variant="caption" tone="muted" accessibilityRole="alert">
+
+
+                {WAKING_MESSAGE}
+
+
+              </Text>
+
+
+            ) : null}
+
+
 
             <Button
               label="Sign in"

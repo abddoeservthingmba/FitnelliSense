@@ -49,5 +49,20 @@ if (!__DEV__ && POINTS_AT_THIS_DEVICE.test(resolvedOrigin)) {
 
 export const API_BASE_URL = `${resolvedOrigin}${API_PREFIX}`;
 
-/** NFR-P-02 expects a fast API; a request hanging longer than this is a failure. */
-export const REQUEST_TIMEOUT_MS = 15_000;
+/**
+ * A warm request answers in well under a second (NFR-P-02). This ceiling is not
+ * about a warm request: the free hosting tier suspends the instance after a
+ * quarter-hour idle, and waking it takes 30–60 seconds. Measured cold: 43s.
+ *
+ * At the old 15s the client aborted mid-wake and reported itself offline, so
+ * anyone returning to the app after a break simply could not sign in. R1 and
+ * NFR-R-06 both anticipate cold starts; the timeout has to allow for one.
+ */
+export const REQUEST_TIMEOUT_MS = 75_000;
+
+/**
+ * How long a request may take before the UI should explain itself. Past this,
+ * silence reads as breakage, so screens show a "waking up" note rather than an
+ * indefinite spinner.
+ */
+export const SLOW_REQUEST_HINT_MS = 4_000;
