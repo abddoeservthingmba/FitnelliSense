@@ -22,6 +22,7 @@ import { authPlugin } from './plugins/auth';
 import { idempotencyPlugin } from './plugins/idempotency';
 import { registerRoutes } from './routes/index';
 import { healthRoutes } from './routes/health';
+import { legalRoutes } from './routes/legal';
 import { rateLimited } from './lib/errors';
 
 export async function buildApp(context: AppContext): Promise<FastifyInstance> {
@@ -84,6 +85,9 @@ export async function buildApp(context: AppContext): Promise<FastifyInstance> {
   // Health lives at the root as well as under the version prefix: uptime
   // monitors and Render's own probe expect `/health` (NFR-O-06).
   await app.register(healthRoutes);
+  // The privacy policy is a public page, not an API resource: no version
+  // prefix, so its URL can go in an app store listing and stay put.
+  await app.register(legalRoutes);
   await app.register(registerRoutes, { prefix: API_PREFIX });
 
   return app;

@@ -317,6 +317,23 @@ export default function ProfileScreen() {
               fullWidth
             />
             <Rule />
+            <Button
+              label="Privacy policy"
+              variant="ghost"
+              onPress={() => {
+                // The API's own page, so the URL follows the deployment rather
+                // than being a second copy that goes stale.
+                void import('expo-linking').then((Linking) =>
+                  Linking.openURL(`${API_BASE_URL.replace(/\/api\/v1$/, '')}/privacy`),
+                );
+              }}
+              fullWidth
+            />
+            <Text variant="micro" tone="faint">
+              What is stored, where, and who else can see it. No analytics, no advertising, nothing
+              sold.
+            </Text>
+            <Rule />
             <Button label="Sign out" variant="ghost" onPress={() => void signOut()} fullWidth />
             <Button
               label="Delete my account"

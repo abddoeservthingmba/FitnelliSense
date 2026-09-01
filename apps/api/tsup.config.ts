@@ -30,5 +30,12 @@ export default defineConfig({
     const { cp } = await import('node:fs/promises');
     await cp('src/db/migrations', 'dist/migrations', { recursive: true });
     console.log('Copied migrations into dist/migrations');
+
+    // The privacy policy is read from disk at boot and served at /privacy.
+    // tsup bundles JavaScript only, so without this the deployed process
+    // throws on startup — loudly, which is the right failure for a
+    // deployment that cannot serve its own privacy policy.
+    await cp('../../docs/privacy-policy.md', 'dist/docs/privacy-policy.md');
+    console.log('Copied privacy-policy.md into dist/docs');
   },
 });
