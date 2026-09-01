@@ -67,35 +67,57 @@ first run.
 
 ### Email (verification and password reset)
 
-Email is optional configuration. With `RESEND_API_KEY` unset the API boots,
-logs `RESEND_API_KEY is not set …` once, and both code endpoints keep answering
-`202` while delivering nothing — the client reads `deliveryConfigured: false`
-and says so rather than sending the user to an empty inbox.
+Email is optional configuration. With no provider key set the API boots, warns
+once, and both code endpoints keep answering `202` while delivering nothing —
+the client reads `deliveryConfigured: false` and says so instead of sending the
+user to an empty inbox.
 
-To switch it on:
+Two providers are supported. Set **one**; Brevo wins if both are present.
 
-1. resend.com → **API Keys** → **Create**. Set `RESEND_API_KEY`.
-2. resend.com → **Domains** → add and verify the sending domain, then set
-   `EMAIL_FROM` to an address on it, e.g. `Fitness Intellisense <no-reply@example.com>`.
+|                          | Brevo                        | Resend             |
+| ------------------------ | ---------------------------- | ------------------ |
+| Verifies                 | a single sender **address**  | a whole **domain** |
+| Needs a domain           | no                           | yes                |
+| Free tier                | 300/day                      | 3,000/month        |
+| From a free-mail address | works, weaker deliverability | not possible       |
 
-Until a domain is verified, Resend's sandbox sender (`onboarding@resend.dev`,
-the default) delivers **only to the Resend account owner's address**. That is
-enough to test the flow end to end and useless for real users, so do not ship
-without step 2.
+**Brevo — the no-domain route.** brevo.com → _Senders, Domains & Dedicated IPs_
+→ add your address → click the link in the confirmation email. Then set
+`BREVO_API_KEY` (Settings → SMTP & API → API keys) and `EMAIL_FROM` to that same
+address.
+
+Expect codes to land in spam sometimes. Sending `From: you@gmail.com` through
+Brevo's servers cannot satisfy DMARC alignment for `gmail.com` — the SPF and
+DKIM signatures are Brevo's, not Google's. **No code change can fix that**; it is
+precisely what a verified domain fixes. The messages help themselves a little by
+carrying no links and no images.
+
+**Resend — the proper route, once you have a domain.** resend.com → Domains →
+add a **subdomain** (`send.yourdomain.com`, so the root domain's reputation is
+never at stake) → add the MX and two TXT records it shows → verify. Then
+`RESEND_API_KEY` and `EMAIL_FROM` on that subdomain.
+
+Until a domain is verified, Resend's sandbox sender (`onboarding@resend.dev`)
+delivers **only to the Resend account owner's own address**. Everything else
+gets `HTTP 403`. This is the failure that actually happened in practice, and it
+cost an hour: the log now names it outright instead of leaving a bare status
+code.
 
 **Current state (2026-09-01):** `RESEND_API_KEY` and `EMAIL_FROM` are set on
-Render and production reports `deliveryConfigured: true`. `EMAIL_FROM` is still
-the **sandbox sender**, so codes reach only the Resend account owner — step 2 is
-outstanding. Note that Render's single-env-var API updates the stored config
-without restarting the process: a `POST /v1/services/{id}/deploys` is needed
-afterwards, or the running instance keeps the old environment and
-`deliveryConfigured` stays `false` while the dashboard shows the key set.
+Render with the sandbox sender, so production reports
+`deliveryConfigured: true` while only the Resend account owner receives
+anything. Switching to Brevo, or verifying a domain, is outstanding.
 
-The key is a **send-only restricted key**, which is the right scope — it cannot
-list or modify domains. A quick way to tell a valid restricted key from a bad
-one without emailing anybody: `GET https://api.resend.com/domains` returns
-`restricted_api_key` for a valid send-only key and `invalid_api_key` for a bad
-one.
+Two traps worth knowing:
+
+- Render's single-env-var API updates the stored config **without restarting the
+  process**. A `POST /v1/services/{id}/deploys` is needed afterwards, or the
+  running instance keeps the old environment and `deliveryConfigured` stays
+  `false` while the dashboard shows the key set.
+- Sending from a machine behind TLS-inspecting antivirus fails with
+  `SELF_SIGNED_CERT_IN_CHAIN` before the request leaves the building. That is a
+  local problem, not a provider one — test delivery against the deployed API,
+  or set `NODE_EXTRA_CA_CERTS` to the interceptor's root certificate.
 
 Codes last `OTP_TTL` (15m), allow five wrong guesses, and requesting a new one
 retires the previous one.

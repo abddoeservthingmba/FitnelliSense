@@ -7,7 +7,7 @@
 import { buildApp } from './app';
 import { ConfigError, loadConfig } from './config';
 import { createDatabase } from './db/client';
-import { createMailer } from './lib/mailer';
+import { createMailer, providerFor } from './lib/mailer';
 import { createFoodLookup } from './lib/open-food-facts';
 import { createStorage } from './lib/r2';
 
@@ -16,7 +16,8 @@ async function main(): Promise<void> {
   const database = createDatabase(config);
   const storage = createStorage(config);
   const mailer = createMailer({
-    apiKey: config.RESEND_API_KEY,
+    brevoApiKey: config.BREVO_API_KEY,
+    resendApiKey: config.RESEND_API_KEY,
     from: config.EMAIL_FROM,
     timeoutMs: config.EMAIL_TIMEOUT_MS,
   });
@@ -54,14 +55,16 @@ async function main(): Promise<void> {
       port: config.PORT,
       commit: config.COMMIT_SHA,
       r2: config.r2Configured,
-      email: config.emailConfigured,
+      email: providerFor({ brevoApiKey: config.BREVO_API_KEY, resendApiKey: config.RESEND_API_KEY }) ?? 'none',
     },
     'api listening',
   );
   // Worth saying once and loudly: without this, verification and password
   // reset both accept requests and deliver nothing.
   if (!config.emailConfigured) {
-    app.log.warn('RESEND_API_KEY is not set — verification and reset emails will not be sent');
+    app.log.warn(
+      'No email provider configured (set BREVO_API_KEY or RESEND_API_KEY) — verification and reset emails will not be sent',
+    );
   }
 }
 

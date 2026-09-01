@@ -7,7 +7,14 @@
  * inject markup into the HTML part.
  */
 import { describe, expect, it } from 'vitest';
-import { createMailer, nullMailer, passwordResetEmail, verificationEmail } from '../src/lib/mailer';
+import {
+  createMailer,
+  nullMailer,
+  parseSender,
+  passwordResetEmail,
+  providerFor,
+  verificationEmail,
+} from '../src/lib/mailer';
 
 describe('nullMailer', () => {
   it('reports failure rather than silently dropping the message', async () => {
@@ -25,12 +32,22 @@ describe('nullMailer', () => {
 
 describe('createMailer', () => {
   it('falls back to the null mailer with no API key, rather than failing at boot', () => {
-    const mailer = createMailer({ apiKey: '', from: 'a@b.com', timeoutMs: 1000 });
+    const mailer = createMailer({
+      brevoApiKey: '',
+      resendApiKey: '',
+      from: 'a@b.com',
+      timeoutMs: 1000,
+    });
     expect(mailer.isConfigured).toBe(false);
   });
 
   it('is configured once a key is present', () => {
-    const mailer = createMailer({ apiKey: 're_test', from: 'a@b.com', timeoutMs: 1000 });
+    const mailer = createMailer({
+      brevoApiKey: '',
+      resendApiKey: 're_test',
+      from: 'a@b.com',
+      timeoutMs: 1000,
+    });
     expect(mailer.isConfigured).toBe(true);
   });
 });
@@ -107,7 +124,7 @@ describe('provider failures', () => {
   };
 
   const send = (from: string) =>
-    createMailer({ apiKey: 're_test', from, timeoutMs: 1000 }).send({
+    createMailer({ brevoApiKey: '', resendApiKey: 're_test', from, timeoutMs: 1000 }).send({
       to: 'someone@example.com',
       subject: 's',
       text: 't',
@@ -174,6 +191,137 @@ describe('provider failures', () => {
       expect(result.failure).toContain('badnamewithspaces');
     } finally {
       restore();
+    }
+  });
+});
+
+describe('provider selection', () => {
+  const keys = { brevoApiKey: '', resendApiKey: '', from: 'a@b.com', timeoutMs: 1000 };
+
+  it('is unconfigured with no keys at all', () => {
+    expect(providerFor(keys)).toBeNull();
+    expect(createMailer(keys).isConfigured).toBe(false);
+  });
+
+  it('uses Resend when only Resend is set', () => {
+    expect(providerFor({ ...keys, resendApiKey: 're_x' })).toBe('resend');
+  });
+
+  it('uses Brevo when only Brevo is set', () => {
+    expect(providerFor({ ...keys, brevoApiKey: 'xkeysib_x' })).toBe('brevo');
+  });
+
+  it('prefers Brevo when both are set', () => {
+    // Not a quality judgement: Brevo verifies a single address, so it is the
+    // one that can reach a real user without owning a domain.
+    expect(providerFor({ ...keys, brevoApiKey: 'xkeysib_x', resendApiKey: 're_x' })).toBe('brevo');
+  });
+});
+
+describe('parseSender', () => {
+  it('splits a name and address, which Brevo requires separately', () => {
+    expect(parseSender('Fitness Intellisense <no-reply@example.com>')).toEqual({
+      name: 'Fitness Intellisense',
+      email: 'no-reply@example.com',
+    });
+  });
+
+  it('accepts a bare address', () => {
+    expect(parseSender('no-reply@example.com')).toEqual({
+      name: '',
+      email: 'no-reply@example.com',
+    });
+  });
+
+  it('tolerates the quoting and spacing people actually type', () => {
+    expect(parseSender('"Fitness Intellisense"  <  no-reply@example.com  >')).toEqual({
+      name: 'Fitness Intellisense',
+      email: 'no-reply@example.com',
+    });
+  });
+});
+
+describe('brevo transport', () => {
+  const brevo = (from = 'Fitness Intellisense <me@gmail.com>') =>
+    createMailer({ brevoApiKey: 'xkeysib_test', resendApiKey: '', from, timeoutMs: 1000 });
+
+  it('sends the shape Brevo expects, with the sender split out', async () => {
+    let captured: { url?: string; headers?: Record<string, string>; body?: unknown } = {};
+    const original = globalThis.fetch;
+    globalThis.fetch = (async (url: string, init: RequestInit) => {
+      captured = {
+        url: String(url),
+        headers: init.headers as Record<string, string>,
+        body: JSON.parse(String(init.body)),
+      };
+      return new Response(JSON.stringify({ messageId: '<abc@brevo>' }), { status: 201 });
+    }) as unknown as typeof fetch;
+
+    try {
+      const result = await brevo().send({
+        to: 'someone@example.com',
+        subject: 's',
+        text: 't',
+        html: 'h',
+      });
+
+      expect(result.sent).toBe(true);
+      // Brevo's id field is messageId, not id.
+      expect(result.id).toBe('<abc@brevo>');
+      expect(captured.url).toContain('api.brevo.com');
+      // Their auth header is api-key, not a bearer token.
+      expect(captured.headers?.['api-key']).toBe('xkeysib_test');
+      expect(captured.body).toEqual({
+        sender: { name: 'Fitness Intellisense', email: 'me@gmail.com' },
+        to: [{ email: 'someone@example.com' }],
+        subject: 's',
+        textContent: 't',
+        htmlContent: 'h',
+      });
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
+
+  it('names an unverified sender on a 400, the failure to expect first', async () => {
+    const original = globalThis.fetch;
+    globalThis.fetch = (async () =>
+      new Response(JSON.stringify({ code: 'invalid_parameter', message: 'sender not valid' }), {
+        status: 400,
+      })) as typeof fetch;
+    try {
+      const result = await brevo().send({
+        to: 'someone@example.com',
+        subject: 's',
+        text: 't',
+        html: 'h',
+      });
+      expect(result.sent).toBe(false);
+      expect(result.failure).toContain('brevo');
+      expect(result.failure).toContain('invalid_parameter');
+      expect(result.failure).toContain('not verified');
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
+
+  it('counts a 2xx with no usable body as sent', async () => {
+    const original = globalThis.fetch;
+    // `null` body, not `''`: 204 is a null-body status and the Response
+    // constructor throws if given content for one.
+    globalThis.fetch = (async () => new Response(null, { status: 204 })) as typeof fetch;
+    try {
+      const result = await brevo().send({
+        to: 'someone@example.com',
+        subject: 's',
+        text: 't',
+        html: 'h',
+      });
+      // Delivery was accepted; only the id is unknown.
+      expect(result.sent).toBe(true);
+      expect(result.id).toBeNull();
+    } finally {
+      globalThis.fetch = original;
     }
   });
 });

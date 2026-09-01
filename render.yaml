@@ -68,9 +68,17 @@ services:
       - key: DATABASE_URL
         sync: false
 
-      # Resend. Until this is set, verification and password-reset endpoints
-      # answer normally and deliver nothing — the API logs a warning at boot.
-      # EMAIL_FROM must be an address on a domain verified with Resend.
+      # Email. Set ONE of these. Until one is set, verification and
+      # password-reset endpoints answer normally and deliver nothing, and the
+      # API logs a warning at boot.
+      #
+      # Brevo verifies a single sender ADDRESS, so it works with no domain and
+      # takes precedence when both are set. Resend needs a domain you control
+      # DNS for — its shared sender only reaches the account owner.
+      #
+      # EMAIL_FROM must match whatever the chosen provider has verified.
+      - key: BREVO_API_KEY
+        sync: false
       - key: RESEND_API_KEY
         sync: false
       - key: EMAIL_FROM

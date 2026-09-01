@@ -62,9 +62,18 @@ export const envSchema = z
      */
     RESEND_API_KEY: z.string().default(''),
     /**
-     * Must be an address on a domain verified with the provider. Resend's
-     * shared sandbox sender only delivers to the account owner, which is fine
-     * for a first test and useless for real users.
+     * Preferred over Resend when both are set.
+     *
+     * Not because it is the better product — it is not — but because Brevo
+     * verifies a single sender *address* while Resend needs a whole domain you
+     * control DNS for. With no domain, Brevo is the only one of the two that
+     * can mail a real user.
+     */
+    BREVO_API_KEY: z.string().default(''),
+    /**
+     * With Brevo: any address verified under Senders — a personal Gmail is
+     * enough. With Resend: an address on a domain verified with them, since
+     * their shared sandbox sender only reaches the account owner.
      */
     EMAIL_FROM: z.string().default('Fitness Intellisense <onboarding@resend.dev>'),
     EMAIL_TIMEOUT_MS: z.coerce.number().int().min(500).max(30_000).default(8000),
@@ -144,6 +153,6 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): Config {
     isDevelopment: env.NODE_ENV === 'development',
     isTest: env.NODE_ENV === 'test',
     r2Configured: Boolean(env.R2_ACCOUNT_ID && env.R2_ACCESS_KEY_ID && env.R2_BUCKET),
-    emailConfigured: Boolean(env.RESEND_API_KEY),
+    emailConfigured: Boolean(env.BREVO_API_KEY || env.RESEND_API_KEY),
   };
 }

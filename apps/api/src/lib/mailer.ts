@@ -5,8 +5,8 @@
  * password. That is the whole surface, and it is worth keeping it that small —
  * every additional template is another thing that can leak.
  *
- * The provider sits behind `Mailer` so nothing above this file knows it is
- * Resend. Without an API key the app boots and runs on `nullMailer`: sending
+ * The provider sits behind `Mailer` so nothing above this file knows which one
+ * is in use. Without an API key the app boots and runs on `nullMailer`: sending
  * reports failure and the caller behaves as it would for any delivery failure.
  * That is deliberate — an unconfigured mailer must not stop the API starting,
  * and must not silently look like success either.
@@ -36,22 +36,6 @@ export interface SendResult {
   readonly failure: string | null;
 }
 
-export interface MailerConfig {
-  readonly apiKey: string;
-  readonly from: string;
-  readonly timeoutMs: number;
-}
-
-const RESEND_ENDPOINT = 'https://api.resend.com/emails';
-
-/**
- * A loggable reason for a transport failure.
- *
- * Deliberately a fixed set of strings rather than `error.message`: the message
- * on a fetch failure can contain the URL, and on some runtimes the request
- * details with it. This is written into the log, so it says only what went
- * wrong in kind.
- */
 /**
  * The provider's machine-readable error code, or null.
  *
@@ -74,22 +58,13 @@ async function providerErrorCode(response: Response): Promise<string | null> {
 }
 
 /**
- * A sentence pointing at the usual cause, for the statuses that have one.
+ * A loggable reason for a transport failure.
  *
- * This exists because the failure that actually happened in practice — a 403
- * from the sandbox sender — is invisible from the status code alone, and the
- * response body that would explain it cannot be logged.
+ * Deliberately a fixed set of strings rather than `error.message`: the message
+ * on a fetch failure can contain the URL, and on some runtimes the request
+ * details with it. This is written into the log, so it says only what went
+ * wrong in kind.
  */
-function hintFor(status: number, from: string): string {
-  if (status === 403 && from.includes('resend.dev')) {
-    return ' — the sandbox sender only delivers to the Resend account owner; verify a domain and set EMAIL_FROM to an address on it';
-  }
-  if (status === 401 || status === 403) return ' — check RESEND_API_KEY and EMAIL_FROM';
-  if (status === 422) return ' — EMAIL_FROM is probably not on a verified domain';
-  if (status === 429) return ' — provider rate limit';
-  return '';
-}
-
 function transportFailure(error: unknown): string {
   if (error instanceof Error && error.name === 'TimeoutError') {
     return 'the email provider did not respond in time';
@@ -97,6 +72,103 @@ function transportFailure(error: unknown): string {
   if (error instanceof SyntaxError) return 'the email provider returned a malformed response';
   return 'the email provider could not be reached';
 }
+
+// ----------------------------------------------------------------- providers --
+
+/**
+ * Two providers, because the choice is forced by circumstance rather than
+ * preference.
+ *
+ * Resend is the better product, but its shared sender (`onboarding@resend.dev`)
+ * only delivers to the account owner's own address, and using any other From
+ * requires a domain you control DNS for. Brevo will verify a single *address* —
+ * a plain Gmail address is enough — so it can reach real users with no domain
+ * at all.
+ *
+ * Selection is inferred from which key is set rather than from a separate
+ * `EMAIL_PROVIDER` variable: one fewer thing to set inconsistently, and it is
+ * impossible to name a provider whose key is missing.
+ */
+type Provider = 'resend' | 'brevo';
+
+interface ProviderSpec {
+  readonly endpoint: string;
+  /** Auth differs: Resend uses a bearer token, Brevo an `api-key` header. */
+  headers: (apiKey: string) => Record<string, string>;
+  body: (from: Sender, message: OutgoingEmail) => unknown;
+  /** Their id field is `id`; Brevo's is `messageId`. */
+  idOf: (body: Record<string, unknown>) => string | null;
+  hint: (status: number, from: string) => string;
+}
+
+interface Sender {
+  readonly name: string;
+  readonly email: string;
+}
+
+/**
+ * Splits `Name <address@example.com>` into its parts.
+ *
+ * Resend takes the combined string; Brevo insists on the two separately, so it
+ * has to be parsed rather than passed through.
+ */
+export function parseSender(from: string): Sender {
+  const match = /^\s*(.*?)\s*<\s*([^>]+)\s*>\s*$/.exec(from);
+  if (match?.[2]) {
+    return { name: (match[1] ?? '').replace(/^"|"$/g, '').trim(), email: match[2].trim() };
+  }
+  // A bare address, which is valid too.
+  const bare = from.trim();
+  return { name: '', email: bare };
+}
+
+const PROVIDERS: Record<Provider, ProviderSpec> = {
+  resend: {
+    endpoint: 'https://api.resend.com/emails',
+    headers: (apiKey) => ({
+      authorization: `Bearer ${apiKey}`,
+      'content-type': 'application/json',
+    }),
+    body: (from, message) => ({
+      from: from.name ? `${from.name} <${from.email}>` : from.email,
+      to: [message.to],
+      subject: message.subject,
+      text: message.text,
+      html: message.html,
+    }),
+    idOf: (body) => (typeof body.id === 'string' ? body.id : null),
+    hint: (status, from) => {
+      if (status === 403 && from.includes('resend.dev')) {
+        return ' — the sandbox sender only delivers to the Resend account owner; verify a domain and set EMAIL_FROM to an address on it';
+      }
+      if (status === 401 || status === 403) return ' — check RESEND_API_KEY and EMAIL_FROM';
+      if (status === 422) return ' — EMAIL_FROM is probably not on a verified domain';
+      if (status === 429) return ' — provider rate limit';
+      return '';
+    },
+  },
+
+  brevo: {
+    endpoint: 'https://api.brevo.com/v3/smtp/email',
+    headers: (apiKey) => ({ 'api-key': apiKey, 'content-type': 'application/json' }),
+    body: (from, message) => ({
+      sender: { name: from.name || 'Fitness Intellisense', email: from.email },
+      to: [{ email: message.to }],
+      subject: message.subject,
+      textContent: message.text,
+      htmlContent: message.html,
+    }),
+    idOf: (body) => (typeof body.messageId === 'string' ? body.messageId : null),
+    hint: (status) => {
+      if (status === 400) {
+        return ' — the sender address is probably not verified in Brevo (Senders → verify the address)';
+      }
+      if (status === 401) return ' — check BREVO_API_KEY';
+      if (status === 402 || status === 429) return ' — Brevo daily limit or credit exhausted';
+      return '';
+    },
+  },
+};
 
 /** Used when no API key is configured. Honest failure, not a silent drop. */
 export const nullMailer: Mailer = {
@@ -108,57 +180,75 @@ export const nullMailer: Mailer = {
   }),
 };
 
-export function createMailer(config: MailerConfig): Mailer {
-  if (!config.apiKey) return nullMailer;
+export interface MailerKeys {
+  /** Preferred when set: it reaches any recipient without owning a domain. */
+  readonly brevoApiKey: string;
+  readonly resendApiKey: string;
+  readonly from: string;
+  readonly timeoutMs: number;
+}
+
+/** Which provider a given set of keys resolves to, or null for none. */
+export function providerFor(
+  keys: Pick<MailerKeys, 'brevoApiKey' | 'resendApiKey'>,
+): Provider | null {
+  if (keys.brevoApiKey) return 'brevo';
+  if (keys.resendApiKey) return 'resend';
+  return null;
+}
+
+export function createMailer(keys: MailerKeys): Mailer {
+  const provider = providerFor(keys);
+  if (provider === null) return nullMailer;
+
+  const spec = PROVIDERS[provider];
+  const apiKey = provider === 'brevo' ? keys.brevoApiKey : keys.resendApiKey;
+  const sender = parseSender(keys.from);
 
   return {
     isConfigured: true,
     async send(message) {
       // The whole request is bounded: a hanging provider must not hold a
       // request open, because the caller answers 202 regardless.
-      const abort = AbortSignal.timeout(config.timeoutMs);
+      const abort = AbortSignal.timeout(keys.timeoutMs);
 
       try {
-        const response = await fetch(RESEND_ENDPOINT, {
+        const response = await fetch(spec.endpoint, {
           method: 'POST',
-          headers: {
-            authorization: `Bearer ${config.apiKey}`,
-            'content-type': 'application/json',
-          },
-          body: JSON.stringify({
-            from: config.from,
-            to: [message.to],
-            subject: message.subject,
-            text: message.text,
-            html: message.html,
-          }),
+          headers: spec.headers(apiKey),
+          body: JSON.stringify(spec.body(sender, message)),
           signal: abort,
         });
 
         if (!response.ok) {
           // The status alone was not enough to diagnose a real 403: it took a
-          // database query and two log reads to work out that the sandbox
-          // sender only delivers to the account owner. Resend also returns a
-          // machine-readable `name` for the error, which is safe to log and
-          // says which of the many 403 causes it was.
+          // database query and two log reads to work out that Resend's sandbox
+          // sender only delivers to the account owner. So the provider's
+          // machine-readable error code is logged, plus a sentence naming the
+          // usual cause for that status.
           //
-          // Their `message` field is NOT logged: it quotes the recipient
-          // address back (NFR-S-07).
+          // Their `message` field is NOT logged: on a 403 it quotes the
+          // recipient's address back (NFR-S-07).
           const code = await providerErrorCode(response);
           return {
             sent: false,
             id: null,
-            failure: `provider rejected the message (HTTP ${response.status}${
+            failure: `${provider} rejected the message (HTTP ${response.status}${
               code === null ? '' : `, ${code}`
-            })${hintFor(response.status, config.from)}`,
+            })${spec.hint(response.status, sender.email)}`,
           };
         }
 
-        const body: unknown = await response.json();
-        const id =
-          typeof body === 'object' && body !== null && 'id' in body && typeof body.id === 'string'
-            ? body.id
-            : null;
+        // Brevo answers 201 with a body; a 2xx with no JSON is still a send.
+        let id: string | null = null;
+        try {
+          const body: unknown = await response.json();
+          if (typeof body === 'object' && body !== null) {
+            id = spec.idOf(body as Record<string, unknown>);
+          }
+        } catch {
+          id = null;
+        }
         return { sent: true, id, failure: null };
       } catch (error) {
         return { sent: false, id: null, failure: transportFailure(error) };
