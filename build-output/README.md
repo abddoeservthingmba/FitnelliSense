@@ -12,20 +12,28 @@ whose update refuses to install.
 
 ## Version log
 
-| Version   | Code | Date       | What changed                                                                                         |
-| --------- | ---- | ---------- | ---------------------------------------------------------------------------------------------------- |
-| **0.3.1** | 5    | 2026-09-01 | Security: `allowBackup` off, password strength rules, drizzle-orm CVE, CI fixed                      |
-| 0.3.0     | 4    | 2026-09-01 | Movement demos, current-tier strip, email verification, password reset, nutrition + barcode scanning |
-| 0.2.0     | 3    | 2026-09-01 | The Hunter System — levels, ranks, quests, badges, leaderboard                                       |
+| Version   | Code | Package                     | Date       | What changed                                                                                                   |
+| --------- | ---- | --------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------- |
+| **0.4.0** | 7    | com.arise.fitness           | 2026-09-02 | **Renamed ARISE.** New icon and palette, launch screen, cardio tracking. New package: install is NOT an update |
+| 0.3.1     | 5    | com.fitnessintellisense.app | 2026-09-01 | Security: allowBackup off, password rules, drizzle CVE, CI fixed                                               |
+| 0.3.0     | 4    | com.fitnessintellisense.app | 2026-09-01 | Movement demos, tier strip, email verification, password reset, nutrition + barcode                            |
+| 0.2.0     | 3    | com.fitnessintellisense.app | 2026-09-01 | The Hunter System — levels, ranks, quests, badges, leaderboard                                                 |
+
+**0.4.0 changed the package name.** Android treats it as a different app: the
+old _Fitness Intellisense_ must be uninstalled, and it will not update in
+place. Both can sit on a phone at once, which is confusing rather than useful.
+Agreed while only one device had it installed; after a Play Store listing the
+package is permanent.
 
 ## Current build
 
 |                           |                                                                    |
 | ------------------------- | ------------------------------------------------------------------ |
-| File                      | `FitnessIntellisense-0.3.1.apk`                                    |
-| versionName / versionCode | 0.3.1 / 5                                                          |
-| Size                      | 72,263,685 bytes (68.9 MB)                                         |
-| SHA-256                   | `4a25dc185a0414a1d95ef055e891515b5cbb6ef980826563898d0d1298ab83f6` |
+| File                      | `ARISE-0.4.0.apk`                                                  |
+| Package                   | `com.arise.fitness`                                                |
+| versionName / versionCode | 0.4.0 / 7                                                          |
+| Size                      | 72,722,405 bytes (69.4 MB)                                         |
+| SHA-256                   | `57bcdf8b96e487f700b791765eacf67a2e49219956b797ad414506767f0b9a10` |
 | **Signing cert SHA-256**  | `c35574e619810ce487e6e92d2e3cbabced3e85356f32e4d793183335a0fee5de` |
 | API                       | `https://fitnellisense.onrender.com`                               |
 | ABIs                      | arm64-v8a, armeabi-v7a                                             |

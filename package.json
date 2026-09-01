@@ -25,7 +25,9 @@
     "db:migrate": "pnpm --filter @fi/api db:migrate",
     "db:seed": "pnpm --filter @fi/api db:seed",
     "content:export": "pnpm --filter @fi/api content:export",
-    "content:import": "pnpm --filter @fi/api content:import"
+    "content:import": "pnpm --filter @fi/api content:import",
+    "apk": "pnpm --filter @fi/mobile apk",
+    "icons": "pnpm --filter @fi/mobile exec node scripts/generate-icons.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
