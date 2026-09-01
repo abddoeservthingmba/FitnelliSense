@@ -57,6 +57,17 @@ export const routes = {
   media: {
     url: (mediaId: string) => `/media/${mediaId}/url`,
   },
+  nutrition: {
+    /** The day: entries, totals by meal, and the targets (FR-NUT-09). */
+    day: (date: string) => `/nutrition/days/${date}`,
+    entries: '/nutrition/entries',
+    entry: (id: string) => `/nutrition/entries/${id}`,
+    targets: '/nutrition/targets',
+    /** FR-NUT-06: search and barcode are proxied, never called from a client. */
+    foodSearch: '/nutrition/foods',
+    foodByBarcode: (barcode: string) => `/nutrition/foods/barcode/${barcode}`,
+    customFoods: '/nutrition/foods/custom',
+  },
   admin: {
     exercises: '/admin/exercises',
     exercise: (id: string) => `/admin/exercises/${id}`,

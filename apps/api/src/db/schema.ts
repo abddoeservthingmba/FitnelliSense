@@ -118,6 +118,16 @@ export const userProfiles = pgTable('user_profiles', {
    * off until deliberately turned on.
    */
   leaderboardOptIn: boolean('leaderboard_opt_in').notNull().default(false),
+  /**
+   * Nutrition target overrides (FR-NUT-10). Null means "derive it from the
+   * profile" — the estimate is not copied in, so it stays correct when
+   * bodyweight changes. Nullable per field, so protein can be pinned while the
+   * rest stays derived.
+   */
+  targetEnergyKj: integer('target_energy_kj'),
+  targetProteinG: numeric('target_protein_g', { precision: 6, scale: 2 }),
+  targetCarbsG: numeric('target_carbs_g', { precision: 6, scale: 2 }),
+  targetFatG: numeric('target_fat_g', { precision: 6, scale: 2 }),
   ...timestamps,
 });
 
@@ -546,7 +556,7 @@ export const adminAuditLog = pgTable(
 );
 
 // ============ The Hunter System ============
-export const xpSource = pgEnum('xp_source', ['workout', 'quest', 'badge']);
+export const xpSource = pgEnum('xp_source', ['workout', 'quest', 'badge', 'nutrition']);
 
 /**
  * An append-only XP ledger rather than a running total on the user.
@@ -616,6 +626,100 @@ export const userBadges = pgTable(
     earnedAt: timestamp('earned_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [primaryKey({ columns: [table.userId, table.badgeKey] })],
+);
+
+// ============ Nutrition (FR-NUT-*, BRD v0.2) ============
+export const mealSlot = pgEnum('meal_slot', ['breakfast', 'lunch', 'dinner', 'snack']);
+export const foodSource = pgEnum('food_source', ['open_food_facts', 'custom']);
+
+/**
+ * The food catalogue: cached external products and users' own foods.
+ *
+ * Nutrition is stored **per 100 g**, which is how every label and every food
+ * database states it, so nothing is converted on the way in or out.
+ *
+ * Macros are NUMERIC, never float — §9.3's rule for weights applies for the
+ * same reason: grams get added dozens of times a day.
+ */
+export const foods = pgTable(
+  'foods',
+  {
+    id: uuid('id').primaryKey(),
+    name: text('name').notNull(),
+    brand: text('brand'),
+    /** EAN/UPC, for the products that carry one (FR-NUT-05). */
+    barcode: text('barcode'),
+    source: foodSource('source').notNull(),
+    /** Null for a catalogue food; set for a custom one, private to that user. */
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
+    energyKj: integer('energy_kj').notNull(),
+    proteinG: numeric('protein_g', { precision: 5, scale: 2 }).notNull(),
+    carbsG: numeric('carbs_g', { precision: 5, scale: 2 }).notNull(),
+    fatG: numeric('fat_g', { precision: 5, scale: 2 }).notNull(),
+    /** A likely portion, advisory only — an entry always stores grams. */
+    servingG: numeric('serving_g', { precision: 7, scale: 2 }),
+    servingLabel: text('serving_label'),
+    ...timestamps,
+  },
+  (table) => [
+    // One catalogue row per barcode. Partial, so two users may each have a
+    // custom food that happens to carry the same barcode.
+    uniqueIndex('foods_barcode_unique')
+      .on(table.barcode)
+      .where(sql`user_id IS NULL AND barcode IS NOT NULL`),
+    index('idx_foods_user').on(table.userId),
+    index('idx_foods_name_trgm').using('gin', sql`${table.name} gin_trgm_ops`),
+    // FR-NUT-08: a custom food belongs to someone; a cached one belongs to
+    // nobody. Anything else means the ownership rules have been bypassed.
+    check(
+      'foods_source_ownership',
+      sql`(${table.source} = 'custom' AND ${table.userId} IS NOT NULL)
+       OR (${table.source} = 'open_food_facts' AND ${table.userId} IS NULL)`,
+    ),
+    check(
+      'foods_macros_per_100g',
+      sql`${table.proteinG} BETWEEN 0 AND 100
+      AND ${table.carbsG} BETWEEN 0 AND 100
+      AND ${table.fatG} BETWEEN 0 AND 100
+      AND ${table.energyKj} BETWEEN 0 AND 4000`,
+    ),
+  ],
+);
+
+/**
+ * A logged food entry.
+ *
+ * The panel columns are a **snapshot**, not a join (FR-NUT-03). Open Food Facts
+ * is crowd-edited and recipes change, so an entry that only pointed at `foods`
+ * would let a later edit silently rewrite yesterday's total. `food_id` is kept
+ * for provenance and set to NULL if the food goes away — the entry survives,
+ * because it holds its own figures.
+ */
+export const foodEntries = pgTable(
+  'food_entries',
+  {
+    id: uuid('id').primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    /** The local date the food was eaten — a date, not a timestamp. */
+    entryDate: date('entry_date').notNull(),
+    mealSlot: mealSlot('meal_slot').notNull(),
+    foodId: uuid('food_id').references(() => foods.id, { onDelete: 'set null' }),
+    foodName: text('food_name').notNull(),
+    brand: text('brand'),
+    quantityG: numeric('quantity_g', { precision: 8, scale: 2 }).notNull(),
+    energyKj: integer('energy_kj').notNull(),
+    proteinG: numeric('protein_g', { precision: 5, scale: 2 }).notNull(),
+    carbsG: numeric('carbs_g', { precision: 5, scale: 2 }).notNull(),
+    fatG: numeric('fat_g', { precision: 5, scale: 2 }).notNull(),
+    loggedAt: timestamp('logged_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    // Every read is "this user, this day", so this is the index that matters.
+    index('idx_food_entries_user_date').on(table.userId, table.entryDate),
+    check('food_entries_quantity_positive', sql`${table.quantityG} > 0`),
+  ],
 );
 
 // ============ Idempotency (NFR-R-03) ============

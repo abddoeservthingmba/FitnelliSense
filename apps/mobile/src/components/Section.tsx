@@ -112,6 +112,7 @@ export function ListRow({
   leading,
   trailing,
   onPress,
+  onLongPress,
   accessibilityLabel,
 }: {
   title: string;
@@ -119,6 +120,11 @@ export function ListRow({
   leading?: ReactNode;
   trailing?: ReactNode;
   onPress?: () => void;
+  /**
+   * A secondary action. Long-press is discoverable only if the screen says so,
+   * so any screen using this must state it in visible text.
+   */
+  onLongPress?: () => void;
   accessibilityLabel?: string;
 }) {
   const theme = useTheme();
@@ -148,11 +154,12 @@ export function ListRow({
     </View>
   );
 
-  if (!onPress) return content;
+  if (!onPress && !onLongPress) return content;
 
   return (
     <Pressable
       onPress={onPress}
+      onLongPress={onLongPress}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? title}
       style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}

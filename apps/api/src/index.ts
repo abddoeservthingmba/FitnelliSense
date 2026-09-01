@@ -8,6 +8,7 @@ import { buildApp } from './app';
 import { ConfigError, loadConfig } from './config';
 import { createDatabase } from './db/client';
 import { createMailer } from './lib/mailer';
+import { createFoodLookup } from './lib/open-food-facts';
 import { createStorage } from './lib/r2';
 
 async function main(): Promise<void> {
@@ -20,11 +21,14 @@ async function main(): Promise<void> {
     timeoutMs: config.EMAIL_TIMEOUT_MS,
   });
 
+  const foodLookup = createFoodLookup({ timeoutMs: config.FOOD_LOOKUP_TIMEOUT_MS });
+
   const app = await buildApp({
     config,
     database,
     storage,
     mailer,
+    foodLookup,
     tokens: {
       accessSecret: config.JWT_ACCESS_SECRET,
       refreshPepper: config.JWT_REFRESH_PEPPER,

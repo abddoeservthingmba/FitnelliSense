@@ -17,6 +17,7 @@ export * from './routine';
 export * from './workout';
 export * from './progress';
 export * from './hunter';
+export * from './nutrition';
 export * from './content';
 export * from './health';
 export * from './routes';

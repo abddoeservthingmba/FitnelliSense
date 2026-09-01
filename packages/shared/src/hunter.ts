@@ -142,8 +142,14 @@ export const leaderboardEntrySchema = z.object({
   totalXp: z.number().int(),
   /** Full stats, per the product decision to show them. Opt-in only. */
   volumeKg: positiveDecimalStringSchema,
+  /**
+   * FR-LB-07: activity as a count, not a streak. A streak depends on the
+   * viewer's own midnight, and the server does not know the timezone of anyone
+   * but the caller — so a 'streak' column would be wrong for most of the people
+   * on the board. This field used to exist and was always sent as 0, which is
+   * worse than not offering it.
+   */
   workouts: z.number().int(),
-  streakDays: z.number().int(),
   isYou: z.boolean(),
 });
 

@@ -607,7 +607,6 @@ export interface LeaderboardRow {
   totalXp: number;
   volumeKg: string;
   workouts: number;
-  streakDays: number;
 }
 
 /**
@@ -675,11 +674,9 @@ export async function leaderboard(
         displayName: participant.displayName,
         totalXp: xpByUser.get(participant.userId) ?? 0,
         volumeKg: Number(work?.volume ?? 0).toFixed(2),
+        // FR-LB-07: the count of sessions in the window. Not a streak — that
+        // cannot be computed in another user's timezone.
         workouts: work?.count ?? 0,
-        // A streak is a local calendar fact and cannot be computed in another
-        // user's timezone, so the board reports workouts in the window instead
-        // of a number that would be wrong for most of the people on it.
-        streakDays: 0,
       };
     })
     .sort((a, b) => b.totalXp - a.totalXp);

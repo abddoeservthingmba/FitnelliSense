@@ -1,8 +1,13 @@
 # ADR 0003 — The v1 catalogue ships without demonstration media
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR 0004](0004-catalogue-ships-public-domain-media.md) (2026-09-01)
 - **Date:** 2026-08-31
 - **Context:** BRD §6.8, FR-MED-07, FR-MED-10, R10
+
+> **Superseded, not reversed.** The reasoning below — that an invented licence
+> field is the R10 failure itself — still stands. Only its premise changed: a
+> genuinely public-domain library was found, so "we have no such library" is no
+> longer true. ADR 0004 records what replaced this and why.
 
 ## Decision
 

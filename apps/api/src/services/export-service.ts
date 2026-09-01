@@ -9,6 +9,8 @@ import { desc, eq, inArray } from 'drizzle-orm';
 import {
   bodyMeasurements,
   exercises,
+  foodEntries,
+  foods,
   personalRecords,
   routineExercises,
   routines,
@@ -83,5 +85,9 @@ export async function exportUserData(db: Database, userId: string): Promise<Reco
       .select()
       .from(bodyMeasurements)
       .where(eq(bodyMeasurements.userId, userId)),
+    // FR-NUT-14. Raw rows rather than the API shape: an export is the data the
+    // user gave us, and each entry already carries its own nutrition snapshot.
+    foodEntries: await db.select().from(foodEntries).where(eq(foodEntries.userId, userId)),
+    customFoods: await db.select().from(foods).where(eq(foods.userId, userId)),
   };
 }

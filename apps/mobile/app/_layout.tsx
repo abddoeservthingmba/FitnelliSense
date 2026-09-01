@@ -66,6 +66,14 @@ function ThemedShell() {
         <Stack.Screen name="routine/[id]" options={{ title: 'Routine' }} />
         <Stack.Screen name="progress/[exerciseId]" options={{ title: 'Progress' }} />
         <Stack.Screen name="leaderboard" options={{ title: 'Ranking' }} />
+        <Stack.Screen name="food/add" options={{ title: 'Add food' }} />
+        <Stack.Screen
+          name="food/scan"
+          options={{ title: 'Scan a barcode', presentation: 'modal' }}
+        />
+        <Stack.Screen name="food/custom" options={{ title: 'Add a food' }} />
+        <Stack.Screen name="food/entry/[id]" options={{ title: 'Edit entry' }} />
+        <Stack.Screen name="food/targets" options={{ title: 'Daily targets' }} />
         <Stack.Screen
           name="verify-email"
           options={{ title: 'Verify email', presentation: 'modal' }}

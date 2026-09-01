@@ -7,6 +7,7 @@ import type { FastifyInstance } from 'fastify';
 import type { Config } from '../config';
 import type { DatabaseHandle } from '../db/client';
 import type { Mailer } from '../lib/mailer';
+import type { FoodLookup } from '../lib/open-food-facts';
 import type { Storage } from '../lib/r2';
 import type { TokenConfig } from '../lib/tokens';
 
@@ -16,6 +17,7 @@ export interface AppContext {
   readonly storage: Storage;
   readonly tokens: TokenConfig;
   readonly mailer: Mailer;
+  readonly foodLookup: FoodLookup;
   readonly startedAt: Date;
 }
 

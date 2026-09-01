@@ -17,6 +17,7 @@ import { buildApp } from '../../src/app';
 import { loadConfig, type Config } from '../../src/config';
 import { createDatabase, type DatabaseHandle } from '../../src/db/client';
 import type { Mailer, OutgoingEmail } from '../../src/lib/mailer';
+import type { ExternalFood, FoodLookup } from '../../src/lib/open-food-facts';
 import { createStorage } from '../../src/lib/r2';
 
 export const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;
@@ -33,6 +34,57 @@ export interface TestContext {
   config: Config;
   /** The emails the app tried to send, so a code flow can be driven end to end. */
   mailbox: Mailbox;
+  /** A stand-in for Open Food Facts, so tests never depend on the network. */
+  pantry: Pantry;
+}
+
+/**
+ * A controllable Open Food Facts.
+ *
+ * Hitting the real one from a test would make the suite depend on a volunteer
+ * project's uptime and on crowd-edited data that changes underneath us. This
+ * lets a test state exactly what the source returns, including returning
+ * nothing — which is the case worth covering, since it is the common one.
+ */
+export interface Pantry {
+  /** Foods the fake source will return, keyed by barcode where they have one. */
+  readonly stock: ExternalFood[];
+  /** Counts calls, so caching can be asserted rather than assumed. */
+  calls: { search: number; barcode: number };
+  set(foods: ExternalFood[]): void;
+  reset(): void;
+}
+
+function createPantry(): { lookup: FoodLookup; pantry: Pantry } {
+  const stock: ExternalFood[] = [];
+  const calls = { search: 0, barcode: 0 };
+
+  return {
+    lookup: {
+      search: async (term, limit) => {
+        calls.search += 1;
+        const needle = term.toLowerCase();
+        return stock.filter((food) => food.name.toLowerCase().includes(needle)).slice(0, limit);
+      },
+      byBarcode: async (barcode) => {
+        calls.barcode += 1;
+        return stock.find((food) => food.barcode === barcode) ?? null;
+      },
+    },
+    pantry: {
+      stock,
+      calls,
+      set: (foods) => {
+        stock.length = 0;
+        stock.push(...foods);
+      },
+      reset: () => {
+        stock.length = 0;
+        calls.search = 0;
+        calls.barcode = 0;
+      },
+    },
+  };
 }
 
 /**
@@ -99,12 +151,14 @@ export async function createTestContext(): Promise<TestContext> {
   await truncateAll(database);
 
   const { mailer, mailbox } = createMailbox();
+  const { lookup, pantry } = createPantry();
 
   const app = await buildApp({
     config,
     database,
     storage: createStorage(config),
     mailer,
+    foodLookup: lookup,
     tokens: {
       accessSecret: config.JWT_ACCESS_SECRET,
       refreshPepper: config.JWT_REFRESH_PEPPER,
@@ -115,7 +169,7 @@ export async function createTestContext(): Promise<TestContext> {
   });
   await app.ready();
 
-  return { app, database, config, mailbox };
+  return { app, database, config, mailbox, pantry };
 }
 
 /** Between suites: same schema, no rows, sequences reset. */
@@ -125,7 +179,7 @@ export async function truncateAll(database: DatabaseHandle): Promise<void> {
       admin_audit_log, idempotency_keys, cv_analyses, ai_insights,
       body_measurements, personal_records, workout_sets, workout_exercises,
       workouts, routine_exercises, routines, exercise_media, exercise_muscles,
-      exercises, media_assets, email_codes, refresh_tokens,
+      exercises, media_assets, email_codes, food_entries, foods, refresh_tokens,
       user_profiles, users, muscles, muscle_groups, equipment
     restart identity cascade
   `);

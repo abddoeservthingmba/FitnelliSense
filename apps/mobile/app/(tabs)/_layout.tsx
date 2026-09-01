@@ -1,5 +1,6 @@
 /**
- * The signed-in shell: five tabs, matching the five things the product does.
+ * The signed-in shell. Seven tabs is at the limit of what a phone bar holds —
+ * if an eighth is ever wanted, something has to move behind Home instead.
  *
  * Tab icons are drawn as glyphs rather than pulled from an icon package —
  * one less dependency, and they scale with the OS font size like everything
@@ -16,6 +17,7 @@ import { useTheme } from '../../src/theme';
 const TAB_GLYPHS = {
   index: '◆',
   hunter: '⬟',
+  food: '◓',
   exercises: '☰',
   routines: '▤',
   history: '◷',
@@ -68,6 +70,10 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="hunter"
         options={{ title: 'Hunter', tabBarIcon: icon('hunter'), headerShown: false }}
+      />
+      <Tabs.Screen
+        name="food"
+        options={{ title: 'Food', tabBarIcon: icon('food'), headerShown: false }}
       />
       <Tabs.Screen
         name="exercises"

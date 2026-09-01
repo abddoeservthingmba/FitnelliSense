@@ -15,3 +15,4 @@ export * from './progress';
 export * from './hunter';
 export * from './quests';
 export * from './badges';
+export * from './nutrition';

@@ -19,9 +19,11 @@ import { Overline, Text } from '../../src/components/Text';
 import { TextField } from '../../src/components/TextField';
 import { ErrorState, LoadingState } from '../../src/components/StateViews';
 import { TierStrip } from '../../src/features/hunter/TierStrip';
+import { useNutritionTargets } from '../../src/api/hooks/use-nutrition';
 import { useDeleteAccount, useMe, useUpdateProfile } from '../../src/api/hooks/use-profile';
 import { useAuth } from '../../src/auth/auth-context';
 import { API_BASE_URL } from '../../src/api/config';
+import { kjToKcal } from '@fi/domain';
 import { formatClock } from '../../src/lib/format';
 import { useUnits } from '../../src/lib/use-units';
 import { useTheme } from '../../src/theme';
@@ -38,6 +40,7 @@ export default function ProfileScreen() {
   const me = useMe();
   const updateProfile = useUpdateProfile();
   const deleteAccount = useDeleteAccount();
+  const targets = useNutritionTargets();
   const { signOut } = useAuth();
 
   // Local drafts for the free-text fields, so typing is never round-tripped.
@@ -131,6 +134,37 @@ export default function ProfileScreen() {
                 fullWidth
               />
             )}
+          </Stack>
+        </Section>
+
+        {/* FR-NUT-10. Read-only here with a route to change them: the estimate
+            is derived from fields on this same screen, so it updates itself. */}
+        <Section title="Daily nutrition targets">
+          <Stack gap="sm">
+            {targets.data ? (
+              <>
+                <Text>
+                  {kjToKcal(targets.data.energyKj) === 0
+                    ? 'No target yet'
+                    : `${kjToKcal(targets.data.energyKj)} kcal · ${Math.round(
+                        Number(targets.data.proteinG),
+                      )} g protein`}
+                </Text>
+                <Text variant="caption" tone="faint">
+                  {targets.data.basis}
+                </Text>
+              </>
+            ) : (
+              <Text variant="caption" tone="faint">
+                Loading…
+              </Text>
+            )}
+            <Button
+              label="Set your own targets"
+              variant="secondary"
+              onPress={() => router.push('/food/targets')}
+              fullWidth
+            />
           </Stack>
         </Section>
 

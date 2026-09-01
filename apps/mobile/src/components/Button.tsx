@@ -29,6 +29,11 @@ export interface ButtonProps {
   fullWidth?: boolean;
   /** Enhancement only; never the sole signal that something happened. */
   haptic?: boolean;
+  /**
+   * Overrides the label for assistive technology. Needed when the visible
+   * label is a glyph — '‹' reads as nothing useful.
+   */
+  accessibilityLabel?: string;
   accessibilityHint?: string;
   style?: StyleProp<ViewStyle>;
   icon?: React.ReactNode;
@@ -72,6 +77,7 @@ export function Button({
   loading = false,
   fullWidth = false,
   haptic = false,
+  accessibilityLabel,
   accessibilityHint,
   style,
   icon,
@@ -94,7 +100,7 @@ export function Button({
       onPress={handlePress}
       disabled={inactive}
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ disabled: inactive, busy: loading }}
       {...(accessibilityHint ? { accessibilityHint } : {})}
       style={({ pressed }) => [

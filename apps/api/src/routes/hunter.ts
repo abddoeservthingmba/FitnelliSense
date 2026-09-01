@@ -120,7 +120,6 @@ export async function hunterRoutes(app: FastifyInstance): Promise<void> {
           totalXp: entry.totalXp,
           volumeKg: entry.volumeKg,
           workouts: entry.workouts,
-          streakDays: entry.streakDays,
           isYou: entry.userId === userId,
         };
       });

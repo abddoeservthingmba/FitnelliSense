@@ -69,6 +69,9 @@ export const envSchema = z
     EMAIL_FROM: z.string().default('Fitness Intellisense <onboarding@resend.dev>'),
     EMAIL_TIMEOUT_MS: z.coerce.number().int().min(500).max(30_000).default(8000),
 
+    /** Open Food Facts is a volunteer project; do not hold a request on it. */
+    FOOD_LOOKUP_TIMEOUT_MS: z.coerce.number().int().min(500).max(30_000).default(6000),
+
     CORS_ORIGINS: originListSchema,
 
     R2_ACCOUNT_ID: z.string().default(''),
