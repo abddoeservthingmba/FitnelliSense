@@ -14,7 +14,8 @@ whose update refuses to install.
 
 | Version   | Code | Package                     | Date       | What changed                                                                                                   |
 | --------- | ---- | --------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------- |
-| **0.4.2** | 9    | com.arise.fitness           | 2026-09-02 | Cardio now visible and loggable (minutes/km inputs); 16 machines added                                         |
+| **0.4.3** | 10   | com.arise.fitness           | 2026-09-02 | Barcode scanner: green reticle, decoded digits shown, manual entry, food source displayed                      |
+| 0.4.2     | 9    | com.arise.fitness           | 2026-09-02 | Cardio now visible and loggable (minutes/km inputs); 16 machines added                                         |
 | 0.4.1     | 8    | com.arise.fitness           | 2026-09-02 | 28 manifest permissions down to 11 — launcher badge and attribution entries removed                            |
 | 0.4.0     | 7    | com.arise.fitness           | 2026-09-02 | **Renamed ARISE.** New icon and palette, launch screen, cardio tracking. New package: install is NOT an update |
 | 0.3.1     | 5    | com.fitnessintellisense.app | 2026-09-01 | Security: allowBackup off, password rules, drizzle CVE, CI fixed                                               |
@@ -31,11 +32,11 @@ package is permanent.
 
 |                           |                                                                    |
 | ------------------------- | ------------------------------------------------------------------ |
-| File                      | `ARISE-0.4.2.apk`                                                  |
+| File                      | `ARISE-0.4.3.apk`                                                  |
 | Package                   | `com.arise.fitness`                                                |
-| versionName / versionCode | 0.4.2 / 9                                                          |
-| Size                      | 72,724,789 bytes (69.4 MB)                                         |
-| SHA-256                   | `5a746bd5eb5d482a520fb070644bba79f244d649dc66efc78d73ebacd99e2ccb` |
+| versionName / versionCode | 0.4.3 / 10                                                         |
+| Size                      | 72,728,321 bytes (69.4 MB)                                         |
+| SHA-256                   | `145de2a6810d5797be9b1617a76bfce584233591e7d9dad3bdcd2ae178385b99` |
 | **Signing cert SHA-256**  | `c35574e619810ce487e6e92d2e3cbabced3e85356f32e4d793183335a0fee5de` |
 | API                       | `https://fitnellisense.onrender.com`                               |
 | ABIs                      | arm64-v8a, armeabi-v7a                                             |
