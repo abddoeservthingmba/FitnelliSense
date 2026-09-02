@@ -259,6 +259,10 @@
       {
         "slug": "jump-rope",
         "name": "Jump rope"
+      },
+      {
+        "slug": "plate-loaded",
+        "name": "Plate-loaded machine"
       }
     ]
   },
@@ -1241,6 +1245,25 @@
       "kind": "strength"
     },
     {
+      "slug": "chest-supported-row-machine",
+      "name": "Chest-Supported Row Machine",
+      "description": null,
+      "instructions": "The pad takes the lower back out of it completely, which is the point: everything goes to the upper back.",
+      "equipment": "machine",
+      "kind": "strength",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "latissimus-dorsi"
+      ],
+      "secondaryMuscles": [
+        "rhomboids",
+        "trapezius",
+        "posterior-deltoid"
+      ],
+      "movementPattern": null,
+      "media": []
+    },
+    {
       "slug": "chest-supported-t-bar-row",
       "name": "Chest-Supported T-Bar Row",
       "description": null,
@@ -1640,6 +1663,23 @@
         }
       ],
       "kind": "strength"
+    },
+    {
+      "slug": "decline-chest-press-machine",
+      "name": "Decline Chest Press Machine",
+      "description": null,
+      "instructions": "The decline angle favours the lower chest. Keep your shoulders pinned back against the pad throughout.",
+      "equipment": "machine",
+      "kind": "strength",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "pectoralis-major"
+      ],
+      "secondaryMuscles": [
+        "triceps-brachii"
+      ],
+      "movementPattern": null,
+      "media": []
     },
     {
       "slug": "decline-push-up",
@@ -2243,6 +2283,23 @@
       "kind": "strength"
     },
     {
+      "slug": "glute-kickback-machine",
+      "name": "Glute Kickback Machine",
+      "description": null,
+      "instructions": "One leg at a time. Drive through the heel and stop when the hip is straight — arching past that is the lower back, not the glute.",
+      "equipment": "machine",
+      "kind": "strength",
+      "isUnilateral": true,
+      "primaryMuscles": [
+        "gluteus-maximus"
+      ],
+      "secondaryMuscles": [
+        "hamstrings"
+      ],
+      "movementPattern": null,
+      "media": []
+    },
+    {
       "slug": "goblet-squat",
       "name": "Goblet Squat",
       "description": null,
@@ -2597,6 +2654,24 @@
       "kind": "strength"
     },
     {
+      "slug": "horizontal-leg-press",
+      "name": "Horizontal Leg Press",
+      "description": null,
+      "instructions": "Seated rather than angled. Kinder to the lower back than the 45-degree version, and a sensible place to start.",
+      "equipment": "machine",
+      "kind": "strength",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "gluteus-maximus",
+        "hamstrings"
+      ],
+      "movementPattern": null,
+      "media": []
+    },
+    {
       "slug": "incline-barbell-bench-press",
       "name": "Incline Barbell Bench Press",
       "description": null,
@@ -2739,6 +2814,24 @@
         }
       ],
       "kind": "strength"
+    },
+    {
+      "slug": "incline-plate-loaded-chest-press",
+      "name": "Incline Plate-Loaded Chest Press",
+      "description": null,
+      "instructions": "The incline shifts the work toward the upper chest. Plate-loaded arms move independently, so neither side can quietly carry the other.",
+      "equipment": "plate-loaded",
+      "kind": "strength",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "pectoralis-major"
+      ],
+      "secondaryMuscles": [
+        "anterior-deltoid",
+        "triceps-brachii"
+      ],
+      "movementPattern": null,
+      "media": []
     },
     {
       "slug": "incline-push-up",
@@ -3189,6 +3282,24 @@
       "kind": "strength"
     },
     {
+      "slug": "machine-pullover",
+      "name": "Machine Pullover",
+      "description": null,
+      "instructions": "One of the few machines that loads the lats without the biceps doing much of the work. Move at the shoulder, keeping the elbows fixed.",
+      "equipment": "machine",
+      "kind": "strength",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "latissimus-dorsi"
+      ],
+      "secondaryMuscles": [
+        "triceps-brachii",
+        "teres-major"
+      ],
+      "movementPattern": null,
+      "media": []
+    },
+    {
       "slug": "machine-row",
       "name": "Machine Row",
       "description": null,
@@ -3489,6 +3600,24 @@
       "movementPattern": "horizontal-pull",
       "media": [],
       "kind": "strength"
+    },
+    {
+      "slug": "pendulum-squat",
+      "name": "Pendulum Squat",
+      "description": null,
+      "instructions": "The arc keeps the load over your feet through the whole range, so the knees track naturally. Go deep.",
+      "equipment": "plate-loaded",
+      "kind": "strength",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "gluteus-maximus",
+        "adductors"
+      ],
+      "movementPattern": null,
+      "media": []
     },
     {
       "slug": "pistol-squat",
@@ -4166,6 +4295,23 @@
         }
       ],
       "kind": "strength"
+    },
+    {
+      "slug": "seated-machine-fly",
+      "name": "Seated Machine Fly",
+      "description": null,
+      "instructions": "Elbows slightly bent and then fixed. The movement happens at the shoulder, not the elbow.",
+      "equipment": "machine",
+      "kind": "strength",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "pectoralis-major"
+      ],
+      "secondaryMuscles": [
+        "anterior-deltoid"
+      ],
+      "movementPattern": null,
+      "media": []
     },
     {
       "slug": "side-plank",
@@ -5025,6 +5171,24 @@
         }
       ],
       "kind": "strength"
+    },
+    {
+      "slug": "vertical-leg-press",
+      "name": "Vertical Leg Press",
+      "description": null,
+      "instructions": "The load sits directly above you, so it feels heavier than a 45-degree press at the same weight. Do not let the lower back peel off the pad at the bottom.",
+      "equipment": "plate-loaded",
+      "kind": "strength",
+      "isUnilateral": false,
+      "primaryMuscles": [
+        "quadriceps"
+      ],
+      "secondaryMuscles": [
+        "gluteus-maximus",
+        "hamstrings"
+      ],
+      "movementPattern": null,
+      "media": []
     },
     {
       "slug": "walking-lunge",

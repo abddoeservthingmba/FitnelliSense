@@ -1,6 +1,6 @@
 /** Workout contracts — FR-WK-01..12. */
 import { z } from 'zod';
-import { prTypeSchema, setTypeSchema, workoutStatusSchema } from './enums';
+import { exerciseKindSchema, prTypeSchema, setTypeSchema, workoutStatusSchema } from './enums';
 import { hunterRewardSchema } from './hunter';
 import {
   isoDateTimeSchema,
@@ -35,6 +35,8 @@ export const workoutExerciseSchema = z.object({
   id: uuidSchema,
   exerciseId: uuidSchema,
   exerciseName: shortTextSchema,
+  /** FR-CAR-03: the client cannot know which fields to show without this. */
+  kind: exerciseKindSchema,
   position: positionSchema,
   restSecs: restSecsSchema.nullable(),
   notes: noteTextSchema.nullable(),

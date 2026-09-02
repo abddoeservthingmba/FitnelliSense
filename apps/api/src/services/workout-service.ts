@@ -155,6 +155,7 @@ export async function getWorkoutDetail(
       id: workoutExercises.id,
       exerciseId: workoutExercises.exerciseId,
       exerciseName: exercises.name,
+      kind: exercises.kind,
       position: workoutExercises.position,
       restSecs: workoutExercises.restSecs,
       notes: workoutExercises.notes,

@@ -11,7 +11,7 @@
  */
 import { memo, useEffect, useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
-import type { SetType, WorkoutSet } from '@fi/shared';
+import type { ExerciseKind, SetType, WorkoutSet } from '@fi/shared';
 import { Text } from '../../components/Text';
 import { useTheme } from '../../theme';
 import { useUnits } from '../../lib/use-units';
@@ -19,9 +19,20 @@ import { useUnits } from '../../lib/use-units';
 export interface SetRowProps {
   set: WorkoutSet;
   index: number;
+  /**
+   * Which two numbers this row asks for. A treadmill has no weight and no
+   * reps, so showing those fields for it is not merely useless — it invites
+   * someone to type a number into a box that will be ignored (FR-CAR-03).
+   */
+  kind: ExerciseKind;
   /** What the fields should start at when the set is empty (FR-WK-06). */
   placeholder: { weight: string; reps: string };
-  onChange: (patch: { weightKg?: string | null; reps?: number | null }) => void;
+  onChange: (patch: {
+    weightKg?: string | null;
+    reps?: number | null;
+    durationSecs?: number | null;
+    distanceM?: number | null;
+  }) => void;
   onToggleComplete: (isCompleted: boolean) => void;
   onLongPress: () => void;
 }
@@ -36,6 +47,7 @@ const SET_TYPE_LABEL: Record<SetType, string> = {
 export const SetRow = memo(function SetRow({
   set,
   index,
+  kind,
   placeholder,
   onChange,
   onToggleComplete,
@@ -67,11 +79,48 @@ export const SetRow = memo(function SetRow({
     if (next !== set.reps) onChange({ reps: next });
   };
 
+  // --- cardio. Minutes and kilometres are the units people actually speak in;
+  // the wire format is seconds and metres, converted at this boundary only.
+  const [minutes, setMinutes] = useState(() =>
+    set.durationSecs === null ? '' : String(Math.round(set.durationSecs / 60)),
+  );
+  const [distance, setDistance] = useState(() =>
+    set.distanceM === null ? '' : String(set.distanceM / 1000),
+  );
+
+  useEffect(() => {
+    setMinutes(set.durationSecs === null ? '' : String(Math.round(set.durationSecs / 60)));
+  }, [set.durationSecs]);
+  useEffect(() => {
+    setDistance(set.distanceM === null ? '' : String(set.distanceM / 1000));
+  }, [set.distanceM]);
+
+  const commitMinutes = () => {
+    const parsed = minutes.trim() === '' ? null : Number(minutes);
+    const next =
+      parsed !== null && Number.isFinite(parsed) && parsed >= 0 ? Math.round(parsed * 60) : null;
+    if (next !== set.durationSecs) onChange({ durationSecs: next });
+  };
+
+  const commitDistance = () => {
+    const parsed = distance.trim() === '' ? null : Number(distance);
+    const next =
+      parsed !== null && Number.isFinite(parsed) && parsed >= 0 ? Math.round(parsed * 1000) : null;
+    if (next !== set.distanceM) onChange({ distanceM: next });
+  };
+
+  const isCardio = kind === 'cardio';
+
   const complete = () => {
     // Commit whatever is in the fields before marking the set done, so a tick
     // never records a stale number.
-    commitWeight();
-    commitReps();
+    if (isCardio) {
+      commitMinutes();
+      commitDistance();
+    } else {
+      commitWeight();
+      commitReps();
+    }
     onToggleComplete(!set.isCompleted);
   };
 
@@ -114,33 +163,65 @@ export const SetRow = memo(function SetRow({
         </Text>
       </Pressable>
 
-      <TextInput
-        value={weight}
-        onChangeText={setWeight}
-        onBlur={commitWeight}
-        placeholder={placeholder.weight}
-        placeholderTextColor={theme.colors.textFaint}
-        keyboardType="decimal-pad"
-        inputMode="decimal"
-        returnKeyType="next"
-        accessibilityLabel={`Set ${index + 1} weight in ${units.label}`}
-        selectTextOnFocus
-        style={fieldStyle}
-      />
-
-      <TextInput
-        value={reps}
-        onChangeText={setReps}
-        onBlur={commitReps}
-        placeholder={placeholder.reps}
-        placeholderTextColor={theme.colors.textFaint}
-        keyboardType="number-pad"
-        inputMode="numeric"
-        returnKeyType="done"
-        accessibilityLabel={`Set ${index + 1} reps`}
-        selectTextOnFocus
-        style={fieldStyle}
-      />
+      {isCardio ? (
+        <>
+          <TextInput
+            value={minutes}
+            onChangeText={setMinutes}
+            onBlur={commitMinutes}
+            placeholder="min"
+            placeholderTextColor={theme.colors.textFaint}
+            keyboardType="decimal-pad"
+            inputMode="decimal"
+            returnKeyType="next"
+            accessibilityLabel={`Set ${index + 1} duration in minutes`}
+            selectTextOnFocus
+            style={fieldStyle}
+          />
+          <TextInput
+            value={distance}
+            onChangeText={setDistance}
+            onBlur={commitDistance}
+            placeholder="km"
+            placeholderTextColor={theme.colors.textFaint}
+            keyboardType="decimal-pad"
+            inputMode="decimal"
+            returnKeyType="done"
+            accessibilityLabel={`Set ${index + 1} distance in kilometres`}
+            selectTextOnFocus
+            style={fieldStyle}
+          />
+        </>
+      ) : (
+        <>
+          <TextInput
+            value={weight}
+            onChangeText={setWeight}
+            onBlur={commitWeight}
+            placeholder={placeholder.weight}
+            placeholderTextColor={theme.colors.textFaint}
+            keyboardType="decimal-pad"
+            inputMode="decimal"
+            returnKeyType="next"
+            accessibilityLabel={`Set ${index + 1} weight in ${units.label}`}
+            selectTextOnFocus
+            style={fieldStyle}
+          />
+          <TextInput
+            value={reps}
+            onChangeText={setReps}
+            onBlur={commitReps}
+            placeholder={placeholder.reps}
+            placeholderTextColor={theme.colors.textFaint}
+            keyboardType="number-pad"
+            inputMode="numeric"
+            returnKeyType="done"
+            accessibilityLabel={`Set ${index + 1} reps`}
+            selectTextOnFocus
+            style={fieldStyle}
+          />
+        </>
+      )}
 
       <Pressable
         onPress={complete}

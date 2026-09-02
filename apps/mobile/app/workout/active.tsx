@@ -84,8 +84,7 @@ export default function ActiveWorkoutScreen() {
   const connectionProblem = [addSet, updateSet, deleteSet, addExercise]
     .map((mutation) => mutation.error)
     .find(
-      (error): error is ApiRequestError =>
-        error instanceof ApiRequestError && error.isTransient,
+      (error): error is ApiRequestError => error instanceof ApiRequestError && error.isTransient,
     );
 
   const confirmDiscard = useCallback(() => {
@@ -290,7 +289,15 @@ function ExerciseCardWithPrefill({
   workoutId: string;
   routineId: string | null;
   onAddSet: (prefill: { weightKg: string | null; reps: number | null }) => void;
-  onUpdateSet: (setId: string, patch: { weightKg?: string | null; reps?: number | null }) => void;
+  onUpdateSet: (
+    setId: string,
+    patch: {
+      weightKg?: string | null;
+      reps?: number | null;
+      durationSecs?: number | null;
+      distanceM?: number | null;
+    },
+  ) => void;
   onCompleteSet: (setId: string, isCompleted: boolean) => void;
   onDeleteSet: (setId: string) => void;
   onRemove: () => void;
@@ -300,6 +307,7 @@ function ExerciseCardWithPrefill({
   return (
     <WorkoutExerciseCard
       exercise={exercise}
+      kind={exercise.kind}
       prefill={prefill}
       onAddSet={() => onAddSet({ weightKg: prefill.weightKg, reps: prefill.reps })}
       {...handlers}

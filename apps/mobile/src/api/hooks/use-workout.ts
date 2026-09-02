@@ -6,6 +6,7 @@
  * (NFR-P-01). The server's response then replaces the optimistic copy, and a
  * failure rolls back to the exact snapshot taken before the change.
  */
+import type { ExerciseKind } from '@fi/shared';
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import {
   routes,
@@ -113,34 +114,39 @@ export function useStartWorkout() {
 export function useAddWorkoutExercise(workoutId: string | undefined) {
   const queryClient = useQueryClient();
   return useMutation(
-    optimisticWorkoutMutation<{ exerciseId: string; exerciseName: string; restSecs?: number }>(
-      queryClient,
-      {
-        apply: (workout, input) => ({
-          ...workout,
-          exercises: [
-            ...workout.exercises,
-            {
-              id: `pending-${input.exerciseId}`,
-              exerciseId: input.exerciseId,
-              exerciseName: input.exerciseName,
-              position: workout.exercises.length,
-              restSecs: input.restSecs ?? null,
-              notes: null,
-              sets: [],
-            },
-          ],
-        }),
-        send: (input) => {
-          const id = uuidv7();
-          return api.post<WorkoutDetail>(
-            routes.workouts.exercises(workoutId ?? ''),
-            { id, exerciseId: input.exerciseId, restSecs: input.restSecs ?? null },
-            { idempotencyKey: idempotencyKey('add-exercise', id) },
-          );
-        },
+    optimisticWorkoutMutation<{
+      exerciseId: string;
+      exerciseName: string;
+      kind?: ExerciseKind;
+      restSecs?: number;
+    }>(queryClient, {
+      apply: (workout, input) => ({
+        ...workout,
+        exercises: [
+          ...workout.exercises,
+          {
+            id: `pending-${input.exerciseId}`,
+            exerciseId: input.exerciseId,
+            exerciseName: input.exerciseName,
+            // Optimistically strength, which is the overwhelmingly common case;
+            // the server's response corrects it within a round trip.
+            kind: input.kind ?? 'strength',
+            position: workout.exercises.length,
+            restSecs: input.restSecs ?? null,
+            notes: null,
+            sets: [],
+          },
+        ],
+      }),
+      send: (input) => {
+        const id = uuidv7();
+        return api.post<WorkoutDetail>(
+          routes.workouts.exercises(workoutId ?? ''),
+          { id, exerciseId: input.exerciseId, restSecs: input.restSecs ?? null },
+          { idempotencyKey: idempotencyKey('add-exercise', id) },
+        );
       },
-    ),
+    }),
   );
 }
 
@@ -179,11 +185,9 @@ export function useAddSet(workoutId: string | undefined) {
         ),
       }),
       send: ({ workoutExerciseId, ...body }) =>
-        api.post<WorkoutDetail>(
-          routes.workouts.sets(workoutId ?? '', workoutExerciseId),
-          body,
-          { idempotencyKey: idempotencyKey('add-set', body.id) },
-        ),
+        api.post<WorkoutDetail>(routes.workouts.sets(workoutId ?? '', workoutExerciseId), body, {
+          idempotencyKey: idempotencyKey('add-set', body.id),
+        }),
     }),
   );
 }

@@ -9,7 +9,7 @@
 import { memo } from 'react';
 import { View } from 'react-native';
 import { router } from 'expo-router';
-import type { WorkoutExercise } from '@fi/shared';
+import type { ExerciseKind, WorkoutExercise } from '@fi/shared';
 import { Button } from '../../components/Button';
 import { Card, Divider, Row, Stack } from '../../components/Card';
 import { Overline, Text } from '../../components/Text';
@@ -20,9 +20,19 @@ import type { PrefillSuggestion } from './use-prefill';
 
 export interface WorkoutExerciseCardProps {
   exercise: WorkoutExercise;
+  /** Which numbers this exercise takes. Drives the headers and the fields. */
+  kind: ExerciseKind;
   prefill: PrefillSuggestion;
   onAddSet: () => void;
-  onUpdateSet: (setId: string, patch: { weightKg?: string | null; reps?: number | null }) => void;
+  onUpdateSet: (
+    setId: string,
+    patch: {
+      weightKg?: string | null;
+      reps?: number | null;
+      durationSecs?: number | null;
+      distanceM?: number | null;
+    },
+  ) => void;
   onCompleteSet: (setId: string, isCompleted: boolean) => void;
   onDeleteSet: (setId: string) => void;
   onRemove: () => void;
@@ -30,6 +40,7 @@ export interface WorkoutExerciseCardProps {
 
 export const WorkoutExerciseCard = memo(function WorkoutExerciseCard({
   exercise,
+  kind,
   prefill,
   onAddSet,
   onUpdateSet,
@@ -76,10 +87,10 @@ export const WorkoutExerciseCard = memo(function WorkoutExerciseCard({
         <Row gap="sm">
           <View style={{ width: 26 }} />
           <View style={{ flex: 1, alignItems: 'center' }}>
-            <Overline>{units.label}</Overline>
+            <Overline>{kind === 'cardio' ? 'minutes' : units.label}</Overline>
           </View>
           <View style={{ flex: 1, alignItems: 'center' }}>
-            <Overline>reps</Overline>
+            <Overline>{kind === 'cardio' ? 'km' : 'reps'}</Overline>
           </View>
           <View style={{ width: 52 }} />
         </Row>
@@ -89,6 +100,7 @@ export const WorkoutExerciseCard = memo(function WorkoutExerciseCard({
             key={set.id}
             set={set}
             index={index}
+            kind={kind}
             placeholder={prefill.placeholder}
             onChange={(patch) => onUpdateSet(set.id, patch)}
             onToggleComplete={(isCompleted) => onCompleteSet(set.id, isCompleted)}

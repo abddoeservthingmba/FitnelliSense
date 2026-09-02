@@ -3,7 +3,7 @@
     "name": "ARISE",
     "slug": "arise",
     "scheme": "arise",
-    "version": "0.4.1",
+    "version": "0.4.2",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -13,7 +13,7 @@
     ],
     "android": {
       "package": "com.arise.fitness",
-      "versionCode": 8,
+      "versionCode": 9,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0B2547"
