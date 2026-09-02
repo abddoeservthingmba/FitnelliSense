@@ -14,7 +14,8 @@ whose update refuses to install.
 
 | Version   | Code | Package                     | Date       | What changed                                                                                                   |
 | --------- | ---- | --------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------- |
-| **0.4.3** | 10   | com.arise.fitness           | 2026-09-02 | Barcode scanner: green reticle, decoded digits shown, manual entry, food source displayed                      |
+| **0.5.0** | 11   | com.arise.fitness           | 2026-09-02 | **Training insights** — volume, sets and sessions per muscle group against the previous period, with bars      |
+| 0.4.3     | 10   | com.arise.fitness           | 2026-09-02 | Barcode scanner: green reticle, decoded digits shown, manual entry, food source displayed                      |
 | 0.4.2     | 9    | com.arise.fitness           | 2026-09-02 | Cardio now visible and loggable (minutes/km inputs); 16 machines added                                         |
 | 0.4.1     | 8    | com.arise.fitness           | 2026-09-02 | 28 manifest permissions down to 11 — launcher badge and attribution entries removed                            |
 | 0.4.0     | 7    | com.arise.fitness           | 2026-09-02 | **Renamed ARISE.** New icon and palette, launch screen, cardio tracking. New package: install is NOT an update |
@@ -32,11 +33,11 @@ package is permanent.
 
 |                           |                                                                    |
 | ------------------------- | ------------------------------------------------------------------ |
-| File                      | `ARISE-0.4.3.apk`                                                  |
+| File                      | `ARISE-0.5.0.apk`                                                  |
 | Package                   | `com.arise.fitness`                                                |
-| versionName / versionCode | 0.4.3 / 10                                                         |
-| Size                      | 72,728,321 bytes (69.4 MB)                                         |
-| SHA-256                   | `145de2a6810d5797be9b1617a76bfce584233591e7d9dad3bdcd2ae178385b99` |
+| versionName / versionCode | 0.5.0 / 11                                                         |
+| Size                      | 72,744,873 bytes (69.4 MB)                                         |
+| SHA-256                   | `86894edba64f952ced323fbfbb0faf18b747daa5e4cd18537e9fe8fed9c9eb36` |
 | **Signing cert SHA-256**  | `c35574e619810ce487e6e92d2e3cbabced3e85356f32e4d793183335a0fee5de` |
 | API                       | `https://fitnellisense.onrender.com`                               |
 | ABIs                      | arm64-v8a, armeabi-v7a                                             |
@@ -46,8 +47,16 @@ package is permanent.
 ## The check that matters before every release
 
 ```bash
-apksigner verify --print-certs build-output/ARISE-*.apk
+# apksigner is not on PATH and needs a JDK. It ships with the SDK build-tools:
+JAVA_HOME="I:/android-toolchain/jdk-17.0.20.1+1" \
+  /i/android-toolchain/sdk/build-tools/36.0.0/apksigner.bat \
+  verify --print-certs build-output/ARISE-0.5.0.apk
 ```
+
+Only apksigner can read it. These APKs are signed with **v2/v3 only**, so there
+is no `META-INF/*.RSA` entry to unzip — the signature lives in the APK Signing
+Block, which is not a zip entry at all. Reaching for `unzip` and `openssl` is a
+dead end.
 
 The certificate digest **must** equal the value in the table above. If it
 differs, the signing identity has changed and every existing user has to
