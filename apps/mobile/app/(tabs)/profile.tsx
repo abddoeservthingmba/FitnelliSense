@@ -7,7 +7,7 @@
  * Destructive actions confirm, and say what will actually happen.
  */
 import { useState } from 'react';
-import { Alert, Platform, Switch, View } from 'react-native';
+import { Alert, Platform, View } from 'react-native';
 import { router } from 'expo-router';
 import { REST_SECONDS_OPTIONS, SESSION_MINUTES_OPTIONS, TRAINING_DAYS_OPTIONS } from '@fi/shared';
 import { Button } from '../../src/components/Button';
@@ -277,26 +277,27 @@ export default function ProfileScreen() {
           </Stack>
         </Section>
 
-        {/* FR-AI-06 / FR-AI-07: off until explicitly enabled, and honest about
-            not existing yet. */}
-        <Section title="AI insights">
-          <Row justify="space-between">
-            <View style={{ flex: 1, gap: 3, paddingRight: theme.space.md }}>
-              <Text variant="callout" weight="semibold">
-                Training insights
-              </Text>
-              <Text variant="caption" tone="muted">
-                Advisory only, and never applied automatically. Arriving in a later release —
-                enabling this now only records your consent.
-              </Text>
-            </View>
-            <Switch
-              value={profile.aiEnabled}
-              onValueChange={(value) => updateProfile.mutate({ aiEnabled: value })}
-              accessibilityLabel="Enable AI insights"
-              trackColor={{ true: theme.colors.accent, false: theme.colors.border }}
+        {/*
+          This was an AI consent toggle (FR-AI-06/07) that enabled nothing.
+          Insights are now computed from the user's own logged sets by
+          `packages/domain`, so there is no third party to consent to and
+          nothing to switch on — which is why the switch is gone rather than
+          relabelled. `aiEnabled` stays in the profile for the day a model is
+          actually wired in.
+        */}
+        <Section title="Training insights">
+          <Stack gap="sm">
+            <Text variant="caption" tone="muted">
+              How your volume, sets and sessions compare with the period before, muscle group by
+              muscle group. Worked out from your own logs — nothing is sent anywhere.
+            </Text>
+            <Button
+              label="See my insights"
+              variant="secondary"
+              onPress={() => router.push('/insights')}
+              fullWidth
             />
-          </Row>
+          </Stack>
         </Section>
 
         <Section title="Your data">

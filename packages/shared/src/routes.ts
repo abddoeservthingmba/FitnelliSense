@@ -49,6 +49,8 @@ export const routes = {
   sets: {
     detail: (setId: string) => `/sets/${setId}`,
   },
+  /** Training insights: this window against the previous one (FR-AI-04). */
+  insights: '/insights',
   progress: {
     exercise: (exerciseId: string) => `/progress/exercises/${exerciseId}`,
     records: '/progress/records',
