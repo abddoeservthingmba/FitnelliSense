@@ -35,13 +35,7 @@ export interface LogFoodFormProps {
   onBack: (() => void) | null;
 }
 
-export function LogFoodForm({
-  food,
-  date,
-  initialMealSlot,
-  onLogged,
-  onBack,
-}: LogFoodFormProps) {
+export function LogFoodForm({ food, date, initialMealSlot, onLogged, onBack }: LogFoodFormProps) {
   const theme = useTheme();
   const logFood = useLogFood();
 
@@ -73,7 +67,29 @@ export function LogFoodForm({
           <Overline>how much</Overline>
           <Text variant="heading">{food.name}</Text>
           {food.brand ? <Text tone="muted">{food.brand}</Text> : null}
+
+          {/*
+            Where the numbers came from. It matters because Open Food Facts is
+            crowd-edited: a figure someone typed into a public wiki deserves
+            more scepticism than one the user read off the packet themselves,
+            and the only way to apply that scepticism is to know which it is.
+          */}
+          <Text variant="micro" tone="faint">
+            {food.source === 'custom'
+              ? 'Your own entry'
+              : 'Open Food Facts — crowd-sourced, so worth a glance against the packet'}
+            {food.barcode ? ` · ${food.barcode}` : ''}
+          </Text>
         </Stack>
+
+        {/* The panel as recorded, so it can be checked before it is committed. */}
+        <Section title="Per 100 g">
+          <Text variant="caption" tone="muted">
+            {kjToKcal(food.per100g.energyKj)} kcal · {Number(food.per100g.proteinG).toFixed(1)} g
+            protein · {Number(food.per100g.carbsG).toFixed(1)} g carbs ·{' '}
+            {Number(food.per100g.fatG).toFixed(1)} g fat
+          </Text>
+        </Section>
 
         <TextField
           label="Grams"

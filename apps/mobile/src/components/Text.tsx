@@ -29,6 +29,7 @@ export type TextTone =
   | 'accent'
   | 'danger'
   | 'warning'
+  | 'success'
   | 'highlight'
   | 'monarch'
   | 'inverse';
@@ -110,6 +111,7 @@ export function Text({
     accent: theme.colors.accent,
     danger: theme.colors.danger,
     warning: theme.colors.warning,
+    success: theme.colors.success,
     highlight: theme.colors.highlight,
     monarch: theme.colors.monarch,
     inverse: theme.colors.inverseText,

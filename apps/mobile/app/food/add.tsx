@@ -108,7 +108,7 @@ export default function AddFoodScreen() {
                     subtitle={[
                       food.brand,
                       `${kjToKcal(food.per100g.energyKj)} kcal / 100 g`,
-                      food.source === 'custom' ? 'yours' : null,
+                      food.source === 'custom' ? 'yours' : 'Open Food Facts',
                     ]
                       .filter(Boolean)
                       .join(' · ')}

@@ -24,7 +24,13 @@ import { useTheme } from '../../src/theme';
 
 export default function CustomFoodScreen() {
   const theme = useTheme();
-  const params = useLocalSearchParams<{ date?: string; mealSlot?: MealSlot; name?: string }>();
+  const params = useLocalSearchParams<{
+    date?: string;
+    mealSlot?: MealSlot;
+    name?: string;
+    /** Carried from a scan that found nothing, so the number is not lost. */
+    barcode?: string;
+  }>();
   const date = params.date ?? localToday();
 
   const [name, setName] = useState(params.name ?? '');
@@ -101,17 +107,19 @@ export default function CustomFoodScreen() {
             <Overline>your own food</Overline>
             <Text variant="heading">What is it?</Text>
             <Text tone="muted">
-              Copy the figures from the packet, per 100 g. Only you will see this
-              food.
+              Copy the figures from the packet, per 100 g. Only you will see this food.
             </Text>
           </Stack>
 
+          {params.barcode ? (
+            <Text variant="caption" tone="muted">
+              Barcode {params.barcode} — scanned, but not in the food database. What you enter here
+              is yours; it is not published back to anyone.
+            </Text>
+          ) : null}
+
           <TextField label="Name" value={name} onChangeText={setName} autoFocus />
-          <TextField
-            label="Brand (optional)"
-            value={brand}
-            onChangeText={setBrand}
-          />
+          <TextField label="Brand (optional)" value={brand} onChangeText={setBrand} />
 
           <Stack gap="md">
             <Overline>per 100 g</Overline>
@@ -143,9 +151,8 @@ export default function CustomFoodScreen() {
 
           {!plausible ? (
             <Text variant="caption" tone="warning">
-              Those macros do not add up to that energy figure. Worth a second
-              look at the packet — though labels do vary, so carry on if it is
-              right.
+              Those macros do not add up to that energy figure. Worth a second look at the packet —
+              though labels do vary, so carry on if it is right.
             </Text>
           ) : null}
 
