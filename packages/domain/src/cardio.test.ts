@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { ZERO, dec, decToString } from './decimal';
 import {
   EMPTY_CARDIO,
   MIN_PACE_RECORD_DISTANCE_M,
@@ -9,6 +10,7 @@ import {
   formatDistance,
   formatDuration,
   formatPace,
+  detectCardioPRs,
   isCardioLogged,
   paceSecsPerKm,
   speedKmh,
@@ -210,5 +212,102 @@ describe('cardio records', () => {
     expect(beatsCardioRecord('farthest_distance', empty, null)).toBe(false);
     expect(beatsCardioRecord('longest_duration', empty, null)).toBe(false);
     expect(beatsCardioRecord('best_pace', empty, null)).toBe(false);
+  });
+});
+
+describe('detectCardioPRs', () => {
+  const set = (
+    id: string,
+    exerciseId: string,
+    durationSecs: number | null,
+    distanceM: number | null,
+    isCompleted = true,
+  ) => ({ id, exerciseId, durationSecs, distanceM, isCompleted });
+
+  it('takes all three records from a first ever run', () => {
+    const prs = detectCardioPRs([set('s1', 'run', 1500, 5000)]);
+    expect(prs.map((p) => p.prType).sort()).toEqual([
+      'best_pace',
+      'farthest_distance',
+      'longest_duration',
+    ]);
+    expect(prs.every((p) => p.exerciseId === 'run' && p.setId === 's1')).toBe(true);
+  });
+
+  it('stores metres, seconds and seconds-per-km as the record values', () => {
+    const prs = detectCardioPRs([set('s1', 'run', 1500, 5000)]);
+    const value = (type: string) => decToString(prs.find((p) => p.prType === type)?.value ?? ZERO);
+    expect(value('farthest_distance')).toBe('5000.00');
+    expect(value('longest_duration')).toBe('1500.00');
+    expect(value('best_pace')).toBe('300.00');
+  });
+
+  it('ignores a set that was never completed', () => {
+    expect(detectCardioPRs([set('s1', 'run', 1500, 5000, false)])).toEqual([]);
+  });
+
+  it('ignores a set with nothing logged in it', () => {
+    expect(detectCardioPRs([set('s1', 'run', null, null)])).toEqual([]);
+  });
+
+  it('does not beat an existing better record', () => {
+    const existing = new Map([
+      ['run:farthest_distance', dec('8000')],
+      ['run:longest_duration', dec('3000')],
+      // Lower pace is better, so an existing 280 beats a new 300.
+      ['run:best_pace', dec('280')],
+    ]);
+    expect(detectCardioPRs([set('s1', 'run', 1500, 5000)], existing)).toEqual([]);
+  });
+
+  it('beats a worse existing record, and carries the previous value', () => {
+    const existing = new Map([['run:farthest_distance', dec('3000')]]);
+    const prs = detectCardioPRs([set('s1', 'run', 1500, 5000)], existing);
+
+    const distance = prs.find((p) => p.prType === 'farthest_distance');
+    expect(distance).toBeDefined();
+    expect(decToString(distance?.previousValue ?? ZERO)).toBe('3000.00');
+  });
+
+  it('keeps only the best set of the session for each record', () => {
+    const prs = detectCardioPRs([
+      set('s1', 'run', 600, 2000),
+      set('s2', 'run', 1500, 5000),
+      set('s3', 'run', 300, 1000),
+    ]);
+    const distance = prs.find((p) => p.prType === 'farthest_distance');
+    expect(distance?.setId).toBe('s2');
+    expect(prs.filter((p) => p.prType === 'farthest_distance')).toHaveLength(1);
+  });
+
+  it('attributes the pace record to the fastest set, not the longest', () => {
+    // s1 is a longer run; s2 is faster over a qualifying distance.
+    const prs = detectCardioPRs([
+      set('s1', 'run', 3000, 8000), // 375 s/km
+      set('s2', 'run', 1200, 4000), // 300 s/km
+    ]);
+    expect(prs.find((p) => p.prType === 'farthest_distance')?.setId).toBe('s1');
+    expect(prs.find((p) => p.prType === 'best_pace')?.setId).toBe('s2');
+  });
+
+  it('keeps records separate per exercise', () => {
+    const prs = detectCardioPRs([set('s1', 'run', 1500, 5000), set('s2', 'bike', 1800, 15000)]);
+    expect(new Set(prs.map((p) => p.exerciseId))).toEqual(new Set(['run', 'bike']));
+    expect(prs.filter((p) => p.exerciseId === 'run')).toHaveLength(3);
+  });
+
+  it('carries no weight or reps, because a cardio set has neither', () => {
+    const prs = detectCardioPRs([set('s1', 'run', 1500, 5000)]);
+    expect(prs.every((p) => p.weightKg === null && p.reps === null)).toBe(true);
+  });
+
+  it('takes a duration record from a set with no distance', () => {
+    const prs = detectCardioPRs([set('s1', 'bike', 1800, null)]);
+    expect(prs.map((p) => p.prType)).toEqual(['longest_duration']);
+  });
+
+  it('takes a distance record from an untimed run, but no pace', () => {
+    const prs = detectCardioPRs([set('s1', 'run', null, 10_000)]);
+    expect(prs.map((p) => p.prType)).toEqual(['farthest_distance']);
   });
 });

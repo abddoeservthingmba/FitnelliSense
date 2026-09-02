@@ -18,3 +18,4 @@ export * from './badges';
 export * from './nutrition';
 export * from './password-strength';
 export * from './cardio';
+export * from './insights';
