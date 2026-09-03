@@ -190,6 +190,13 @@ export const athleteRecordSchema = z.object({
 export const athleteStatsSchema = z.object({
   userId: uuidSchema,
   displayName: shortTextSchema,
+  /**
+   * Their chosen Ascension, so their tier renders as THEIRS.
+   *
+   * Showing another athlete's rank in the viewer's costume would misname them —
+   * a Hokage displayed as a Shadow Sovereign. Null when they have not chosen.
+   */
+  ascension: z.enum(['monarch', 'saiyan', 'shinobi', 'shinigami', 'pirate']).nullable(),
   level: z.number().int(),
   hunterRank: rankSchema,
   totalXp: z.number().int(),

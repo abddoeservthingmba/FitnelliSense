@@ -33,6 +33,7 @@ import { Screen } from '../src/components/Screen';
 import { Section } from '../src/components/Section';
 import { Overline, Text } from '../src/components/Text';
 import { AscensionSigil } from '../src/features/ascension/AscensionSigil';
+import { TierMark } from '../src/features/ascension/TierMark';
 import { useHunterStatus } from '../src/api/hooks/use-hunter';
 import { useMe, useUpdateProfile } from '../src/api/hooks/use-profile';
 import { useAscensionContext } from '../src/theme/ascension-context';
@@ -125,9 +126,9 @@ export default function AscensionScreen() {
                     >
                       <Column gap="md">
                         <Row gap="md" style={{ alignItems: 'center' }}>
-                          {/* The Ascension's own mark, in its own colours —
-                              the choice is largely a look, so show the look. */}
-                          <AscensionSigil size={56} ascension={ascension} />
+                          {/* The mark of the tier you would currently be on
+                              this Ascension — the choice made concrete. */}
+                          <TierMark tier={current} motif={ascension.motif} size={56} />
 
                           <View style={{ flex: 1, gap: 2 }}>
                             <Text variant="callout" weight="semibold">
@@ -167,16 +168,25 @@ export default function AscensionScreen() {
                           <Section title="The ladder">
                             <Column gap="xs">
                               {ascensionLadder(ascension).map((step) => (
-                                <Row key={step.tier.rank} justify="space-between">
-                                  <Text
-                                    variant="caption"
-                                    weight={
-                                      step.tier.rank === current.rank ? 'semibold' : 'regular'
-                                    }
-                                    tone={step.tier.rank === current.rank ? 'accent' : 'muted'}
-                                  >
-                                    {step.tier.name}
-                                  </Text>
+                                <Row
+                                  key={step.tier.rank}
+                                  justify="space-between"
+                                  style={{ alignItems: 'center' }}
+                                >
+                                  {/* Each tier's own mark, so the ladder shows
+                                      the six icons rather than six names. */}
+                                  <Row gap="sm" style={{ alignItems: 'center', flex: 1 }}>
+                                    <TierMark tier={step.tier} motif={ascension.motif} size={30} />
+                                    <Text
+                                      variant="caption"
+                                      weight={
+                                        step.tier.rank === current.rank ? 'semibold' : 'regular'
+                                      }
+                                      tone={step.tier.rank === current.rank ? 'accent' : 'muted'}
+                                    >
+                                      {step.tier.name}
+                                    </Text>
+                                  </Row>
                                   <Text variant="micro" tone="faint">
                                     {ascension.levelWord} {step.atLevel}
                                   </Text>

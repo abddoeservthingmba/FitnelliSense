@@ -11,6 +11,7 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
+import { ascensionFor, tierForRank } from '@fi/domain';
 import type { AthleteStats } from '@fi/shared';
 import { Card, Row, Stack as Column } from '../../src/components/Card';
 import { Chip } from '../../src/components/Chip';
@@ -69,9 +70,11 @@ export default function AthleteScreen() {
       <Screen scroll>
         <Column gap="xxl" style={{ paddingTop: theme.space.lg }}>
           <Row gap="lg" style={{ alignItems: 'center' }}>
-            <RankBadge rank={athlete.hunterRank} size={64} />
+            <RankBadge rank={athlete.hunterRank} size={64} ascension={athlete.ascension} />
             <View style={{ flex: 1, gap: 2 }}>
-              <Overline>Rank {athlete.hunterRank}</Overline>
+              <Overline>
+                {tierForRank(ascensionFor(athlete.ascension), athlete.hunterRank).name}
+              </Overline>
               <Text variant="heading" numberOfLines={1}>
                 {athlete.displayName}
               </Text>

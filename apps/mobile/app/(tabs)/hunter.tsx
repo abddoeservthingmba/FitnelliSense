@@ -29,6 +29,7 @@ import { RankBadge } from '../../src/features/hunter/RankBadge';
 import { StatBlock } from '../../src/features/hunter/StatBlock';
 import { BadgeGrid } from '../../src/features/hunter/BadgeGrid';
 import { useUnits } from '../../src/lib/use-units';
+import { nextTier, tierForRank } from '@fi/domain';
 import { useTheme } from '../../src/theme';
 
 export default function HunterScreen() {
@@ -49,6 +50,9 @@ export default function HunterScreen() {
   }
 
   const hunter = status.data;
+  // The tier this rank renders as on the chosen Ascension, and the next one up.
+  const tier = tierForRank(theme.ascension, hunter.rank);
+  const next = nextTier(theme.ascension, hunter.level);
 
   const onClaim = (questId: string) => {
     setClaimingId(questId);
@@ -63,7 +67,7 @@ export default function HunterScreen() {
           <Stack gap="xl">
             <Row justify="space-between" align="center">
               <View style={{ flex: 1, gap: 2 }}>
-                <Overline>hunter</Overline>
+                <Overline>{theme.ascension.systemLabel}</Overline>
                 <Text variant="heading">{me.data?.profile.displayName ?? 'Unnamed'}</Text>
               </View>
               <RankBadge rank={hunter.rank} size={64} labelled />
@@ -76,14 +80,15 @@ export default function HunterScreen() {
               xpForThisLevel={hunter.xpForThisLevel}
             />
 
-            {hunter.nextRank ? (
+            {/* Named in the chosen Ascension, not as a bare letter-rank. */}
+            {next ? (
               <Text variant="caption" tone="faint">
-                {hunter.nextRank.rank}-rank at level {hunter.nextRank.atLevel} —{' '}
-                {hunter.nextRank.atLevel - hunter.level} to go.
+                {next.tier.name} at {theme.ascension.levelWord.toLowerCase()} {next.atLevel} —{' '}
+                {next.atLevel - hunter.level} to go.
               </Text>
             ) : (
               <Text variant="caption" tone="monarch">
-                You have reached the highest rank the System recognises.
+                {tier.blurb} There is nothing above {tier.name}.
               </Text>
             )}
           </Stack>

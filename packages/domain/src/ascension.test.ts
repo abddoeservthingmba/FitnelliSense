@@ -68,7 +68,7 @@ describe('the Ascensions themselves', () => {
   });
 
   /*
-   * THE INVARIANT. A Ascension decorates the ladder; it must not be able to alter
+   * THE INVARIANT. An Ascension decorates the ladder; it must not be able to alter
    * it. Six tiers, one per rank, no duplicates, for every Ascension — so no Ascension
    * can level faster, and two users' levels stay comparable no matter what
    * they picked.
@@ -109,7 +109,7 @@ describe('the Ascensions themselves', () => {
   });
 
   /*
-   * Contrast is checked here rather than trusted, because a Ascension is five more
+   * Contrast is checked here rather than trusted, because an Ascension is five more
    * chances to ship something unreadable. The accent sits on the Ascension's own
    * background and carries text on top of it, so both directions matter.
    */
@@ -158,7 +158,7 @@ describe('the Ascensions themselves', () => {
 });
 
 describe('ascensionFor', () => {
-  it('finds a Ascension by id', () => {
+  it('finds an Ascension by id', () => {
     expect(ascensionFor('saiyan').id).toBe('saiyan');
   });
 
@@ -240,13 +240,86 @@ describe('ascensionLadder', () => {
   });
 
   it('gives the same unlock levels on every Ascension', () => {
-    // If this ever differs, a Ascension has changed the ladder.
+    // If this ever differs, an Ascension has changed the ladder.
     const reference = ascensionLadder(ASCENSIONS.monarch).map((step) => step.atLevel);
     for (const id of ASCENSION_IDS) {
       expect(
         ascensionLadder(ASCENSIONS[id]).map((step) => step.atLevel),
         id,
       ).toEqual(reference);
+    }
+  });
+});
+
+describe('tier forms', () => {
+  it('gives every tier a well-formed mark', () => {
+    for (const id of ASCENSION_IDS) {
+      for (const tier of ASCENSIONS[id].tiers) {
+        const { colour, crest, reach, aura } = tier.form;
+        expect(colour, `${id}.${tier.rank}`).toMatch(/^#[0-9A-Fa-f]{6}$/);
+        expect(Number.isInteger(crest)).toBe(true);
+        expect(crest).toBeGreaterThanOrEqual(0);
+        // The renderer fans the crest across the head; beyond about a dozen
+        // the elements overlap into a solid block.
+        expect(crest).toBeLessThanOrEqual(12);
+        expect(reach).toBeGreaterThan(0);
+        // reach is a fraction of the radius; above 1 the crest leaves the box.
+        expect(reach).toBeLessThanOrEqual(1);
+        expect([0, 1, 2, 3]).toContain(aura);
+      }
+    }
+  });
+
+  it('gives every Ascension a motif', () => {
+    for (const id of ASCENSION_IDS) {
+      expect(['spike', 'horn', 'crown', 'brim', 'band']).toContain(ASCENSIONS[id].motif);
+    }
+  });
+
+  /*
+   * The marks have to read as one thing escalating, not six unrelated badges.
+   *
+   * Measured as reach PLUS aura, not reach alone. Reach on its own is not
+   * monotonic and should not be: the Saiyan's fifth form is the long-haired
+   * one and its sixth is deliberately short and silver, so demanding
+   * ever-growing hair would force a mark that is less recognisable, not more.
+   * A later form can be smaller as long as it is unmistakably more powerful,
+   * which is what the aura rings carry.
+   */
+  it('escalates presence up every ladder', () => {
+    const presence = (form: { reach: number; aura: number }) => form.reach + form.aura;
+
+    for (const id of ASCENSION_IDS) {
+      const scores = ASCENSIONS[id].tiers.map((tier) => presence(tier.form));
+      for (let i = 1; i < scores.length; i += 1) {
+        expect(scores[i] as number, `${id} tier ${i} vs ${i - 1}`).toBeGreaterThan(
+          scores[i - 1] as number,
+        );
+      }
+    }
+  });
+
+  it('draws no two tiers of an Ascension identically', () => {
+    for (const id of ASCENSION_IDS) {
+      const shapes = ASCENSIONS[id].tiers.map(
+        (tier) => `${tier.form.crest}:${tier.form.reach}:${tier.form.aura}`,
+      );
+      expect(new Set(shapes).size, id).toBe(shapes.length);
+    }
+  });
+
+  it('reaches its peak aura only at the top of the ladder', () => {
+    for (const id of ASCENSION_IDS) {
+      const auras = ASCENSIONS[id].tiers.map((tier) => tier.form.aura);
+      expect(Math.max(...auras), id).toBe(auras[auras.length - 1]);
+      expect(auras[0], `${id} starts bare`).toBe(0);
+    }
+  });
+
+  it('does not reuse one colour for two tiers of the same Ascension', () => {
+    for (const id of ASCENSION_IDS) {
+      const colours = ASCENSIONS[id].tiers.map((tier) => tier.form.colour);
+      expect(new Set(colours).size, id).toBe(colours.length);
     }
   });
 });

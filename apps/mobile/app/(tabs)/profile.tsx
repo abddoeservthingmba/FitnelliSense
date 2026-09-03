@@ -7,7 +7,7 @@
  * Destructive actions confirm, and say what will actually happen.
  */
 import { useEffect, useState } from 'react';
-import { Alert, Platform, Switch, View } from 'react-native';
+import { Alert, Platform, Pressable, Switch, View } from 'react-native';
 import { router } from 'expo-router';
 import { REST_SECONDS_OPTIONS, SESSION_MINUTES_OPTIONS, TRAINING_DAYS_OPTIONS } from '@fi/shared';
 import { Button } from '../../src/components/Button';
@@ -19,12 +19,14 @@ import { Overline, Text } from '../../src/components/Text';
 import { TextField } from '../../src/components/TextField';
 import { ErrorState, LoadingState } from '../../src/components/StateViews';
 import { TierStrip } from '../../src/features/hunter/TierStrip';
+import { TierMark } from '../../src/features/ascension/TierMark';
 import { NAV_SOUND_DEFAULT, loadNavSound, saveNavSound } from '../../src/features/nav/nav-sound';
+import { useHunterStatus } from '../../src/api/hooks/use-hunter';
 import { useNutritionTargets } from '../../src/api/hooks/use-nutrition';
 import { useDeleteAccount, useMe, useUpdateProfile } from '../../src/api/hooks/use-profile';
 import { useAuth } from '../../src/auth/auth-context';
 import { API_BASE_URL } from '../../src/api/config';
-import { kjToKcal } from '@fi/domain';
+import { kjToKcal, tierForRank } from '@fi/domain';
 import { formatClock } from '../../src/lib/format';
 import { useUnits } from '../../src/lib/use-units';
 import { useTheme } from '../../src/theme';
@@ -42,6 +44,7 @@ export default function ProfileScreen() {
   const updateProfile = useUpdateProfile();
   const deleteAccount = useDeleteAccount();
   const targets = useNutritionTargets();
+  const status = useHunterStatus();
   const { signOut } = useAuth();
 
   // Local drafts for the free-text fields, so typing is never round-tripped.
@@ -60,6 +63,8 @@ export default function ProfileScreen() {
   }
 
   const profile = me.data.profile;
+  // Null until the status loads; the row renders without the mark meanwhile.
+  const currentTier = status.data ? tierForRank(theme.ascension, status.data.rank) : null;
   const bodyweightValue = bodyweight ?? units.toInput(profile.bodyweightKg);
   const weeklyHours =
     profile.trainingDaysPerWeek !== null && profile.sessionMinutes !== null
@@ -117,6 +122,55 @@ export default function ProfileScreen() {
             />
           </View>
         </StatRow>
+
+        {/*
+          Placed directly under the tier strip, and tappable as a whole row
+          rather than a label above a button. This is the setting people go
+          looking for — burying it three sections down in a wall of chips is
+          how it went unfound.
+        */}
+        <Section title="Your Ascension">
+          <Pressable
+            onPress={() => router.push('/ascension')}
+            accessibilityRole="button"
+            accessibilityLabel={`Change your Ascension. Currently ${theme.ascension.name}.`}
+            style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+          >
+            <Row
+              gap="md"
+              style={{
+                alignItems: 'center',
+                padding: theme.space.md,
+                borderWidth: 1,
+                borderColor: theme.colors.accent,
+                borderRadius: theme.radius.md,
+                backgroundColor: theme.colors.surface,
+              }}
+            >
+              {/* The mark of the tier you are on right now, so the row shows
+                  what is being changed rather than describing it. */}
+              {currentTier ? (
+                <TierMark tier={currentTier} motif={theme.ascension.motif} size={48} />
+              ) : null}
+              <Stack gap="xs" style={{ flex: 1 }}>
+                <Text variant="callout" weight="semibold">
+                  {theme.ascension.name}
+                </Text>
+                <Text variant="caption" tone="muted" numberOfLines={2}>
+                  {currentTier ? `${currentTier.name} · ` : ''}
+                  {theme.ascension.systemLabel}
+                </Text>
+              </Stack>
+              <Text variant="callout" tone="accent">
+                ›
+              </Text>
+            </Row>
+          </Pressable>
+          <Text variant="micro" tone="faint" style={{ marginTop: theme.space.sm }}>
+            Changes your tier names, their icons and the app's colours. Your level, XP and records
+            stay exactly as they are.
+          </Text>
+        </Section>
 
         {/* The banner on Home can be dismissed, so verification needs a
             permanent home. Shown either way, because "verified" is worth
@@ -294,24 +348,6 @@ export default function ProfileScreen() {
         */}
         {/* FR-HP-11. Named after what it changes, and honest that it is only
             wording and colour. */}
-        <Section title="Your Ascension">
-          <Stack gap="sm">
-            <Text variant="caption" tone="muted">
-              {theme.ascension.name} — {theme.ascension.tagline}
-            </Text>
-            <Button
-              label="Change your Ascension"
-              variant="secondary"
-              onPress={() => router.push('/ascension')}
-              fullWidth
-            />
-            <Text variant="micro" tone="faint">
-              Changes the names of your tiers and the app's colours. Your level, XP and records stay
-              exactly as they are.
-            </Text>
-          </Stack>
-        </Section>
-
         <Section title="Training insights">
           <Stack gap="sm">
             <Text variant="caption" tone="muted">

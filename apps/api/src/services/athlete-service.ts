@@ -12,6 +12,7 @@
  */
 import { and, desc, eq, gte, inArray, lt, sql } from 'drizzle-orm';
 import {
+  ascensionFor,
   decToString,
   isoDateDaysAgo,
   levelFromXp,
@@ -44,7 +45,7 @@ async function statsFor(
   today: string,
 ): Promise<AthleteStats | null> {
   const [profile] = await db
-    .select({ displayName: userProfiles.displayName })
+    .select({ displayName: userProfiles.displayName, ascension: userProfiles.ascension })
     .from(userProfiles)
     .where(eq(userProfiles.userId, userId))
     .limit(1);
@@ -103,6 +104,7 @@ async function statsFor(
   return {
     userId,
     displayName: profile.displayName,
+    ascension: profile.ascension === null ? null : ascensionFor(profile.ascension).id,
     level,
     hunterRank: rankForLevel(level),
     totalXp,
