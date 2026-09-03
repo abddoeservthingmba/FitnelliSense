@@ -14,32 +14,45 @@ whose update refuses to install.
 
 | Version   | Code | Package                     | Date       | What changed                                                                                                       |
 | --------- | ---- | --------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------ |
-| **0.7.0** | 13   | com.ascension.fitness       | 2026-09-03 | Athlete profiles from the ranking; post-workout comparison; History back in the bar. **Leaderboard opt-ins reset** |
-| 0.6.0     | 12   | com.ascension.fitness       | 2026-09-03 | Cardio logging fixed (server-side); 5 tabs not 7; tab-press flourish and sound. Native change — built `--clean`    |
-| 0.5.0     | 11   | com.ascension.fitness       | 2026-09-02 | **Training insights** — volume, sets and sessions per muscle group against the previous period, with bars          |
-| 0.4.3     | 10   | com.ascension.fitness       | 2026-09-02 | Barcode scanner: green reticle, decoded digits shown, manual entry, food source displayed                          |
-| 0.4.2     | 9    | com.ascension.fitness       | 2026-09-02 | Cardio now visible and loggable (minutes/km inputs); 16 machines added                                             |
-| 0.4.1     | 8    | com.ascension.fitness       | 2026-09-02 | 28 manifest permissions down to 11 — launcher badge and attribution entries removed                                |
-| 0.4.0     | 7    | com.ascension.fitness       | 2026-09-02 | **Renamed ARISE.** New icon and palette, launch screen, cardio tracking. New package: install is NOT an update     |
+| **0.9.0** | 15   | com.ascension.fitness       | 2026-09-03 | **Renamed Ascension.** Ascension themes, faster launch, premium transitions. New package: install is NOT an update |
+| 0.7.0     | 13   | com.arise.fitness           | 2026-09-03 | Athlete profiles from the ranking; post-workout comparison; History back in the bar. **Leaderboard opt-ins reset** |
+| 0.6.0     | 12   | com.arise.fitness           | 2026-09-03 | Cardio logging fixed (server-side); 5 tabs not 7; tab-press flourish and sound. Native change — built `--clean`    |
+| 0.5.0     | 11   | com.arise.fitness           | 2026-09-02 | **Training insights** — volume, sets and sessions per muscle group against the previous period, with bars          |
+| 0.4.3     | 10   | com.arise.fitness           | 2026-09-02 | Barcode scanner: green reticle, decoded digits shown, manual entry, food source displayed                          |
+| 0.4.2     | 9    | com.arise.fitness           | 2026-09-02 | Cardio now visible and loggable (minutes/km inputs); 16 machines added                                             |
+| 0.4.1     | 8    | com.arise.fitness           | 2026-09-02 | 28 manifest permissions down to 11 — launcher badge and attribution entries removed                                |
+| 0.4.0     | 7    | com.arise.fitness           | 2026-09-02 | **Renamed ARISE.** New icon and palette, launch screen, cardio tracking. New package: install is NOT an update     |
 | 0.3.1     | 5    | com.fitnessintellisense.app | 2026-09-01 | Security: allowBackup off, password rules, drizzle CVE, CI fixed                                                   |
 | 0.3.0     | 4    | com.fitnessintellisense.app | 2026-09-01 | Movement demos, tier strip, email verification, password reset, nutrition + barcode                                |
 | 0.2.0     | 3    | com.fitnessintellisense.app | 2026-09-01 | The Hunter System — levels, ranks, quests, badges, leaderboard                                                     |
 
-**0.4.0 changed the package name.** Android treats it as a different app: the
-old _Fitness Intellisense_ must be uninstalled, and it will not update in
-place. Both can sit on a phone at once, which is confusing rather than useful.
-Agreed while only one device had it installed; after a Play Store listing the
-package is permanent.
+**The package has changed twice, and each time cost every user a reinstall.**
+Android identifies an app by its package, so a new one is a new app: it cannot
+update in place, and both can sit on a phone at once.
+
+- **0.4.0** — `com.fitnessintellisense.app` → `com.arise.fitness`. Agreed while
+  only one device had it installed.
+- **0.9.0** — `com.arise.fitness` → `com.ascension.fitness`. This one landed
+  while 0.7.0 was already on other people's phones, so everyone had to remove
+  it and install fresh. Nothing was lost, because all data is server-side, but
+  they had to sign in again.
+
+After a Play Store listing the package is permanent, so there is no third time.
+
+The column above is the historical record and is **not** rewritten when the
+package changes: 0.4.0 through 0.7.0 really did ship as `com.arise.fitness`,
+and saying otherwise would destroy the only account of which binary carried
+which id.
 
 ## Current build
 
 |                           |                                                                    |
 | ------------------------- | ------------------------------------------------------------------ |
-| File                      | `ARISE-0.7.0.apk`                                                  |
+| File                      | `Ascension-0.9.0.apk`                                              |
 | Package                   | `com.ascension.fitness`                                            |
-| versionName / versionCode | 0.7.0 / 13                                                         |
-| Size                      | 75,047,328 bytes (71.6 MB)                                         |
-| SHA-256                   | `afb0662c25ca2d83c6705be0d5c41dce711531bb5f3f487d4f1f1ac422d531af` |
+| versionName / versionCode | 0.9.0 / 15                                                         |
+| Size                      | 75,065,172 bytes (71.6 MB)                                         |
+| SHA-256                   | `c97af8f63dfe443638c2c60d6cfd5e2e5df755eae01188a71b8355eabdc8236e` |
 | **Signing cert SHA-256**  | `c35574e619810ce487e6e92d2e3cbabced3e85356f32e4d793183335a0fee5de` |
 | API                       | `https://fitnellisense.onrender.com`                               |
 | ABIs                      | arm64-v8a, armeabi-v7a                                             |
