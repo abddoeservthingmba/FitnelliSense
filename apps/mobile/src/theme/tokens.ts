@@ -90,7 +90,7 @@ interface Palette {
   text: string;
   textMuted: string;
   textFaint: string;
-  /** ARISE blue. Live, earned, actionable. */
+  /** Ascension blue. Live, earned, actionable. */
   accent: string;
   accentText: string;
   accentSoft: string;
@@ -108,7 +108,7 @@ interface Palette {
 }
 
 /**
- * ARISE, after dark.
+ * Ascension, after dark.
  *
  * Taken from the icon: deep navy ground, ice-blue mark. The previous palette
  * was near-black with a cyan accent, which was close but read as a terminal
@@ -188,7 +188,7 @@ export const palettes = { dark, light } as const;
 export type ColorScheme = keyof typeof palettes;
 export type ThemeColors = Palette;
 
-/** Rank colours: greys climb into the ARISE blue, then gold at A, violet at S. */
+/** Rank colours: greys climb into the Ascension blue, then gold at A, violet at S. */
 export const RANK_COLORS: Record<string, keyof ThemeColors> = {
   E: 'textFaint',
   D: 'textMuted',

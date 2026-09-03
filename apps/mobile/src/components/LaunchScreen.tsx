@@ -8,7 +8,7 @@
  * The chevron is drawn here rather than loaded as an image so it is the same
  * shape as the launcher icon at any density, and so it can animate. It fades
  * and rises on entry, which is the one place a flourish is warranted: the app
- * is called ARISE.
+ * is called Ascension.
  */
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, View } from 'react-native';
@@ -93,22 +93,30 @@ export function LaunchScreen({ message }: { message?: string }) {
         gap: theme.space.xl,
       }}
       accessible
-      accessibilityLabel={`ARISE. ${TAGLINE}`}
+      accessibilityLabel={`Ascension. ${TAGLINE}`}
     >
       <Animated.View style={{ opacity: enter, transform: [{ translateY: rise }] }}>
         <View style={{ alignItems: 'center', gap: theme.space.lg }}>
           <AriseMark size={104} />
 
           <View style={{ alignItems: 'center', gap: theme.space.xs }}>
-            {/* Tracked wide: the wordmark is five letters and needs the air. */}
+            {/*
+              Tracked wide for presence, but less so than ARISE was: nine
+              letters at 40pt with 6.6 of tracking is about 285px, which
+              overflows a 320dp phone. Half the tracking, one line, and allowed
+              to shrink — so the wordmark fits every screen without being
+              re-tuned per device.
+            */}
             <Text
               variant="display"
               weight="heavy"
-              style={{ letterSpacing: theme.tracking.wider * 3 }}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              style={{ letterSpacing: theme.tracking.wider * 1.5 }}
               // The label is on the container; this would read it twice.
               accessibilityElementsHidden
             >
-              ARISE
+              ASCENSION
             </Text>
             <Text variant="caption" tone="muted" style={{ letterSpacing: theme.tracking.wide }}>
               {TAGLINE}

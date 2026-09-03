@@ -191,7 +191,7 @@ function renderMarkdown(source: string): string {
   return out.join('\n');
 }
 
-/** ARISE's own palette, so the page looks like the app rather than a default. */
+/** Ascension's own palette, so the page looks like the app rather than a default. */
 const STYLE = `
 :root { color-scheme: dark light; }
 * { box-sizing: border-box; }
@@ -237,10 +237,10 @@ export async function legalRoutes(app: FastifyInstance): Promise<void> {
 <html lang="en"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Privacy Policy — ARISE</title>
+<title>Privacy Policy — Ascension</title>
 <style>${STYLE}</style>
 </head><body><main>
-<p class="tagline">ARISE · TRAIN. RANK. REPEAT.</p>
+<p class="tagline">ASCENSION · TRAIN. RANK. REPEAT.</p>
 ${body}
 </main></body></html>`;
 

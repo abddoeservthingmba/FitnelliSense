@@ -1,8 +1,8 @@
-# ARISE — Privacy Policy
+# Ascension — Privacy Policy
 
 **Last updated: 3 September 2026**
 
-ARISE is a training log. This policy describes exactly what it stores, where,
+Ascension is a training log. This policy describes exactly what it stores, where,
 who else sees it, and how to get rid of it.
 
 It is written against what the code actually does rather than from a template.
@@ -10,7 +10,7 @@ Where something is uncomfortable — a third party seeing your IP address, a
 feature that publishes your name to other users — it is stated plainly rather
 than buried.
 
-> **ARISE is currently a private trial** shared with a small number of people.
+> **Ascension is currently a private trial** shared with a small number of people.
 > It is not on any app store, and there is no company behind it. Treat it
 > accordingly: it holds your training data with reasonable care, but it is not
 > an established service with a support desk.
@@ -19,12 +19,12 @@ than buried.
 
 ## 1. Who is responsible
 
-ARISE is run by an individual, not a company.
+Ascension is run by an individual, not a company.
 
 **Contact for any privacy question, correction or complaint:**
 `REPLACE_WITH_CONTACT_EMAIL`
 
-## 2. What ARISE stores
+## 2. What Ascension stores
 
 Only what you type in, plus what the app needs to keep you signed in. There is
 **no analytics, no advertising, no tracking, and no third-party SDK collecting
@@ -86,11 +86,11 @@ never sent anywhere, and are removed when you sign out or uninstall:
   instead of waiting for the server to answer
 - which Ascension to colour the app with before your profile has loaded
 
-## 3. What ARISE does NOT do
+## 3. What Ascension does NOT do
 
 - No advertising, and no data is ever sold or rented.
 - No analytics or product telemetry of any kind.
-- No location tracking. ARISE never requests location permission.
+- No location tracking. Ascension never requests location permission.
 - No contacts, no photo library, no microphone.
 - No profiling, and no automated decision-making with legal effects.
 - No cookies, and no cross-site tracking.
@@ -154,7 +154,7 @@ until you turn it on in your profile.
 > off** and everyone has to opt in again against the list below. Nobody's
 > records were published under the old wording.
 
-If you turn it on, other users of ARISE can see the following, and nothing
+If you turn it on, other users of Ascension can see the following, and nothing
 else.
 
 **On the ranking list:**
@@ -194,7 +194,7 @@ attempt exactly that and require it to fail.
 
 A profile belonging to someone who has not opted in does not merely refuse to
 load; the server answers as though the account does not exist. That is
-deliberate, so this cannot be used to find out who has an ARISE account.
+deliberate, so this cannot be used to find out who has an Ascension account.
 
 ## 8. How long it is kept
 
@@ -208,7 +208,7 @@ underlying rows are then removed within 30 days.
 
 You can, at any time and without asking anyone:
 
-- **See everything.** Profile → _Export my data_ returns every row ARISE holds
+- **See everything.** Profile → _Export my data_ returns every row Ascension holds
   about you, as JSON.
 - **Correct it.** Every profile field and every logged entry is editable, and
   entries can be deleted outright.
@@ -239,7 +239,7 @@ A written self-assessment, including what has **not** been checked, is public at
 
 ## 11. Children
 
-ARISE is not intended for anyone under 16, and accounts should not be created
+Ascension is not intended for anyone under 16, and accounts should not be created
 for children. If you believe a child has created an account, email the contact
 address and it will be deleted.
 
@@ -250,7 +250,7 @@ counts as health data with extra protection. It is treated as sensitive
 throughout: never published without the explicit ranking opt-in, never sold,
 never analysed for advertising.
 
-**ARISE gives no medical or dietary advice.** Nutrition targets are estimates
+**Ascension gives no medical or dietary advice.** Nutrition targets are estimates
 derived from figures you provided, they are always overrideable, and nothing in
 the app is scored against them. Ask a doctor or a dietitian, not a phone.
 

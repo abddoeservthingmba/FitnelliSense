@@ -1,5 +1,6 @@
 /**
- * Generates ARISE's icon set.
+ * Generates Ascension's icon set. The mark is a letter A, which the rename
+ * did not disturb.
  *
  * The mark is a hard-edged **A** inside four corner brackets, lit from within.
  * The brackets are the same motif `SystemWindow` draws around a panel in the

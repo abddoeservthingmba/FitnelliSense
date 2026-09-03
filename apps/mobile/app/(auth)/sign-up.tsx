@@ -67,7 +67,7 @@ export default function SignUpScreen() {
       <Screen scroll>
         <View style={{ paddingTop: theme.space.xxxl, gap: theme.space.xl }}>
           <VStack gap="sm">
-            <Overline>ARISE</Overline>
+            <Overline>ASCENSION</Overline>
             <Text variant="display">Start training</Text>
             <Text tone="muted">Three fields. You can change everything else later.</Text>
           </VStack>
@@ -116,20 +116,10 @@ export default function SignUpScreen() {
             ) : null}
 
             {waking ? (
-
-
               <Text variant="caption" tone="muted" accessibilityRole="alert">
-
-
                 {WAKING_MESSAGE}
-
-
               </Text>
-
-
             ) : null}
-
-
 
             <Button
               label="Create account"

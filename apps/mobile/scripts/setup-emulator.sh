@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Installs an Android emulator and creates a device to run ARISE on this PC.
+# Installs an Android emulator and creates a device to run Ascension on this PC.
 #
 #   ./scripts/setup-emulator.sh          # install + create the AVD
 #   ./scripts/setup-emulator.sh --start  # just boot the one already created
@@ -77,7 +77,7 @@ Done. Two ways to run the app on it:
 
   2. Or install the release APK you already built:
        ./scripts/setup-emulator.sh --start
-       "$ANDROID_HOME"/platform-tools/adb install -r ../../build-output/ARISE-0.7.0.apk
+       "$ANDROID_HOME"/platform-tools/adb install -r ../../build-output/Ascension-0.9.0.apk
 
 Option 2 tests exactly the binary your friends have. Option 1 gives you fast
 reload while working.

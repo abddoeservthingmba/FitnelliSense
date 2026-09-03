@@ -68,7 +68,7 @@ cd android
 "$GRADLE" assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
 
 APK="$MOBILE/android/app/build/outputs/apk/release/app-release.apk"
-DEST="$ROOT/build-output/ARISE-$VERSION.apk"
+DEST="$ROOT/build-output/Ascension-$VERSION.apk"
 
 mkdir -p "$ROOT/build-output"
 cp "$APK" "$DEST"

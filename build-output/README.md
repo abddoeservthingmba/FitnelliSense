@@ -14,13 +14,13 @@ whose update refuses to install.
 
 | Version   | Code | Package                     | Date       | What changed                                                                                                       |
 | --------- | ---- | --------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------ |
-| **0.7.0** | 13   | com.arise.fitness           | 2026-09-03 | Athlete profiles from the ranking; post-workout comparison; History back in the bar. **Leaderboard opt-ins reset** |
-| 0.6.0     | 12   | com.arise.fitness           | 2026-09-03 | Cardio logging fixed (server-side); 5 tabs not 7; tab-press flourish and sound. Native change — built `--clean`    |
-| 0.5.0     | 11   | com.arise.fitness           | 2026-09-02 | **Training insights** — volume, sets and sessions per muscle group against the previous period, with bars          |
-| 0.4.3     | 10   | com.arise.fitness           | 2026-09-02 | Barcode scanner: green reticle, decoded digits shown, manual entry, food source displayed                          |
-| 0.4.2     | 9    | com.arise.fitness           | 2026-09-02 | Cardio now visible and loggable (minutes/km inputs); 16 machines added                                             |
-| 0.4.1     | 8    | com.arise.fitness           | 2026-09-02 | 28 manifest permissions down to 11 — launcher badge and attribution entries removed                                |
-| 0.4.0     | 7    | com.arise.fitness           | 2026-09-02 | **Renamed ARISE.** New icon and palette, launch screen, cardio tracking. New package: install is NOT an update     |
+| **0.7.0** | 13   | com.ascension.fitness       | 2026-09-03 | Athlete profiles from the ranking; post-workout comparison; History back in the bar. **Leaderboard opt-ins reset** |
+| 0.6.0     | 12   | com.ascension.fitness       | 2026-09-03 | Cardio logging fixed (server-side); 5 tabs not 7; tab-press flourish and sound. Native change — built `--clean`    |
+| 0.5.0     | 11   | com.ascension.fitness       | 2026-09-02 | **Training insights** — volume, sets and sessions per muscle group against the previous period, with bars          |
+| 0.4.3     | 10   | com.ascension.fitness       | 2026-09-02 | Barcode scanner: green reticle, decoded digits shown, manual entry, food source displayed                          |
+| 0.4.2     | 9    | com.ascension.fitness       | 2026-09-02 | Cardio now visible and loggable (minutes/km inputs); 16 machines added                                             |
+| 0.4.1     | 8    | com.ascension.fitness       | 2026-09-02 | 28 manifest permissions down to 11 — launcher badge and attribution entries removed                                |
+| 0.4.0     | 7    | com.ascension.fitness       | 2026-09-02 | **Renamed ARISE.** New icon and palette, launch screen, cardio tracking. New package: install is NOT an update     |
 | 0.3.1     | 5    | com.fitnessintellisense.app | 2026-09-01 | Security: allowBackup off, password rules, drizzle CVE, CI fixed                                                   |
 | 0.3.0     | 4    | com.fitnessintellisense.app | 2026-09-01 | Movement demos, tier strip, email verification, password reset, nutrition + barcode                                |
 | 0.2.0     | 3    | com.fitnessintellisense.app | 2026-09-01 | The Hunter System — levels, ranks, quests, badges, leaderboard                                                     |
@@ -36,7 +36,7 @@ package is permanent.
 |                           |                                                                    |
 | ------------------------- | ------------------------------------------------------------------ |
 | File                      | `ARISE-0.7.0.apk`                                                  |
-| Package                   | `com.arise.fitness`                                                |
+| Package                   | `com.ascension.fitness`                                            |
 | versionName / versionCode | 0.7.0 / 13                                                         |
 | Size                      | 75,047,328 bytes (71.6 MB)                                         |
 | SHA-256                   | `afb0662c25ca2d83c6705be0d5c41dce711531bb5f3f487d4f1f1ac422d531af` |
