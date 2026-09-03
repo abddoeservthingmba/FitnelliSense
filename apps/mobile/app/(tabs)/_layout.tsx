@@ -77,6 +77,19 @@ export default function TabsLayout() {
     return <Redirect href="/onboarding" />;
   }
 
+  /*
+   * Choosing an Ascension is the first thing the app asks for after
+   * onboarding, because it decides what everything else looks like.
+   *
+   * NULL means never asked — distinct from having chosen the default, which is
+   * why the column is nullable. Once chosen it is never asked again; it is
+   * changed from Profile. Asking on every launch would put a tap in front of
+   * the app forever, which is the opposite of the startup work.
+   */
+  if (me.data && me.data.profile.ascension === null) {
+    return <Redirect href="/ascension?first=1" />;
+  }
+
   return (
     <TabFlourishProvider>
       <SignedInTabs />

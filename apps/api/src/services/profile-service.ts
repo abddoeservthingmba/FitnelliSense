@@ -68,7 +68,16 @@ export async function getMe(deps: ProfileDeps, userId: string): Promise<MeRespon
       leaderboardOptIn: row.leaderboardOptIn,
       // Any unrecognised value degrades to the original ladder rather than
       // failing the response schema (FR-HP-11).
-      ascension: ascensionFor(row.ascension).id,
+      /*
+       * NULL is passed through, because "never chosen" is the state the app
+       * uses to decide whether to ask. Coercing it to the default here would
+       * make the question unaskable.
+       *
+       * A non-null value is still normalised, so a row holding an Ascension
+       * this build does not know about degrades to the default rather than
+       * failing the response schema.
+       */
+      ascension: row.ascension === null ? null : ascensionFor(row.ascension).id,
     },
     avatarUrl,
   };

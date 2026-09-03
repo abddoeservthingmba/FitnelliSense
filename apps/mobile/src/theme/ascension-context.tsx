@@ -86,9 +86,14 @@ export function useAscensionContext(): PathContextValue {
  * the profile wins once it is known, which is what makes the choice follow the
  * account to a second device rather than living on one phone.
  */
-export function useAscensionSync(fromProfile: AscensionId | undefined): void {
+export function useAscensionSync(fromProfile: AscensionId | null | undefined): void {
   const { ascensionId, setAscensionLocally } = useAscensionContext();
   useEffect(() => {
-    if (fromProfile !== undefined && fromProfile !== ascensionId) setAscensionLocally(fromProfile);
+    // `null` means the account has never chosen, and `undefined` means the
+    // profile has not loaded. Neither is an instruction to change anything —
+    // adopting null would wipe the local mirror the theme is reading, so the
+    // picker would paint in the default instead of following the taps.
+    if (fromProfile === null || fromProfile === undefined) return;
+    if (fromProfile !== ascensionId) setAscensionLocally(fromProfile);
   }, [fromProfile, ascensionId, setAscensionLocally]);
 }

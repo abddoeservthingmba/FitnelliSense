@@ -29,6 +29,7 @@ import { EmptyState, LoadingState, OfflineBanner } from '../../src/components/St
 import { ExercisePicker } from '../../src/features/routine/ExercisePicker';
 import { RestTimerBar } from '../../src/features/workout/RestTimerBar';
 import { WorkoutExerciseCard } from '../../src/features/workout/WorkoutExerciseCard';
+import { MotivationLine } from '../../src/features/ascension/MotivationLine';
 import { WorkoutSummarySheet } from '../../src/features/workout/WorkoutSummarySheet';
 import { LevelUpWindow } from '../../src/features/hunter/LevelUpWindow';
 import { usePrefill } from '../../src/features/workout/use-prefill';
@@ -167,6 +168,10 @@ export default function ActiveWorkoutScreen() {
             </StatRow>
             <Rule />
           </View>
+
+          {/* Seeded on the workout id, so the line is fixed for this session
+              rather than changing between sets. */}
+          <MotivationLine context="training" seed={workout.id} />
 
           {workout.exercises.length === 0 ? (
             <EmptyState

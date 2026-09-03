@@ -132,7 +132,7 @@ export const userProfiles = pgTable('user_profiles', {
    * only — no threshold anywhere depends on it, so changing it moves nothing
    * the user has earned. Defaults to the original ladder.
    */
-  ascension: text('ascension').notNull().default('monarch'),
+  ascension: text('ascension'),
   /**
    * Nutrition target overrides (FR-NUT-10). Null means "derive it from the
    * profile" — the estimate is not copied in, so it stays correct when

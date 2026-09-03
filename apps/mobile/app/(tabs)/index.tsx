@@ -16,6 +16,7 @@ import { Overline, Text } from '../../src/components/Text';
 import { ErrorState, LoadingState } from '../../src/components/StateViews';
 import { VerifyReminder } from '../../src/features/account/VerifyReminder';
 import { TierStrip } from '../../src/features/hunter/TierStrip';
+import { MotivationLine } from '../../src/features/ascension/MotivationLine';
 import { useActiveWorkout, useStartWorkout } from '../../src/api/hooks/use-workout';
 import { useProgressSummary } from '../../src/api/hooks/use-history';
 import { useMe } from '../../src/api/hooks/use-profile';
@@ -57,6 +58,9 @@ export default function HomeScreen() {
           </Stack>
           {/* Rank and level, straight after the name. */}
           <TierStrip />
+          {/* A line in the chosen Ascension's voice, with its mark. Fixed for
+              the day, so opening the app twice does not reshuffle it. */}
+          <MotivationLine context="home" withSigil />
           {/* Only while unverified, and only until dismissed. */}
           <VerifyReminder />
         </Stack>

@@ -35,7 +35,7 @@ export const profileSchema = z.object({
    * likes and nothing they have earned moves. Validated as a plain enum
    * rather than against `@fi/domain` so the contract stays dependency-free.
    */
-  ascension: z.enum(['monarch', 'saiyan', 'shinobi', 'shinigami', 'pirate']),
+  ascension: z.enum(['monarch', 'saiyan', 'shinobi', 'shinigami', 'pirate']).nullable(),
 });
 
 export const meResponseSchema = z.object({

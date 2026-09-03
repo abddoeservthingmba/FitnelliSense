@@ -18,6 +18,7 @@ import { Rule, Section, Stat, StatRow } from '../src/components/Section';
 import { Overline, Text } from '../src/components/Text';
 import { ErrorState, LoadingState } from '../src/components/StateViews';
 import { MuscleBars } from '../src/features/insights/MuscleBars';
+import { MotivationLine } from '../src/features/ascension/MotivationLine';
 import { useTrainingInsights } from '../src/api/hooks/use-insights';
 import { useUnits } from '../src/lib/use-units';
 import { useTheme } from '../src/theme';
@@ -53,6 +54,10 @@ export default function InsightsScreen() {
             {data.from} to {data.to}, against {data.previousFrom} to {data.previousTo}
           </Text>
         </Stack>
+
+        {/* Perspective rather than hype: this screen is where someone reads
+            their own numbers, and the tone is chosen to suit that. */}
+        <MotivationLine context="insights" />
 
         <View style={{ flexDirection: 'row', gap: theme.space.sm }}>
           {WINDOWS.map((option) => (

@@ -3,7 +3,7 @@
     "name": "Ascension",
     "slug": "ascension",
     "scheme": "ascension",
-    "version": "0.9.0",
+    "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -13,7 +13,7 @@
     ],
     "android": {
       "package": "com.ascension.fitness",
-      "versionCode": 15,
+      "versionCode": 16,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0B2547"
