@@ -9,9 +9,11 @@ import {
   isoDateSchema,
   isoDateTimeSchema,
   positiveDecimalStringSchema,
+  repsSchema,
   shortTextSchema,
   uuidSchema,
 } from './primitives';
+import { prTypeSchema } from './enums';
 
 export const rankSchema = z.enum(['E', 'D', 'C', 'B', 'A', 'S']);
 export const statKeySchema = z.enum(['strength', 'endurance', 'discipline']);
@@ -160,6 +162,62 @@ export const leaderboardQuerySchema = z.object({
   window: z.enum(['week', 'month', 'all']).default('week'),
 });
 
+/**
+ * One athlete's public training profile — FR-LB-08.
+ *
+ * What is deliberately NOT here is the point of the shape. No email, no
+ * bodyweight, no nutrition, no notes, no individual session dates. Someone
+ * opted in to being compared on training, and that is the whole extent of it.
+ *
+ * Bodyweight in particular is excluded even though it would make the strength
+ * numbers more meaningful: it is health data about a person's body, and a
+ * leaderboard opt-in is not consent to publish it.
+ */
+export const athleteMuscleSchema = z.object({
+  group: z.string(),
+  volumeKg: positiveDecimalStringSchema,
+  sets: z.number().int(),
+  sharePercent: z.number(),
+});
+
+export const athleteRecordSchema = z.object({
+  exerciseName: shortTextSchema,
+  prType: prTypeSchema,
+  value: positiveDecimalStringSchema,
+  reps: repsSchema.nullable(),
+});
+
+export const athleteStatsSchema = z.object({
+  userId: uuidSchema,
+  displayName: shortTextSchema,
+  level: z.number().int(),
+  hunterRank: rankSchema,
+  totalXp: z.number().int(),
+  workouts: z.number().int(),
+  sets: z.number().int(),
+  volumeKg: positiveDecimalStringSchema,
+  /** Primary muscle groups only, split so the shares still sum to the whole. */
+  muscles: z.array(athleteMuscleSchema),
+  records: z.array(athleteRecordSchema),
+});
+
+export const athleteProfileSchema = z.object({
+  window: z.enum(['week', 'month', 'all']),
+  athlete: athleteStatsSchema,
+  /**
+   * The viewer's own figures over the SAME window, so the comparison is like
+   * for like. Null when the viewer is looking at their own profile — there is
+   * nothing to compare against yourself.
+   */
+  you: athleteStatsSchema.nullable(),
+  isYou: z.boolean(),
+});
+
+export const athleteProfileQuerySchema = z.object({
+  window: z.enum(['week', 'month', 'all']).default('month'),
+  today: z.iso.date().optional(),
+});
+
 export type Rank = z.infer<typeof rankSchema>;
 export type Stats = z.infer<typeof statsSchema>;
 export type XpBreakdown = z.infer<typeof xpBreakdownSchema>;
@@ -172,3 +230,7 @@ export type HunterReward = z.infer<typeof hunterRewardSchema>;
 export type ClaimQuestResponse = z.infer<typeof claimQuestResponseSchema>;
 export type LeaderboardEntry = z.infer<typeof leaderboardEntrySchema>;
 export type Leaderboard = z.infer<typeof leaderboardSchema>;
+export type AthleteMuscle = z.infer<typeof athleteMuscleSchema>;
+export type AthleteRecord = z.infer<typeof athleteRecordSchema>;
+export type AthleteStats = z.infer<typeof athleteStatsSchema>;
+export type AthleteProfile = z.infer<typeof athleteProfileSchema>;

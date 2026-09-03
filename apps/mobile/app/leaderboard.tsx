@@ -7,7 +7,8 @@
  * workout data is health-adjacent (BRD R2), so this is not a toggle to bury.
  */
 import { useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { router } from 'expo-router';
 import type { LeaderboardEntry } from '@fi/shared';
 import { useLeaderboard } from '../src/api/hooks/use-hunter';
 import { useMe, useUpdateProfile } from '../src/api/hooks/use-profile';
@@ -56,9 +57,13 @@ export default function LeaderboardScreen() {
                 You are not on the board.
               </Text>
               <Text variant="caption" tone="muted">
-                Joining publishes your display name, level, rank, XP, total volume and
-                workout count to everyone else who has joined. It does not publish your
-                individual lifts, your bodyweight, or anything you have not logged.
+                Joining publishes your display name, level, rank, XP, total volume and workout count
+                to everyone else who has joined — and lets them open your profile to see your
+                personal records and which muscle groups you train.
+              </Text>
+              <Text variant="caption" tone="muted">
+                It does not publish your bodyweight, what you eat, your session notes, or when you
+                trained. You can leave at any time.
               </Text>
               <Button
                 label="Join the ranking"
@@ -115,18 +120,15 @@ export default function LeaderboardScreen() {
   );
 }
 
-function LeaderboardRow({
-  entry,
-  volumeLabel,
-}: {
-  entry: LeaderboardEntry;
-  volumeLabel: string;
-}) {
+function LeaderboardRow({ entry, volumeLabel }: { entry: LeaderboardEntry; volumeLabel: string }) {
   const theme = useTheme();
 
   return (
-    <View
-      style={{
+    <Pressable
+      onPress={() => router.push(`/athlete/${entry.userId}`)}
+      accessibilityRole="button"
+      accessibilityLabel={`${entry.isYou ? 'Your' : entry.displayName + "'s"} profile`}
+      style={({ pressed }) => ({
         flexDirection: 'row',
         alignItems: 'center',
         gap: theme.space.md,
@@ -135,7 +137,8 @@ function LeaderboardRow({
         // most people are looking for.
         backgroundColor: entry.isYou ? theme.colors.accentSoft : 'transparent',
         paddingHorizontal: entry.isYou ? theme.space.sm : 0,
-      }}
+        opacity: pressed ? 0.6 : 1,
+      })}
     >
       <Text variant="title" tone={entry.isYou ? 'accent' : 'faint'} style={{ width: 34 }}>
         {entry.rank}
@@ -159,6 +162,10 @@ function LeaderboardRow({
         </Text>
         <Overline>xp</Overline>
       </View>
-    </View>
+
+      <Text variant="callout" tone="faint">
+        ›
+      </Text>
+    </Pressable>
   );
 }

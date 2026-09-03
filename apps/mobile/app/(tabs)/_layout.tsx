@@ -1,11 +1,12 @@
 /**
  * The signed-in shell.
  *
- * Five tabs, down from seven. Routines folded into Exercises — they answer the
- * same question — and History moved to that screen's top right. Seven targets
- * across a phone's width gives each one about 55px, which is under the 44pt
- * minimum once you account for the gaps; five gives a comfortable target and a
- * label that can be read at a glance.
+ * Six tabs. Routines folded into Exercises — they answer the same question —
+ * which is the one merge that removed a destination rather than hiding one.
+ *
+ * History came back to the bar after being tried in the Train screen's header:
+ * it is looked at often enough to deserve a permanent target, and a header
+ * button on one screen is only reachable from that screen.
  *
  * Tab icons are drawn as glyphs rather than pulled from an icon package — one
  * less dependency, and they scale with the OS font size like everything else
@@ -27,6 +28,7 @@ const TABS = [
   { name: 'hunter', title: 'Hunter', glyph: '⬟' },
   { name: 'exercises', title: 'Train', glyph: '☰' },
   { name: 'food', title: 'Food', glyph: '◓' },
+  { name: 'history', title: 'History', glyph: '◷' },
   { name: 'profile', title: 'Profile', glyph: '◍' },
 ] as const;
 
@@ -110,17 +112,10 @@ function SignedInTabs() {
             ),
           }}
           listeners={{
-            tabPress: () => play(tab.glyph, index, TABS.length),
+            tabPress: () => play(tab.glyph, tab.title, index, TABS.length),
           }}
         />
       ))}
-
-      {/*
-        History still lives in this group so `/(tabs)/history` keeps working
-        from Home, from the Train tab's header and from the end of a workout.
-        `href: null` takes it off the bar without taking it off the router.
-      */}
-      <Tabs.Screen name="history" options={{ href: null, headerShown: false }} />
     </Tabs>
   );
 }

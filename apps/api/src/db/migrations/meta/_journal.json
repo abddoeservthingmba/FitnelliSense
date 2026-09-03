@@ -64,6 +64,13 @@
       "when": 1788285443143,
       "tag": "0008_cardio",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1788414168260,
+      "tag": "0009_leaderboard_reconsent",
+      "breakpoints": true
     }
   ]
 }

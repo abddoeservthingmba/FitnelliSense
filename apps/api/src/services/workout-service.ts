@@ -19,6 +19,11 @@ import {
   completedSetCount,
   cardioTotals,
   detectCardioPRs,
+  compareSessions,
+  summariseComparison,
+  decToNumber,
+  type ExerciseTopSet,
+  type SessionTotals,
 } from '@fi/domain';
 import type {
   AddSetRequest,
@@ -611,6 +616,110 @@ async function existingRecords(
   return best;
 }
 
+/** The heaviest working set of each exercise in a session. */
+function topSetsOf(
+  sets: readonly AttributedSet[],
+  names: ReadonlyMap<string, string>,
+): ExerciseTopSet[] {
+  const best = new Map<string, { weightKg: Dec; reps: number }>();
+
+  for (const set of sets) {
+    // Warmups are excluded here for the same reason they are excluded from
+    // volume: they are not the work, and a heavy warmup would flatter the
+    // comparison.
+    if (!set.isCompleted || set.setType === 'warmup') continue;
+    if (set.weightKg === null || set.reps === null) continue;
+
+    const current = best.get(set.exerciseId);
+    const heavier = current === null || current === undefined;
+    const beatsIt =
+      current !== undefined &&
+      (decToNumber(set.weightKg) > decToNumber(current.weightKg) ||
+        // Same weight, more reps: the better set of the two.
+        (decToNumber(set.weightKg) === decToNumber(current.weightKg) && set.reps > current.reps));
+
+    if (heavier || beatsIt) best.set(set.exerciseId, { weightKg: set.weightKg, reps: set.reps });
+  }
+
+  return [...best.entries()].map(([exerciseId, value]) => ({
+    exerciseId,
+    exerciseName: names.get(exerciseId) ?? 'Exercise',
+    weightKg: value.weightKg,
+    reps: value.reps,
+  }));
+}
+
+function totalsOf(sets: readonly AttributedSet[], durationSecs: number): SessionTotals {
+  return {
+    volumeKg: totalVolume(sets),
+    sets: completedSetCount(sets),
+    reps: sets.reduce(
+      (count, set) =>
+        set.isCompleted && set.setType !== 'warmup' ? count + (set.reps ?? 0) : count,
+      0,
+    ),
+    durationSecs,
+  };
+}
+
+/**
+ * The session this one should be measured against.
+ *
+ * The previous run of the SAME routine where there is one. Comparing a leg day
+ * with the push day that happened to precede it produces a number that is
+ * arithmetically correct and tells the lifter nothing.
+ */
+async function previousSession(
+  db: Database,
+  userId: string,
+  workoutId: string,
+  routineId: string | null,
+  startedAt: Date,
+): Promise<{
+  id: string;
+  durationSecs: number;
+  basis: 'same_routine' | 'previous_workout';
+} | null> {
+  const earlier = and(
+    eq(workouts.userId, userId),
+    eq(workouts.status, 'completed'),
+    ne(workouts.id, workoutId),
+    lt(workouts.startedAt, startedAt),
+  );
+
+  if (routineId !== null) {
+    const [sameRoutine] = await db
+      .select({ id: workouts.id, durationSecs: workouts.durationSecs })
+      .from(workouts)
+      .where(and(earlier, eq(workouts.routineId, routineId)))
+      .orderBy(desc(workouts.startedAt))
+      .limit(1);
+
+    if (sameRoutine) {
+      return {
+        id: sameRoutine.id,
+        durationSecs: sameRoutine.durationSecs ?? 0,
+        basis: 'same_routine',
+      };
+    }
+  }
+
+  const [anyPrevious] = await db
+    .select({ id: workouts.id, durationSecs: workouts.durationSecs })
+    .from(workouts)
+    .where(earlier)
+    .orderBy(desc(workouts.startedAt))
+    .limit(1);
+
+  return anyPrevious
+    ? {
+        id: anyPrevious.id,
+        durationSecs: anyPrevious.durationSecs ?? 0,
+        basis: 'previous_workout',
+      }
+    : null;
+}
+
 /**
  * FR-WK-10 + FR-HP-06. Duration, volume and records are all computed here, in
  * one transaction, from the domain module — so finishing a workout twice cannot
@@ -668,6 +777,28 @@ export async function completeWorkout(
   const names = await exerciseNames(db, exerciseIds);
   const summary = await getWorkoutDetail(db, userId, workoutId);
 
+  // FR-WK-10: most sessions set no record, so the summary needs something true
+  // to say about the ones that did not.
+  const previous = await previousSession(
+    db,
+    userId,
+    workoutId,
+    workout.routineId,
+    workout.startedAt,
+  );
+  const previousSets = previous === null ? [] : await attributedSets(db, previous.id);
+  const previousNames =
+    previous === null
+      ? new Map<string, string>()
+      : await exerciseNames(db, [...new Set(previousSets.map((set) => set.exerciseId))]);
+
+  const comparison = compareSessions(
+    totalsOf(sets, durationSecs),
+    previous === null ? null : totalsOf(previousSets, previous.durationSecs),
+    topSetsOf(sets, names),
+    topSetsOf(previousSets, previousNames),
+  );
+
   // The Hunter System is credited here, inside completion, so the summary and
   // any level-up are one moment rather than a discovery on the next screen.
   // Every write it performs is idempotent, because completion itself can be
@@ -694,6 +825,32 @@ export async function completeWorkout(
       setCount: completedSetCount(sets),
     },
     hunter,
+    comparison: {
+      volumeKg: decToString(comparison.volumeKg),
+      previousVolumeKg: decToString(comparison.previousVolumeKg),
+      deltaVolumeKg: decToString(comparison.deltaVolumeKg),
+      volumeChangePercent: comparison.volumeChangePercent,
+      sets: comparison.sets,
+      previousSets: comparison.previousSets,
+      reps: comparison.reps,
+      previousReps: comparison.previousReps,
+      durationSecs: comparison.durationSecs,
+      previousDurationSecs: comparison.previousDurationSecs,
+      exercises: comparison.exercises.map((exercise) => ({
+        exerciseId: exercise.exerciseId,
+        exerciseName: exercise.exerciseName,
+        weightKg: decToString(exercise.weightKg),
+        reps: exercise.reps,
+        previousWeightKg:
+          exercise.previousWeightKg === null ? null : decToString(exercise.previousWeightKg),
+        previousReps: exercise.previousReps,
+        deltaWeightKg: exercise.deltaWeightKg === null ? null : decToString(exercise.deltaWeightKg),
+        moreRepsAtSameWeight: exercise.moreRepsAtSameWeight,
+      })),
+      hasPrevious: comparison.hasPrevious,
+      headline: summariseComparison(comparison),
+      basis: previous?.basis ?? 'none',
+    },
     personalRecords: records.map((record) => ({
       exerciseId: record.exerciseId,
       exerciseName: names.get(record.exerciseId) ?? 'Exercise',

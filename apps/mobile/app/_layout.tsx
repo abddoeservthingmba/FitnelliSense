@@ -66,6 +66,8 @@ function ThemedShell() {
         <Stack.Screen name="routine/[id]" options={{ title: 'Routine' }} />
         <Stack.Screen name="progress/[exerciseId]" options={{ title: 'Progress' }} />
         <Stack.Screen name="leaderboard" options={{ title: 'Ranking' }} />
+        {/* Title comes from the screen itself — it is the athlete's name. */}
+        <Stack.Screen name="athlete/[id]" options={{ title: 'Athlete' }} />
         <Stack.Screen name="food/add" options={{ title: 'Add food' }} />
         <Stack.Screen
           name="food/scan"

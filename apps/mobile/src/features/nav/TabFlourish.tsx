@@ -35,6 +35,7 @@ import Animated, {
 import { useAudioPlayer } from 'expo-audio';
 import * as Haptics from 'expo-haptics';
 import navFlourishSound from '../../../assets/nav-flourish.wav';
+import { Text } from '../../components/Text';
 import { ExtrudedGlyph } from './ExtrudedGlyph';
 import { configureNavAudio, loadNavSound } from './nav-sound';
 import { useTheme } from '../../theme';
@@ -47,7 +48,7 @@ const GLYPH_SIZE = 96;
 
 interface FlourishContextValue {
   /** `index` and `total` locate the pressed tab across the bar. */
-  play: (glyph: string, index: number, total: number) => void;
+  play: (glyph: string, label: string, index: number, total: number) => void;
 }
 
 const FlourishContext = createContext<FlourishContextValue>({ play: () => {} });
@@ -61,7 +62,7 @@ export function TabFlourishProvider({ children }: { children: ReactNode }) {
   const { width, height } = useWindowDimensions();
 
   const progress = useSharedValue(0);
-  const [glyph, setGlyph] = useState('◆');
+  const [{ glyph, label }, setBadge] = useState({ glyph: '◆', label: 'Home' });
   const originX = useSharedValue(0);
 
   const player = useAudioPlayer(navFlourishSound);
@@ -83,14 +84,14 @@ export function TabFlourishProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const play = useCallback(
-    (nextGlyph: string, index: number, total: number) => {
+    (nextGlyph: string, nextLabel: string, index: number, total: number) => {
       // Haptics first: it lands before anything is drawn or decoded, which is
       // what makes the tap feel connected to the result.
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
       if (reduceMotion.current) return;
 
-      setGlyph(nextGlyph);
+      setBadge({ glyph: nextGlyph, label: nextLabel });
       // The centre of the pressed tab, as an offset from the screen's middle.
       const tabCentre = (width / total) * (index + 0.5);
       originX.value = tabCentre - width / 2;
@@ -123,6 +124,25 @@ export function TabFlourishProvider({ children }: { children: ReactNode }) {
         { scale: interpolate(p, [0, 0.5, 0.62, 1], [0.28, 1.14, 1, 1.3]) },
         { rotateX: `${interpolate(p, [0, 0.62, 1], [58, 0, -14])}deg` },
         { rotateY: `${interpolate(p, [0, 0.62, 1], [-140, 0, 46])}deg` },
+      ],
+    };
+  });
+
+  /*
+   * The name, under the icon.
+   *
+   * Deliberately NOT part of the glyph's transform: a word carried through a
+   * 140° rotation is unreadable, which defeats the point of showing it. It
+   * gets its own entrance — arriving just after the icon lands, rising as it
+   * goes, so the two read as one movement rather than two things happening.
+   */
+  const labelStyle = useAnimatedStyle(() => {
+    const p = progress.value;
+    return {
+      opacity: interpolate(p, [0.42, 0.62, 0.82, 1], [0, 1, 1, 0]),
+      transform: [
+        { translateY: interpolate(p, [0.42, 0.62, 1], [16, 0, -14]) },
+        { scale: interpolate(p, [0.42, 0.62], [0.9, 1]) },
       ],
     };
   });
@@ -169,6 +189,24 @@ export function TabFlourishProvider({ children }: { children: ReactNode }) {
           />
           <Animated.View style={glyphStyle}>
             <ExtrudedGlyph glyph={glyph} size={GLYPH_SIZE} />
+          </Animated.View>
+
+          <Animated.View
+            style={[{ position: 'absolute', top: '50%', marginTop: GLYPH_SIZE }, labelStyle]}
+          >
+            <Text
+              style={{
+                fontSize: theme.fontSize.title,
+                fontWeight: theme.fontWeight.heavy,
+                letterSpacing: theme.tracking.wider,
+                color: theme.colors.text,
+                textShadowColor: theme.colors.accent,
+                textShadowRadius: 16,
+                textShadowOffset: { width: 0, height: 0 },
+              }}
+            >
+              {label.toUpperCase()}
+            </Text>
           </Animated.View>
         </View>
       </View>

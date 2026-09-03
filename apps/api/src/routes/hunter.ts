@@ -10,6 +10,8 @@ import {
   badgeCollectionSchema,
   claimQuestResponseSchema,
   hunterStatusSchema,
+  athleteProfileQuerySchema,
+  athleteProfileSchema,
   leaderboardQuerySchema,
   leaderboardSchema,
   questBoardSchema,
@@ -18,6 +20,7 @@ import {
 } from '@fi/shared';
 import { levelFromXp, rankForLevel } from '@fi/domain';
 import { currentUser } from '../plugins/auth';
+import * as athletes from '../services/athlete-service';
 import * as hunter from '../services/hunter-service';
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
@@ -132,6 +135,35 @@ export async function hunterRoutes(app: FastifyInstance): Promise<void> {
         yourPosition: mine?.rank ?? null,
         optedIn: board.optedIn,
       };
+    },
+  );
+
+  /**
+   * One athlete's profile, with the viewer's own figures beside it (FR-LB-08).
+   *
+   * Only opted-in athletes have one. Anyone else — including an id that is not
+   * an account at all — is a 404, so this cannot be walked to discover who has
+   * an account here (NFR-S-03).
+   */
+  typed.get(
+    '/hunter/athletes/:athleteId',
+    {
+      preHandler: app.requireUser,
+      schema: {
+        params: z.object({ athleteId: uuidSchema }),
+        querystring: athleteProfileQuerySchema,
+        response: { 200: athleteProfileSchema },
+      },
+    },
+    async (request) => {
+      const userId = currentUser(request).id;
+      return athletes.athleteProfile(
+        db,
+        userId,
+        request.params.athleteId,
+        request.query.window,
+        resolveToday(request.query.today),
+      );
     },
   );
 }

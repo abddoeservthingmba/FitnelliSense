@@ -248,6 +248,7 @@ export default function ActiveWorkoutScreen() {
         visible={finished !== null && !showLevelUp}
         workoutId={workout.id}
         records={finished?.personalRecords ?? []}
+        comparison={finished?.comparison ?? null}
         durationSecs={elapsed}
         setCount={completedSets}
         volumeLabel={units.volume(

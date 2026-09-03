@@ -5,16 +5,12 @@
  * and the bottom bar had seven items, which is more than a thumb can aim at.
  * Routines ride on top as a strip; the catalogue fills the rest.
  *
- * History moved to the top right when it left the bar. It is a destination you
- * want occasionally and always in the same place, which is exactly what a
- * header slot is for.
- *
  * Search is debounced so typing does not fire a request per keystroke; filters
  * are chips over the taxonomy; the list is paginated and virtualised, never
  * rendered whole (NFR-P-03, NFR-P-05).
  */
 import { useMemo, useState } from 'react';
-import { FlatList, Pressable, View } from 'react-native';
+import { FlatList, View } from 'react-native';
 import { router } from 'expo-router';
 import type { ExerciseSummary } from '@fi/shared';
 import { useExercises, useTaxonomy, type ExerciseFilters } from '../../src/api/hooks/use-catalogue';
@@ -84,37 +80,10 @@ export default function ExercisesScreen() {
    */
   const header = (
     <Stack gap="lg" style={{ paddingTop: theme.space.lg, paddingBottom: theme.space.md }}>
-      <Row justify="space-between">
-        <View style={{ gap: 2 }}>
-          <Overline>Library</Overline>
-          <Text variant="heading">Exercises</Text>
-        </View>
-        <Pressable
-          onPress={() => router.push('/(tabs)/history')}
-          accessibilityRole="button"
-          accessibilityLabel="Workout history"
-          hitSlop={12}
-          style={({ pressed }) => ({
-            minWidth: 44,
-            minHeight: 44,
-            paddingHorizontal: theme.space.sm,
-            borderRadius: theme.radius.sm,
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderWidth: 1,
-            borderColor: theme.colors.border,
-            backgroundColor: theme.colors.surfaceRaised,
-            opacity: pressed ? 0.6 : 1,
-          })}
-        >
-          <Text variant="callout" tone="muted">
-            ◷
-          </Text>
-          <Text variant="micro" tone="faint">
-            History
-          </Text>
-        </Pressable>
-      </Row>
+      <View style={{ gap: 2 }}>
+        <Overline>Library</Overline>
+        <Text variant="heading">Exercises</Text>
+      </View>
 
       <RoutinesStrip />
 

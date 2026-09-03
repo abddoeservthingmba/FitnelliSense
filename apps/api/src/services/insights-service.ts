@@ -54,7 +54,7 @@ const WINDOW_DAYS: Record<InsightsWindow, number> = { '14d': 14, '30d': 30, '90d
  * fetching sets and then their muscle groups per exercise, which on a free-tier
  * database is many round trips for the same rows.
  */
-interface SetRow {
+export interface SetRow {
   workoutId: string;
   date: string;
   exerciseId: string;
@@ -65,7 +65,7 @@ interface SetRow {
   groupName: string | null;
 }
 
-async function fetchSets(
+export async function fetchSets(
   db: Database,
   userId: string,
   from: string,
@@ -112,7 +112,7 @@ async function fetchSets(
  * collapsed back to one entry carrying all its groups — otherwise a two-primary
  * exercise would be counted twice and every total that included it inflated.
  */
-function toAttributedWork(rows: readonly SetRow[]): AttributedWork[] {
+export function toAttributedWork(rows: readonly SetRow[]): AttributedWork[] {
   const bySet = new Map<string, { groups: Set<string>; row: SetRow }>();
 
   for (const row of rows) {

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { exerciseKindSchema, prTypeSchema, setTypeSchema, workoutStatusSchema } from './enums';
 import { hunterRewardSchema } from './hunter';
 import {
+  decimalStringSchema,
   isoDateTimeSchema,
   noteTextSchema,
   distanceMetresSchema,
@@ -138,9 +139,52 @@ export const personalRecordHitSchema = z.object({
   previousValue: positiveDecimalStringSchema.nullable(),
 });
 
+/**
+ * One exercise, this session against the last time it was trained in the
+ * session being compared against.
+ *
+ * `deltaWeightKg` is signed — it is a change, and a lighter top set is a real
+ * outcome that has to be representable.
+ */
+export const exerciseComparisonSchema = z.object({
+  exerciseId: uuidSchema,
+  exerciseName: shortTextSchema,
+  weightKg: positiveDecimalStringSchema,
+  reps: repsSchema,
+  previousWeightKg: positiveDecimalStringSchema.nullable(),
+  previousReps: repsSchema.nullable(),
+  deltaWeightKg: decimalStringSchema.nullable(),
+  moreRepsAtSameWeight: z.boolean(),
+});
+
+export const sessionComparisonSchema = z.object({
+  volumeKg: positiveDecimalStringSchema,
+  previousVolumeKg: positiveDecimalStringSchema,
+  deltaVolumeKg: decimalStringSchema,
+  volumeChangePercent: z.number().nullable(),
+  sets: z.number().int(),
+  previousSets: z.number().int(),
+  reps: z.number().int(),
+  previousReps: z.number().int(),
+  durationSecs: z.number().int(),
+  previousDurationSecs: z.number().int(),
+  exercises: z.array(exerciseComparisonSchema),
+  hasPrevious: z.boolean(),
+  /** One line, phrased from the numbers above and never from a model. */
+  headline: z.string().nullable(),
+  /**
+   * What it was compared against. The previous run of the same routine where
+   * there is one — measuring a leg day against the push day before it produces
+   * a number that is correct and meaningless.
+   */
+  basis: z.enum(['same_routine', 'previous_workout', 'none']),
+});
+
 export const completeWorkoutResponseSchema = z.object({
   workout: workoutSummarySchema,
   personalRecords: z.array(personalRecordHitSchema),
+  /** FR-WK-10: a session that set no record still did something. */
+  comparison: sessionComparisonSchema,
   /**
    * What the session did to the Hunter System. Returned here rather than
    * fetched afterwards, so the summary and the level-up are one moment instead
@@ -183,3 +227,5 @@ export type PersonalRecordHit = z.infer<typeof personalRecordHitSchema>;
 export type Prefill = z.infer<typeof prefillSchema>;
 export type PrefillQuery = z.infer<typeof prefillQuerySchema>;
 export type CompleteWorkoutResponse = z.infer<typeof completeWorkoutResponseSchema>;
+export type ExerciseComparison = z.infer<typeof exerciseComparisonSchema>;
+export type SessionComparison = z.infer<typeof sessionComparisonSchema>;
