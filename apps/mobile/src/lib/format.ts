@@ -6,6 +6,7 @@
  * layer, and never reimplement a formula).
  */
 import {
+  formatCompact,
   decOrNull,
   decToString,
   formatWeight as formatWeightKg,
@@ -40,12 +41,20 @@ export function weightFromInput(input: string, units: UnitSystem): string | null
   return parsed === null ? null : decToString(fromDisplayUnit(parsed, units));
 }
 
+/**
+ * Volume, abbreviated once it stops fitting.
+ *
+ * Lifetime volume passes a million kilograms sooner than it sounds, and
+ * "1,284,500 kg" in a stat block either wraps or shrinks to unreadable — and at
+ * that length nobody reads the fourth digit anyway. `formatCompact` switches to
+ * `1.2M` past ten thousand and truncates rather than rounding, so a total can
+ * never claim a milestone the work has not reached.
+ */
 export function formatVolume(volumeKg: string | null, units: UnitSystem): string {
   const value = decOrNull(volumeKg);
   if (value === null) return '—';
   const converted = toDisplayUnit(value, units);
-  const whole = Math.round(Number(decToString(converted)));
-  return `${whole.toLocaleString()} ${unitLabel(units)}`;
+  return `${formatCompact(Number(decToString(converted)))} ${unitLabel(units)}`;
 }
 
 /** `1h 07m`, `48m`, `35s` — compact enough for a summary row. */

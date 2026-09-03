@@ -428,3 +428,32 @@ export function nextTier(
 export function ascensionLadder(ascension: Ascension): { tier: AscensionTier; atLevel: number }[] {
   return ascension.tiers.map((tier) => ({ tier, atLevel: RANK_MIN_LEVEL[tier.rank] }));
 }
+
+/**
+ * A badge's name, in the chosen Ascension's language.
+ *
+ * The rank badges are the ones that were wrong: `rank_d` is called "D-Rank
+ * Hunter" in the catalogue, which is the Monarch's vocabulary sitting in front
+ * of all seven. Someone on the Saiyan path earned "Super Saiyan" as a tier and
+ * was then handed a badge for becoming a C-Rank Hunter.
+ *
+ * Only the rank badges are renamed. The rest — Centurion, One Tonne, Unbroken —
+ * describe the work rather than the world, and translating them per Ascension
+ * would be invention rather than theming.
+ *
+ * Presentation only, and client-side: the badge's KEY is what the server
+ * awards and stores, so nothing here can affect what anyone has earned.
+ */
+export function badgeName(ascension: Ascension, key: string, fallback: string): string {
+  const rank = RANK_BY_BADGE_KEY[key];
+  return rank === undefined ? fallback : tierForRank(ascension, rank).name;
+}
+
+/** The rank each `rank_*` badge marks reaching. */
+const RANK_BY_BADGE_KEY: Readonly<Record<string, Rank>> = {
+  rank_d: 'D',
+  rank_c: 'C',
+  rank_b: 'B',
+  rank_a: 'A',
+  rank_s: 'S',
+};

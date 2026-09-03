@@ -1,0 +1,24 @@
+{
+  "name": "Ascension",
+  "short_name": "Ascension",
+  "description": "Train. Rank. Repeat. A training log that levels up with you.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#050D1F",
+  "theme_color": "#050D1F",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

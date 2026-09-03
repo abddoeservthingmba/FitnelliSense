@@ -3,6 +3,7 @@ import { RANK_THRESHOLDS, rankForLevel, type Rank } from './hunter';
 import {
   DEFAULT_ASCENSION,
   MOTIFS,
+  badgeName,
   ASCENSIONS,
   ASCENSION_IDS,
   isAscensionId,
@@ -322,5 +323,44 @@ describe('tier forms', () => {
       const colours = ASCENSIONS[id].tiers.map((tier) => tier.form.colour);
       expect(new Set(colours).size, id).toBe(colours.length);
     }
+  });
+});
+
+describe('badgeName', () => {
+  it('renames a rank badge to the tier it marks', () => {
+    // The bug this fixes: someone on the Saiyan path earned "Super Saiyan" as
+    // a tier and was handed a badge for becoming a C-Rank Hunter.
+    expect(badgeName(ASCENSIONS.saiyan, 'rank_c', 'C-Rank Hunter')).toBe('Super Saiyan');
+    expect(badgeName(ASCENSIONS.shinobi, 'rank_s', 'S-Rank Hunter')).toBe('Hokage');
+    expect(badgeName(ASCENSIONS.hero, 'rank_a', 'A-Rank Hunter')).toBe('Serious');
+  });
+
+  it('covers every rank badge', () => {
+    for (const [key, rank] of [
+      ['rank_d', 'D'],
+      ['rank_c', 'C'],
+      ['rank_b', 'B'],
+      ['rank_a', 'A'],
+      ['rank_s', 'S'],
+    ] as const) {
+      for (const id of ASCENSION_IDS) {
+        expect(badgeName(ASCENSIONS[id], key, 'fallback')).toBe(
+          tierForRank(ASCENSIONS[id], rank).name,
+        );
+      }
+    }
+  });
+
+  it('leaves badges that describe the work rather than the world', () => {
+    // "Centurion" and "One Tonne" are about what was done, not which universe
+    // it was done in. Translating them per Ascension would be invention.
+    for (const key of ['first_workout', 'centurion', 'one_tonne', 'unbroken']) {
+      expect(badgeName(ASCENSIONS.pirate, key, 'Centurion')).toBe('Centurion');
+    }
+  });
+
+  it('falls back for a key it has never heard of', () => {
+    // A badge added by a newer server than this client knows about.
+    expect(badgeName(ASCENSIONS.monarch, 'some_future_badge', 'Future')).toBe('Future');
   });
 });

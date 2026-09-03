@@ -9,6 +9,7 @@ import { View } from 'react-native';
 import type { Badge } from '@fi/shared';
 import { Row } from '../../components/Card';
 import { Overline, Text } from '../../components/Text';
+import { badgeName } from '@fi/domain';
 import { useTheme } from '../../theme';
 import { BADGE_TIER_COLORS } from '../../theme/tokens';
 
@@ -34,14 +35,17 @@ export function BadgeGrid({ badges }: { badges: readonly Badge[] }) {
 function BadgeRow({ badge }: { badge: Badge }) {
   const theme = useTheme();
   const tierColour = theme.colors[BADGE_TIER_COLORS[badge.tier] ?? 'textMuted'];
+  // Rank badges take the chosen Ascension's tier name; the rest describe the
+  // work rather than the world and keep theirs.
+  const displayName = badgeName(theme.ascension, badge.key, badge.name);
 
   return (
     <View
       accessible
       accessibilityLabel={
         badge.earned
-          ? `${badge.name}, earned. ${badge.requirement}`
-          : `${badge.name}, locked. ${badge.requirement}`
+          ? `${displayName}, earned. ${badge.requirement}`
+          : `${displayName}, locked. ${badge.requirement}`
       }
       style={{
         flexDirection: 'row',
@@ -66,7 +70,7 @@ function BadgeRow({ badge }: { badge: Badge }) {
       <View style={{ flex: 1, gap: 2 }}>
         <Row gap="sm" align="center">
           <Text variant="callout" weight="semibold" style={{ color: tierColour }}>
-            {badge.name}
+            {displayName}
           </Text>
           {badge.tier === 'monarch' ? <Overline tone="monarch">monarch</Overline> : null}
         </Row>
