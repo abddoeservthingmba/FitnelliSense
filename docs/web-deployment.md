@@ -18,16 +18,28 @@ rewrite; only the six dynamic routes need one, and those are generated.
 `netlify.toml` at the repo root already carries the build. In Netlify:
 
 1. **Add new site → Import an existing project**, pick the repository.
-2. Leave the build settings alone — `netlify.toml` sets base, command and
-   publish directory. A pnpm monorepo needs the build to run from the repo
-   root, which is why `base` is `.` and not `apps/mobile`.
-3. Set one environment variable:
+2. **"Project to deploy" → choose "Other (configure manually)".**
+
+   Netlify offers the four workspaces in that dropdown. `apps/mobile` is the
+   right app — it is the only deployable web target — but choosing it sets the
+   **base directory** to `apps/mobile`, and the publish path in
+   `netlify.toml` is then resolved relative to that base and points nowhere.
+   Netlify shows the mismatch in its summary panel as "Published to:
+   `web-build`" instead of `apps/mobile/web-build`.
+
+   Leaving the base at the repository root is also what the build needs:
+   `apps/mobile` depends on `@fi/shared` and `@fi/domain` through the pnpm
+   workspace, which only resolves from the root.
+
+3. Leave the build command and publish directory alone; `netlify.toml` sets
+   both.
+4. Set one environment variable:
 
    | Key                   | Value                                |
    | --------------------- | ------------------------------------ |
    | `EXPO_PUBLIC_API_URL` | `https://fitnellisense.onrender.com` |
 
-4. Deploy.
+5. Deploy.
 
 ### One-off, from this machine
 
