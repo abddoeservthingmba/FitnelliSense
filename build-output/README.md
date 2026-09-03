@@ -12,16 +12,17 @@ whose update refuses to install.
 
 ## Version log
 
-| Version   | Code | Package                     | Date       | What changed                                                                                                   |
-| --------- | ---- | --------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------- |
-| **0.5.0** | 11   | com.arise.fitness           | 2026-09-02 | **Training insights** — volume, sets and sessions per muscle group against the previous period, with bars      |
-| 0.4.3     | 10   | com.arise.fitness           | 2026-09-02 | Barcode scanner: green reticle, decoded digits shown, manual entry, food source displayed                      |
-| 0.4.2     | 9    | com.arise.fitness           | 2026-09-02 | Cardio now visible and loggable (minutes/km inputs); 16 machines added                                         |
-| 0.4.1     | 8    | com.arise.fitness           | 2026-09-02 | 28 manifest permissions down to 11 — launcher badge and attribution entries removed                            |
-| 0.4.0     | 7    | com.arise.fitness           | 2026-09-02 | **Renamed ARISE.** New icon and palette, launch screen, cardio tracking. New package: install is NOT an update |
-| 0.3.1     | 5    | com.fitnessintellisense.app | 2026-09-01 | Security: allowBackup off, password rules, drizzle CVE, CI fixed                                               |
-| 0.3.0     | 4    | com.fitnessintellisense.app | 2026-09-01 | Movement demos, tier strip, email verification, password reset, nutrition + barcode                            |
-| 0.2.0     | 3    | com.fitnessintellisense.app | 2026-09-01 | The Hunter System — levels, ranks, quests, badges, leaderboard                                                 |
+| Version   | Code | Package                     | Date       | What changed                                                                                                    |
+| --------- | ---- | --------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------- |
+| **0.6.0** | 12   | com.arise.fitness           | 2026-09-03 | Cardio logging fixed (server-side); 5 tabs not 7; tab-press flourish and sound. Native change — built `--clean` |
+| 0.5.0     | 11   | com.arise.fitness           | 2026-09-02 | **Training insights** — volume, sets and sessions per muscle group against the previous period, with bars       |
+| 0.4.3     | 10   | com.arise.fitness           | 2026-09-02 | Barcode scanner: green reticle, decoded digits shown, manual entry, food source displayed                       |
+| 0.4.2     | 9    | com.arise.fitness           | 2026-09-02 | Cardio now visible and loggable (minutes/km inputs); 16 machines added                                          |
+| 0.4.1     | 8    | com.arise.fitness           | 2026-09-02 | 28 manifest permissions down to 11 — launcher badge and attribution entries removed                             |
+| 0.4.0     | 7    | com.arise.fitness           | 2026-09-02 | **Renamed ARISE.** New icon and palette, launch screen, cardio tracking. New package: install is NOT an update  |
+| 0.3.1     | 5    | com.fitnessintellisense.app | 2026-09-01 | Security: allowBackup off, password rules, drizzle CVE, CI fixed                                                |
+| 0.3.0     | 4    | com.fitnessintellisense.app | 2026-09-01 | Movement demos, tier strip, email verification, password reset, nutrition + barcode                             |
+| 0.2.0     | 3    | com.fitnessintellisense.app | 2026-09-01 | The Hunter System — levels, ranks, quests, badges, leaderboard                                                  |
 
 **0.4.0 changed the package name.** Android treats it as a different app: the
 old _Fitness Intellisense_ must be uninstalled, and it will not update in
@@ -33,11 +34,11 @@ package is permanent.
 
 |                           |                                                                    |
 | ------------------------- | ------------------------------------------------------------------ |
-| File                      | `ARISE-0.5.0.apk`                                                  |
+| File                      | `ARISE-0.6.0.apk`                                                  |
 | Package                   | `com.arise.fitness`                                                |
-| versionName / versionCode | 0.5.0 / 11                                                         |
-| Size                      | 72,744,873 bytes (69.4 MB)                                         |
-| SHA-256                   | `86894edba64f952ced323fbfbb0faf18b747daa5e4cd18537e9fe8fed9c9eb36` |
+| versionName / versionCode | 0.6.0 / 12                                                         |
+| Size                      | 75,032,560 bytes (71.6 MB)                                         |
+| SHA-256                   | `a6d49503ed2bfb3de63716197259fa60f6787b4bcfc1b400dbb0755378cc7a26` |
 | **Signing cert SHA-256**  | `c35574e619810ce487e6e92d2e3cbabced3e85356f32e4d793183335a0fee5de` |
 | API                       | `https://fitnellisense.onrender.com`                               |
 | ABIs                      | arm64-v8a, armeabi-v7a                                             |
