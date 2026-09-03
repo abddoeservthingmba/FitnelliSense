@@ -29,9 +29,18 @@
 # way a hand-written copy in here would.
 
 [build]
-  # `base` is deliberately unset, which defaults it to the repository root.
-  # Setting it explicitly here would fight the UI's package-directory picker
-  # rather than simply losing to it, and the failure would be confusing.
+  # Set EXPLICITLY, and it has to be.
+  #
+  # Leaving it unset does not default to the repository root — it defaults to
+  # whatever the UI's "Project to deploy" picker last set, which for this repo
+  # was `apps/mobile`. `publish` is then resolved relative to that, producing
+  # `apps/mobile/apps/mobile/web-build` and a deploy that fails on a directory
+  # that never existed.
+  #
+  # netlify.toml wins over the UI — the failing build's own log showed
+  # `commandOrigin: config` and `publishOrigin: config` — so pinning it here
+  # settles the question rather than leaving it to whatever was clicked once.
+  base = "."
   publish = "apps/mobile/web-build"
   command = "corepack enable && pnpm install --frozen-lockfile --prod=false && pnpm --filter @fi/mobile build:web"
 

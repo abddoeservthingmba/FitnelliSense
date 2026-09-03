@@ -20,6 +20,12 @@ rewrite; only the six dynamic routes need one, and those are generated.
 1. **Add new site → Import an existing project**, pick the repository.
 2. **"Project to deploy" → choose "Other (configure manually)".**
 
+   If you already picked `apps/mobile`, clear it: **Site configuration →
+   Build & deploy → Build settings → Base directory**, empty the field, save,
+   and redeploy. `netlify.toml` now pins `base = "."` as well, so a fresh
+   setup is safe either way — but an existing site keeps the value already
+   stored until it is cleared or overridden.
+
    Netlify offers the four workspaces in that dropdown. `apps/mobile` is the
    right app — it is the only deployable web target — but choosing it sets the
    **base directory** to `apps/mobile`, and the publish path in
