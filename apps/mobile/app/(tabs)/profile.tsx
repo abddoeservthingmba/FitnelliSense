@@ -292,6 +292,26 @@ export default function ProfileScreen() {
           relabelled. `aiEnabled` stays in the profile for the day a model is
           actually wired in.
         */}
+        {/* FR-HP-11. Named after what it changes, and honest that it is only
+            wording and colour. */}
+        <Section title="Your Path">
+          <Stack gap="sm">
+            <Text variant="caption" tone="muted">
+              {theme.path.name} — {theme.path.tagline}
+            </Text>
+            <Button
+              label="Change your Path"
+              variant="secondary"
+              onPress={() => router.push('/path')}
+              fullWidth
+            />
+            <Text variant="micro" tone="faint">
+              Changes the names of your tiers and the app's colours. Your level, XP and records stay
+              exactly as they are.
+            </Text>
+          </Stack>
+        </Section>
+
         <Section title="Training insights">
           <Stack gap="sm">
             <Text variant="caption" tone="muted">

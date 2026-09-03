@@ -14,6 +14,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '../src/auth/auth-context';
 import { createQueryClient } from '../src/api/query-client';
 import { ThemeProvider, useTheme } from '../src/theme';
+import { PathProvider } from '../src/theme/path-context';
 
 export default function RootLayout() {
   // One client for the app's lifetime; recreating it would drop every cache.
@@ -23,11 +24,14 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
-          <ThemeProvider>
-            <AuthProvider>
-              <ThemedShell />
-            </AuthProvider>
-          </ThemeProvider>
+          {/* Outside ThemeProvider, which reads the Path to build the palette. */}
+          <PathProvider>
+            <ThemeProvider>
+              <AuthProvider>
+                <ThemedShell />
+              </AuthProvider>
+            </ThemeProvider>
+          </PathProvider>
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
@@ -47,6 +51,18 @@ function ThemedShell() {
           headerTitleStyle: { fontWeight: theme.fontWeight.semibold },
           headerShadowVisible: false,
           contentStyle: { backgroundColor: theme.colors.background },
+          /*
+           * A slide with a dimmed, receding parent rather than the default
+           * push. The outgoing screen staying put is what makes a stack feel
+           * flat; letting it fall back under the incoming one gives the
+           * navigation depth for the cost of one option.
+           *
+           * 260ms matches `Reveal`, so a screen's transition and its
+           * content's entrance read as one movement.
+           */
+          animation: 'slide_from_right',
+          animationDuration: 260,
+          gestureEnabled: true,
         }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -66,6 +82,7 @@ function ThemedShell() {
         <Stack.Screen name="routine/[id]" options={{ title: 'Routine' }} />
         <Stack.Screen name="progress/[exerciseId]" options={{ title: 'Progress' }} />
         <Stack.Screen name="leaderboard" options={{ title: 'Ranking' }} />
+        <Stack.Screen name="path" options={{ title: 'Your Path' }} />
         {/* Title comes from the screen itself — it is the athlete's name. */}
         <Stack.Screen name="athlete/[id]" options={{ title: 'Athlete' }} />
         <Stack.Screen name="food/add" options={{ title: 'Add food' }} />

@@ -22,3 +22,4 @@ export * from './insights';
 export * from './muscle-work';
 export * from './bar-path';
 export * from './session-comparison';
+export * from './progression';

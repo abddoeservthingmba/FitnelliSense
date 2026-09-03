@@ -101,10 +101,7 @@ describeIntegration('cross-tenant isolation', () => {
     // A custom exercise needs at least one primary muscle, so borrow one from
     // the seeded taxonomy rather than inventing an id.
     const taxonomy = await asAlice.get('/api/v1/taxonomy');
-    const muscleId = first(
-      taxonomy.json<{ muscles: { id: number }[] }>().muscles,
-      'muscle',
-    ).id;
+    const muscleId = first(taxonomy.json<{ muscles: { id: number }[] }>().muscles, 'muscle').id;
 
     const custom = await asAlice.post('/api/v1/exercises', {
       id: randomUUID(),
@@ -216,8 +213,7 @@ describeIntegration('cross-tenant isolation', () => {
     },
     {
       name: 'PATCH custom exercise',
-      call: () =>
-        asBob.patch(`/api/v1/exercises/${owned.customExerciseId}`, { name: 'stolen' }),
+      call: () => asBob.patch(`/api/v1/exercises/${owned.customExerciseId}`, { name: 'stolen' }),
     },
     {
       name: 'DELETE custom exercise',
@@ -334,8 +330,21 @@ describeIntegration('cross-tenant isolation', () => {
     });
     expect((await forged.get('/api/v1/me')).statusCode).toBe(401);
 
-    // Alice's own access token with one character changed: the HMAC must fail.
-    const tampered = alice.accessToken.slice(0, -1) + (alice.accessToken.endsWith('a') ? 'b' : 'a');
+    /*
+     * Alice's own access token with its signature altered: the HMAC must fail.
+     *
+     * The character changed is the FIRST of the signature, not the last. This
+     * test used to flip the last one and failed about a quarter of the time:
+     * an HMAC-SHA256 signature is 32 bytes, which base64url encodes as 43
+     * characters carrying 258 bits — so the final character has two bits that
+     * decode to nothing, and four different values for it produce byte-for-byte
+     * identical signatures that verify perfectly.
+     *
+     * Every bit of the first character is significant, so this always tampers.
+     */
+    const [header, payload, signature] = alice.accessToken.split('.') as [string, string, string];
+    const flipped = (signature[0] === 'a' ? 'b' : 'a') + signature.slice(1);
+    const tampered = `${header}.${payload}.${flipped}`;
     const mangled = client(ctx.app, {
       ...alice,
       authHeader: { authorization: `Bearer ${tampered}` },

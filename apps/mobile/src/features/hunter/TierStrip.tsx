@@ -1,6 +1,9 @@
 /**
  * The current tier, in one line.
  *
+ * The tier NAME comes from the chosen Path, while the rank behind it stays
+ * E..S — so the wording changes and the ladder does not.
+ *
  * The Hunter tab shows the full status; this is the version that belongs at the
  * top of a screen you did not open to look at your rank. It answers "what am I
  * right now" — rank, level, progress to the next one — and taps through to the
@@ -15,6 +18,7 @@ import { router } from 'expo-router';
 import { Overline, Text } from '../../components/Text';
 import { RankBadge } from './RankBadge';
 import { useHunterStatus } from '../../api/hooks/use-hunter';
+import { tierForRank, nextTier } from '@fi/domain';
 import { useTheme } from '../../theme';
 import { RANK_COLORS } from '../../theme/tokens';
 
@@ -24,14 +28,16 @@ export function TierStrip() {
 
   if (!status.data) return null;
 
-  const { level, rank, fraction, xpIntoLevel, xpForThisLevel, nextRank } = status.data;
+  const { level, rank, fraction, xpIntoLevel, xpForThisLevel } = status.data;
+  const tier = tierForRank(theme.path, rank);
+  const next = nextTier(theme.path, level);
   const colour = theme.colors[RANK_COLORS[rank] ?? 'text'];
 
   return (
     <Pressable
       onPress={() => router.push('/(tabs)/hunter')}
       accessibilityRole="button"
-      accessibilityLabel={`Rank ${rank}, level ${level}. ${xpIntoLevel} of ${xpForThisLevel} XP into this level. Opens your hunter status.`}
+      accessibilityLabel={`${tier.name}, ${theme.path.levelWord.toLowerCase()} ${level}. ${xpIntoLevel} of ${xpForThisLevel} XP into this level. Opens your status.`}
       style={{
         flexDirection: 'row',
         alignItems: 'center',
@@ -48,11 +54,18 @@ export function TierStrip() {
 
       <View style={{ flex: 1, gap: 4 }}>
         <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: theme.space.sm }}>
-          <Text variant="label" weight="heavy" style={{ color: colour }}>
-            {`RANK ${rank}`}
+          {/* The tier's own name, not the letter behind it. numberOfLines
+              because "Shadow Sovereign" is a great deal longer than "RANK A". */}
+          <Text
+            variant="label"
+            weight="heavy"
+            numberOfLines={1}
+            style={{ color: colour, flexShrink: 1 }}
+          >
+            {tier.name.toUpperCase()}
           </Text>
           <Text variant="caption" tone="muted">
-            {`Level ${level}`}
+            {`${theme.path.levelWord} ${level}`}
           </Text>
         </View>
 
@@ -75,9 +88,9 @@ export function TierStrip() {
         </View>
 
         <Text variant="micro" tone="faint">
-          {nextRank
-            ? `${xpForThisLevel - xpIntoLevel} XP to level ${level + 1} · rank ${nextRank.rank} at ${nextRank.atLevel}`
-            : `${xpForThisLevel - xpIntoLevel} XP to level ${level + 1}`}
+          {next
+            ? `${xpForThisLevel - xpIntoLevel} XP to ${theme.path.levelWord.toLowerCase()} ${level + 1} · ${next.tier.name} at ${next.atLevel}`
+            : `${xpForThisLevel - xpIntoLevel} XP to ${theme.path.levelWord.toLowerCase()} ${level + 1}`}
         </Text>
       </View>
 

@@ -2,6 +2,7 @@
  * Profile reads and writes (FR-AUTH-07..10).
  */
 import { eq } from 'drizzle-orm';
+import { pathFor } from '@fi/domain';
 import type { MeResponse, UpdateProfileRequest } from '@fi/shared';
 import { userProfiles, users } from '../db/schema';
 import { notFound } from '../lib/errors';
@@ -33,6 +34,7 @@ export async function getMe(deps: ProfileDeps, userId: string): Promise<MeRespon
       defaultRestSecs: userProfiles.defaultRestSecs,
       aiEnabled: userProfiles.aiEnabled,
       leaderboardOptIn: userProfiles.leaderboardOptIn,
+      progressionPath: userProfiles.progressionPath,
       avatarR2Key: userProfiles.avatarR2Key,
     })
     .from(users)
@@ -64,6 +66,9 @@ export async function getMe(deps: ProfileDeps, userId: string): Promise<MeRespon
       defaultRestSecs: row.defaultRestSecs,
       aiEnabled: row.aiEnabled,
       leaderboardOptIn: row.leaderboardOptIn,
+      // Any unrecognised value degrades to the original ladder rather than
+      // failing the response schema (FR-HP-11).
+      progressionPath: pathFor(row.progressionPath).id,
     },
     avatarUrl,
   };
@@ -91,6 +96,7 @@ export async function updateProfile(
   if (input.defaultRestSecs !== undefined) patch.defaultRestSecs = input.defaultRestSecs;
   if (input.aiEnabled !== undefined) patch.aiEnabled = input.aiEnabled;
   if (input.leaderboardOptIn !== undefined) patch.leaderboardOptIn = input.leaderboardOptIn;
+  if (input.progressionPath !== undefined) patch.progressionPath = input.progressionPath;
   if (input.avatarR2Key !== undefined) patch.avatarR2Key = input.avatarR2Key;
 
   await deps.db.update(userProfiles).set(patch).where(eq(userProfiles.userId, userId));

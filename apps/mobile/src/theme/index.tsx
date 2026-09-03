@@ -6,6 +6,8 @@
  * rebuilds its stylesheet on every render.
  */
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { pathFor, type Path } from '@fi/domain';
+import { usePathContext } from './path-context';
 import { StyleSheet, useColorScheme, useWindowDimensions } from 'react-native';
 import {
   fontSize,
@@ -26,6 +28,8 @@ export type Layout = 'compact' | 'medium' | 'wide';
 export interface Theme {
   scheme: ColorScheme;
   colors: ThemeColors;
+  /** The chosen Path, so a component can use its wording as well as its colour. */
+  path: Path;
   space: typeof space;
   radius: typeof radius;
   fontSize: typeof fontSize;
@@ -40,6 +44,38 @@ export interface Theme {
 
 const ThemeContext = createContext<Theme | null>(null);
 
+/**
+ * The base palette with the Path's colours laid over it.
+ *
+ * In DARK mode the Path takes the accents and the surfaces, which is what
+ * makes each one feel like its own app rather than a recolour.
+ *
+ * In LIGHT mode it takes ONLY the accents. Every Path palette is tuned dark —
+ * dropping a near-black background into light mode would put pale text on a
+ * dark ground with the light mode's own text colours, which is illegible. The
+ * accents carry the identity; the structure stays where its contrast was
+ * measured (NFR-U-04).
+ */
+function colorsFor(scheme: ColorScheme, path: Path): ThemeColors {
+  const base = palettes[scheme];
+  const { accent, accentText, accentSoft, highlight, monarch, monarchSoft } = path.palette;
+  const accents = { accent, accentText, accentSoft, highlight, monarch, monarchSoft };
+
+  if (scheme === 'light') return { ...base, ...accents };
+
+  return {
+    ...base,
+    ...accents,
+    background: path.palette.background,
+    surface: path.palette.surface,
+    surfaceRaised: path.palette.surfaceRaised,
+    border: path.palette.border,
+    borderStrong: path.palette.borderStrong,
+    borderGlow: accent,
+    track: path.palette.track,
+  };
+}
+
 function layoutFor(width: number): Layout {
   if (width >= 900) return 'wide';
   if (width > 600) return 'medium';
@@ -49,12 +85,15 @@ function layoutFor(width: number): Layout {
 export function ThemeProvider({ children }: { children: ReactNode }): ReactNode {
   const scheme: ColorScheme = useColorScheme() === 'light' ? 'light' : 'dark';
   const { width } = useWindowDimensions();
+  const { pathId } = usePathContext();
 
   const theme = useMemo<Theme>(() => {
     const layout = layoutFor(width);
+    const path = pathFor(pathId);
     return {
       scheme,
-      colors: palettes[scheme],
+      path,
+      colors: colorsFor(scheme, path),
       space,
       radius,
       fontSize,
@@ -65,7 +104,7 @@ export function ThemeProvider({ children }: { children: ReactNode }): ReactNode 
       layout,
       isWide: layout === 'wide',
     };
-  }, [scheme, width]);
+  }, [scheme, width, pathId]);
 
   return <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>;
 }

@@ -12,7 +12,9 @@
     "test": "echo \"Golden path is covered by the API suite and E2E (§14.3)\" && exit 0",
     "icons": "node scripts/generate-icons.mjs",
     "apk": "bash scripts/build-apk.sh",
-    "sfx": "node scripts/generate-sfx.mjs"
+    "sfx": "node scripts/generate-sfx.mjs",
+    "emulator": "bash scripts/setup-emulator.sh",
+    "emulator:start": "bash scripts/setup-emulator.sh --start"
   },
   "dependencies": {
     "@expo/metro-runtime": "~57.0.14",

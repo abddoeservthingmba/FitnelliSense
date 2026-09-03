@@ -12,6 +12,7 @@
  * less dependency, and they scale with the OS font size like everything else
  * (NFR-U-04).
  */
+import { useEffect, useState } from 'react';
 import { Redirect, Tabs } from 'expo-router';
 import { Platform } from 'react-native';
 import { hasSeenOnboarding } from '@fi/shared';
@@ -20,6 +21,12 @@ import { useMe } from '../../src/api/hooks/use-profile';
 import { Text } from '../../src/components/Text';
 import { LaunchScreen } from '../../src/components/LaunchScreen';
 import { TabFlourishProvider, useTabFlourish } from '../../src/features/nav/TabFlourish';
+import { usePathSync } from '../../src/theme/path-context';
+import {
+  readOnboardingHint,
+  rememberOnboarded,
+  type OnboardingHint,
+} from '../../src/auth/onboarding-hint';
 import { useTheme } from '../../src/theme';
 
 /** Order is the bar's order, and the index each flourish flies from. */
@@ -36,13 +43,36 @@ export default function TabsLayout() {
   const { status } = useAuth();
   const me = useMe();
 
+  // The account's Path overrides the device's cached one once it is known.
+  usePathSync(me.data?.profile.progressionPath);
+
+  const [hint, setHint] = useState<OnboardingHint | null>(null);
+  useEffect(() => {
+    void readOnboardingHint().then(setHint);
+  }, []);
+
+  // Record it once the profile confirms it, so the next launch skips the wait.
+  const onboarded = me.data ? hasSeenOnboarding(me.data.profile) : false;
+  useEffect(() => {
+    if (onboarded) void rememberOnboarded();
+  }, [onboarded]);
+
   if (status === 'restoring') return <LaunchScreen />;
   if (status === 'signedOut') return <Redirect href="/(auth)/sign-in" />;
 
-  // The gate lives here, not after sign-up, so it follows the account rather
-  // than the device: signing in on a second phone does not re-ask, and an
-  // account that never reached the end of onboarding still gets there.
-  if (me.isLoading) return <LaunchScreen />;
+  /*
+   * The gate lives here, not after sign-up, so it follows the account rather
+   * than the device: signing in on a second phone does not re-ask, and an
+   * account that never reached the end of onboarding still gets there.
+   *
+   * It only WAITS, though, when the device has no idea. A device that has
+   * onboarded before renders the tabs straight away and lets the profile land
+   * behind them — otherwise every launch pays for a round trip that a cold
+   * instance can take half a minute to answer. The redirect below still fires
+   * if the hint turns out to be wrong.
+   */
+  if (hint === null) return <LaunchScreen />;
+  if (hint === 'unknown' && me.isLoading) return <LaunchScreen />;
   if (me.data && !hasSeenOnboarding(me.data.profile)) {
     return <Redirect href="/onboarding" />;
   }

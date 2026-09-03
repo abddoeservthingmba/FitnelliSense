@@ -81,15 +81,26 @@ export function levelFromXp(totalXp: number): LevelProgress {
 
 export type Rank = 'E' | 'D' | 'C' | 'B' | 'A' | 'S';
 
-/** The level at which each rank begins. */
-export const RANK_THRESHOLDS: readonly { rank: Rank; minLevel: number }[] = [
-  { rank: 'S', minLevel: 80 },
-  { rank: 'A', minLevel: 55 },
-  { rank: 'B', minLevel: 35 },
-  { rank: 'C', minLevel: 20 },
-  { rank: 'D', minLevel: 10 },
-  { rank: 'E', minLevel: 1 },
-];
+/**
+ * The level at which each rank begins — the single source of truth.
+ *
+ * A total record rather than an array, so looking up a rank's floor needs no
+ * "not found" branch. `RANK_THRESHOLDS` is derived from it, which keeps the
+ * ordered form available without letting the two disagree.
+ */
+export const RANK_MIN_LEVEL: Readonly<Record<Rank, number>> = {
+  E: 1,
+  D: 10,
+  C: 20,
+  B: 35,
+  A: 55,
+  S: 80,
+};
+
+/** The same ladder, highest first — the order `rankForLevel` scans. */
+export const RANK_THRESHOLDS: readonly { rank: Rank; minLevel: number }[] = (
+  ['S', 'A', 'B', 'C', 'D', 'E'] as const
+).map((rank) => ({ rank, minLevel: RANK_MIN_LEVEL[rank] }));
 
 export function rankForLevel(level: number): Rank {
   const found = RANK_THRESHOLDS.find((entry) => level >= entry.minLevel);

@@ -128,6 +128,12 @@ export const userProfiles = pgTable('user_profiles', {
    */
   leaderboardOptIn: boolean('leaderboard_opt_in').notNull().default(false),
   /**
+   * Which Path the UI dresses the progression as (FR-HP-11). Presentation
+   * only — no threshold anywhere depends on it, so changing it moves nothing
+   * the user has earned. Defaults to the original ladder.
+   */
+  progressionPath: text('progression_path').notNull().default('monarch'),
+  /**
    * Nutrition target overrides (FR-NUT-10). Null means "derive it from the
    * profile" — the estimate is not copied in, so it stays correct when
    * bodyweight changes. Nullable per field, so protein can be pinned while the

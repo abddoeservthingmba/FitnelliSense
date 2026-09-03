@@ -71,6 +71,13 @@
       "when": 1788414168260,
       "tag": "0009_leaderboard_reconsent",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1788430106675,
+      "tag": "0010_progression_path",
+      "breakpoints": true
     }
   ]
 }
