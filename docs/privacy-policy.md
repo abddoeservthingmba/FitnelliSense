@@ -22,7 +22,11 @@ than buried.
 Ascension is run by an individual, not a company.
 
 **Contact for any privacy question, correction or complaint:**
-`REPLACE_WITH_CONTACT_EMAIL`
+[ashishkhan19062001@gmail.com](mailto:ashishkhan19062001@gmail.com)
+
+This is the address for a privacy question, a correction, a deletion request or
+a complaint. It is a personal mailbox, not a support desk, so an answer may
+take a few days.
 
 ## 2. What Ascension stores
 

@@ -64,11 +64,21 @@ function escapeHtml(value: string): string {
  * Everything is escaped first regardless, so a future editor cannot introduce
  * markup by accident.
  */
-function renderMarkdown(source: string): string {
+export function renderMarkdown(source: string): string {
   const inline = (text: string): string =>
     escapeHtml(text)
+      /*
+       * Links, against a scheme ALLOWLIST rather than a blocklist. Anything
+       * not matched renders as its label alone, so an unexpected scheme
+       * degrades to plain text instead of becoming a live `javascript:` or
+       * `data:` href. This document is written by us, but a renderer that is
+       * only safe for trusted input is one copy-paste away from not being.
+       *
+       * `mailto:` is on the list so the contact address is one tap. It cannot
+       * execute anything — it hands the address to the mail client.
+       */
       .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, label: string, href: string) =>
-        /^https?:\/\//.test(href)
+        /^(https?:\/\/|mailto:)/.test(href)
           ? `<a href="${href}" rel="noopener noreferrer">${label}</a>`
           : label,
       )
