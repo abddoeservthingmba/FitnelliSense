@@ -488,6 +488,11 @@ export async function addSet(
     weightKg: input.weightKg ?? null,
     reps: input.reps ?? null,
     rpe: input.rpe === null || input.rpe === undefined ? null : String(input.rpe),
+    // Cardio (FR-CAR-02). Omitting these silently discarded every minute and
+    // kilometre anyone logged: the schema accepted them, the row did not carry
+    // them, and the response looked like a successful save of nothing.
+    durationSecs: input.durationSecs ?? null,
+    distanceM: input.distanceM ?? null,
     isCompleted: input.isCompleted,
     completedAt: input.completedAt ? new Date(input.completedAt) : null,
     notes: input.notes ?? null,
@@ -509,6 +514,8 @@ export async function updateSet(
   if (input.weightKg !== undefined) patch.weightKg = input.weightKg ?? null;
   if (input.reps !== undefined) patch.reps = input.reps ?? null;
   if (input.rpe !== undefined) patch.rpe = input.rpe === null ? null : String(input.rpe);
+  if (input.durationSecs !== undefined) patch.durationSecs = input.durationSecs ?? null;
+  if (input.distanceM !== undefined) patch.distanceM = input.distanceM ?? null;
   if (input.notes !== undefined) patch.notes = input.notes ?? null;
   if (input.isCompleted !== undefined) {
     patch.isCompleted = input.isCompleted;

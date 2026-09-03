@@ -136,7 +136,7 @@ export default function WorkoutDetailScreen() {
             <Button
               label="Go to routines"
               variant="ghost"
-              onPress={() => router.push('/(tabs)/routines')}
+              onPress={() => router.push('/(tabs)/exercises')}
               fullWidth
             />
           ) : null}

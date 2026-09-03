@@ -1,32 +1,37 @@
 /**
- * The signed-in shell. Seven tabs is at the limit of what a phone bar holds —
- * if an eighth is ever wanted, something has to move behind Home instead.
+ * The signed-in shell.
  *
- * Tab icons are drawn as glyphs rather than pulled from an icon package —
- * one less dependency, and they scale with the OS font size like everything
- * else (NFR-U-04).
+ * Five tabs, down from seven. Routines folded into Exercises — they answer the
+ * same question — and History moved to that screen's top right. Seven targets
+ * across a phone's width gives each one about 55px, which is under the 44pt
+ * minimum once you account for the gaps; five gives a comfortable target and a
+ * label that can be read at a glance.
+ *
+ * Tab icons are drawn as glyphs rather than pulled from an icon package — one
+ * less dependency, and they scale with the OS font size like everything else
+ * (NFR-U-04).
  */
 import { Redirect, Tabs } from 'expo-router';
+import { Platform } from 'react-native';
 import { hasSeenOnboarding } from '@fi/shared';
 import { useAuth } from '../../src/auth/auth-context';
 import { useMe } from '../../src/api/hooks/use-profile';
 import { Text } from '../../src/components/Text';
 import { LaunchScreen } from '../../src/components/LaunchScreen';
+import { TabFlourishProvider, useTabFlourish } from '../../src/features/nav/TabFlourish';
 import { useTheme } from '../../src/theme';
 
-const TAB_GLYPHS = {
-  index: '◆',
-  hunter: '⬟',
-  food: '◓',
-  exercises: '☰',
-  routines: '▤',
-  history: '◷',
-  profile: '◍',
-} as const;
+/** Order is the bar's order, and the index each flourish flies from. */
+const TABS = [
+  { name: 'index', title: 'Home', glyph: '◆' },
+  { name: 'hunter', title: 'Hunter', glyph: '⬟' },
+  { name: 'exercises', title: 'Train', glyph: '☰' },
+  { name: 'food', title: 'Food', glyph: '◓' },
+  { name: 'profile', title: 'Profile', glyph: '◍' },
+] as const;
 
 export default function TabsLayout() {
   const { status } = useAuth();
-  const theme = useTheme();
   const me = useMe();
 
   if (status === 'restoring') return <LaunchScreen />;
@@ -40,13 +45,21 @@ export default function TabsLayout() {
     return <Redirect href="/onboarding" />;
   }
 
-  const icon =
-    (name: keyof typeof TAB_GLYPHS) =>
-    ({ focused }: { focused: boolean }) => (
-      <Text variant="callout" tone={focused ? 'accent' : 'faint'}>
-        {TAB_GLYPHS[name]}
-      </Text>
-    );
+  return (
+    <TabFlourishProvider>
+      <SignedInTabs />
+    </TabFlourishProvider>
+  );
+}
+
+/**
+ * Split out because `useTabFlourish` has to read the context the provider
+ * above establishes — a hook cannot see a provider rendered by the same
+ * component.
+ */
+function SignedInTabs() {
+  const theme = useTheme();
+  const { play } = useTabFlourish();
 
   return (
     <Tabs
@@ -59,38 +72,55 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: theme.colors.surface,
           borderTopColor: theme.colors.border,
+          // Taller than the default. The bar is the app's spine and the old one
+          // was a strip of small grey marks.
+          height: Platform.OS === 'ios' ? 92 : 74,
+          paddingTop: theme.space.sm,
+          paddingBottom: Platform.OS === 'ios' ? theme.space.xl : theme.space.sm,
         },
+        tabBarLabelStyle: {
+          fontSize: theme.fontSize.micro,
+          fontWeight: theme.fontWeight.semibold,
+          letterSpacing: theme.tracking.wide,
+        },
+        tabBarItemStyle: { paddingVertical: theme.space.xs },
         sceneStyle: { backgroundColor: theme.colors.background },
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{ title: 'Home', tabBarIcon: icon('index'), headerShown: false }}
-      />
-      <Tabs.Screen
-        name="hunter"
-        options={{ title: 'Hunter', tabBarIcon: icon('hunter'), headerShown: false }}
-      />
-      <Tabs.Screen
-        name="food"
-        options={{ title: 'Food', tabBarIcon: icon('food'), headerShown: false }}
-      />
-      <Tabs.Screen
-        name="exercises"
-        options={{ title: 'Exercises', tabBarIcon: icon('exercises'), headerShown: false }}
-      />
-      <Tabs.Screen
-        name="routines"
-        options={{ title: 'Routines', tabBarIcon: icon('routines'), headerShown: false }}
-      />
-      <Tabs.Screen
-        name="history"
-        options={{ title: 'History', tabBarIcon: icon('history'), headerShown: false }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{ title: 'Profile', tabBarIcon: icon('profile'), headerShown: false }}
-      />
+      {TABS.map((tab, index) => (
+        <Tabs.Screen
+          key={tab.name}
+          name={tab.name}
+          options={{
+            title: tab.title,
+            headerShown: false,
+            tabBarIcon: ({ focused }) => (
+              <Text
+                style={{
+                  fontSize: theme.fontSize.title,
+                  lineHeight: theme.fontSize.title * 1.2,
+                  color: focused ? theme.colors.accent : theme.colors.textFaint,
+                  textShadowColor: focused ? theme.colors.accent : 'transparent',
+                  textShadowRadius: focused ? 12 : 0,
+                  textShadowOffset: { width: 0, height: 0 },
+                }}
+              >
+                {tab.glyph}
+              </Text>
+            ),
+          }}
+          listeners={{
+            tabPress: () => play(tab.glyph, index, TABS.length),
+          }}
+        />
+      ))}
+
+      {/*
+        History still lives in this group so `/(tabs)/history` keeps working
+        from Home, from the Train tab's header and from the end of a workout.
+        `href: null` takes it off the bar without taking it off the router.
+      */}
+      <Tabs.Screen name="history" options={{ href: null, headerShown: false }} />
     </Tabs>
   );
 }

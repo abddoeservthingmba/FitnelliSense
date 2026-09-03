@@ -20,3 +20,4 @@ export * from './password-strength';
 export * from './cardio';
 export * from './insights';
 export * from './muscle-work';
+export * from './bar-path';

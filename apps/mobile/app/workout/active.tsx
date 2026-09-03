@@ -135,7 +135,7 @@ export default function ActiveWorkoutScreen() {
           title="No workout in progress"
           body="Start one from a routine, or log a session as you go."
           actionLabel="Go to routines"
-          onAction={() => router.replace('/(tabs)/routines')}
+          onAction={() => router.replace('/(tabs)/exercises')}
         />
       </Screen>
     );

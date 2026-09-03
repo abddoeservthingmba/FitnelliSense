@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test": "echo \"Golden path is covered by the API suite and E2E (§14.3)\" && exit 0",
     "icons": "node scripts/generate-icons.mjs",
-    "apk": "bash scripts/build-apk.sh"
+    "apk": "bash scripts/build-apk.sh",
+    "sfx": "node scripts/generate-sfx.mjs"
   },
   "dependencies": {
     "@expo/metro-runtime": "~57.0.14",
@@ -20,6 +21,7 @@
     "@react-native-async-storage/async-storage": "2.2.0",
     "@tanstack/react-query": "^5.94.2",
     "expo": "^57.0.18",
+    "expo-audio": "^57.0.4",
     "expo-build-properties": "~57.0.15",
     "expo-camera": "~57.0.4",
     "expo-constants": "~57.0.16",

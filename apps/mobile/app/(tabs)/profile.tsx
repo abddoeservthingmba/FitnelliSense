@@ -6,8 +6,8 @@
  * be permanent. Changes save immediately; there is no Save button to forget.
  * Destructive actions confirm, and say what will actually happen.
  */
-import { useState } from 'react';
-import { Alert, Platform, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Alert, Platform, Switch, View } from 'react-native';
 import { router } from 'expo-router';
 import { REST_SECONDS_OPTIONS, SESSION_MINUTES_OPTIONS, TRAINING_DAYS_OPTIONS } from '@fi/shared';
 import { Button } from '../../src/components/Button';
@@ -19,6 +19,7 @@ import { Overline, Text } from '../../src/components/Text';
 import { TextField } from '../../src/components/TextField';
 import { ErrorState, LoadingState } from '../../src/components/StateViews';
 import { TierStrip } from '../../src/features/hunter/TierStrip';
+import { NAV_SOUND_DEFAULT, loadNavSound, saveNavSound } from '../../src/features/nav/nav-sound';
 import { useNutritionTargets } from '../../src/api/hooks/use-nutrition';
 import { useDeleteAccount, useMe, useUpdateProfile } from '../../src/api/hooks/use-profile';
 import { useAuth } from '../../src/auth/auth-context';
@@ -46,6 +47,12 @@ export default function ProfileScreen() {
   // Local drafts for the free-text fields, so typing is never round-tripped.
   const [bodyweight, setBodyweight] = useState<string | null>(null);
   const [name, setName] = useState<string | null>(null);
+
+  // Device preference, so it is read here rather than arriving with the profile.
+  const [navSound, setNavSound] = useState(NAV_SOUND_DEFAULT);
+  useEffect(() => {
+    void loadNavSound().then(setNavSound);
+  }, []);
 
   if (me.isLoading) return <LoadingState />;
   if (me.isError || !me.data) {
@@ -298,6 +305,30 @@ export default function ProfileScreen() {
               fullWidth
             />
           </Stack>
+        </Section>
+
+        {/* Per device, not per account: whether you want sound depends on
+            where you are, not who you are. Off does not silence the haptic —
+            the tap should still feel like it landed. */}
+        <Section title="Sound">
+          <Row gap="sm" style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+            <Stack gap="xs" style={{ flex: 1 }}>
+              <Text>Navigation sound</Text>
+              <Text variant="caption" tone="faint">
+                Plays over your music without pausing it, and stays quiet when your phone is on
+                silent.
+              </Text>
+            </Stack>
+            <Switch
+              value={navSound}
+              onValueChange={(next) => {
+                setNavSound(next);
+                void saveNavSound(next);
+              }}
+              trackColor={{ false: theme.colors.border, true: theme.colors.accentSoft }}
+              thumbColor={navSound ? theme.colors.accent : theme.colors.textFaint}
+            />
+          </Row>
         </Section>
 
         <Section title="Your data">

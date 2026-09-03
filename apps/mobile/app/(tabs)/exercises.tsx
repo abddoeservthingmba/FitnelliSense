@@ -1,17 +1,25 @@
 /**
- * The exercise library (FR-EX-05, FR-EX-06, NFR-P-03, NFR-P-05).
+ * Routines and the exercise library, one tab (FR-EX-05, FR-EX-06, FR-RT-01).
+ *
+ * These were two tabs. They answer the same question — "what am I training" —
+ * and the bottom bar had seven items, which is more than a thumb can aim at.
+ * Routines ride on top as a strip; the catalogue fills the rest.
+ *
+ * History moved to the top right when it left the bar. It is a destination you
+ * want occasionally and always in the same place, which is exactly what a
+ * header slot is for.
  *
  * Search is debounced so typing does not fire a request per keystroke; filters
  * are chips over the taxonomy; the list is paginated and virtualised, never
- * rendered whole.
+ * rendered whole (NFR-P-03, NFR-P-05).
  */
 import { useMemo, useState } from 'react';
-import { FlatList, View } from 'react-native';
+import { FlatList, Pressable, View } from 'react-native';
 import { router } from 'expo-router';
 import type { ExerciseSummary } from '@fi/shared';
 import { useExercises, useTaxonomy, type ExerciseFilters } from '../../src/api/hooks/use-catalogue';
 import { Button } from '../../src/components/Button';
-import { Divider, Row } from '../../src/components/Card';
+import { Divider, Row, Stack } from '../../src/components/Card';
 import { Chip } from '../../src/components/Chip';
 import { ExerciseThumbnail } from '../../src/components/ExerciseMedia';
 import { Screen } from '../../src/components/Screen';
@@ -19,6 +27,7 @@ import { ListRow } from '../../src/components/Section';
 import { EmptyState, ErrorState, LoadingState } from '../../src/components/StateViews';
 import { Overline, Text } from '../../src/components/Text';
 import { TextField } from '../../src/components/TextField';
+import { RoutinesStrip } from '../../src/features/routines/RoutinesStrip';
 import { useDebounced } from '../../src/lib/use-debounced';
 import { useTheme } from '../../src/theme';
 
@@ -67,18 +76,55 @@ export default function ExercisesScreen() {
     return parts.filter((part): part is string => Boolean(part)).join(' · ');
   };
 
-  return (
-    <Screen padded={false}>
-      <View style={{ paddingHorizontal: theme.space.lg, paddingTop: theme.space.lg, gap: theme.space.md }}>
+  /*
+   * Passed to `ListHeaderComponent` as an ELEMENT, never as `() => <View/>`.
+   * An inline arrow is a new component type on every render, so React unmounts
+   * and remounts the header — which drops focus and closes the keyboard on
+   * every keystroke typed into the search field below.
+   */
+  const header = (
+    <Stack gap="lg" style={{ paddingTop: theme.space.lg, paddingBottom: theme.space.md }}>
+      <Row justify="space-between">
+        <View style={{ gap: 2 }}>
+          <Overline>Library</Overline>
+          <Text variant="heading">Exercises</Text>
+        </View>
+        <Pressable
+          onPress={() => router.push('/(tabs)/history')}
+          accessibilityRole="button"
+          accessibilityLabel="Workout history"
+          hitSlop={12}
+          style={({ pressed }) => ({
+            minWidth: 44,
+            minHeight: 44,
+            paddingHorizontal: theme.space.sm,
+            borderRadius: theme.radius.sm,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderWidth: 1,
+            borderColor: theme.colors.border,
+            backgroundColor: theme.colors.surfaceRaised,
+            opacity: pressed ? 0.6 : 1,
+          })}
+        >
+          <Text variant="callout" tone="muted">
+            ◷
+          </Text>
+          <Text variant="micro" tone="faint">
+            History
+          </Text>
+        </Pressable>
+      </Row>
+
+      <RoutinesStrip />
+
+      <Stack gap="md">
         <Row justify="space-between">
-          <View style={{ gap: 2 }}>
-            <Overline>Library</Overline>
-            <Text variant="heading">Exercises</Text>
-          </View>
+          <Overline>Catalogue</Overline>
           <Button
-            label="New"
+            label="New exercise"
             size="small"
-            variant="secondary"
+            variant="ghost"
             onPress={() => router.push('/exercise/new')}
           />
         </Row>
@@ -111,29 +157,38 @@ export default function ExercisesScreen() {
 
         <Row gap="sm">
           <Chip label="Everything" selected={scope === 'all'} onPress={() => setScope('all')} />
-          <Chip label="My exercises" selected={scope === 'custom'} onPress={() => setScope('custom')} />
+          <Chip
+            label="My exercises"
+            selected={scope === 'custom'}
+            onPress={() => setScope('custom')}
+          />
         </Row>
-      </View>
+      </Stack>
+    </Stack>
+  );
 
-      {query.isLoading ? (
-        <LoadingState />
-      ) : query.isError ? (
-        <ErrorState error={query.error} onRetry={() => void query.refetch()} />
-      ) : (
-        <FlatList
-          data={exercises}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={{
-            paddingHorizontal: theme.space.lg,
-            paddingBottom: theme.space.xxl,
-          }}
-          ItemSeparatorComponent={() => <Divider inset={60} />}
-          onEndReached={() => {
-            if (query.hasNextPage && !query.isFetchingNextPage) void query.fetchNextPage();
-          }}
-          onEndReachedThreshold={0.4}
-          keyboardShouldPersistTaps="handled"
-          ListEmptyComponent={
+  return (
+    <Screen padded={false}>
+      <FlatList
+        data={query.isLoading || query.isError ? [] : exercises}
+        keyExtractor={(item) => item.id}
+        ListHeaderComponent={header}
+        contentContainerStyle={{
+          paddingHorizontal: theme.space.lg,
+          paddingBottom: theme.space.xxl,
+        }}
+        ItemSeparatorComponent={() => <Divider inset={60} />}
+        onEndReached={() => {
+          if (query.hasNextPage && !query.isFetchingNextPage) void query.fetchNextPage();
+        }}
+        onEndReachedThreshold={0.4}
+        keyboardShouldPersistTaps="handled"
+        ListEmptyComponent={
+          query.isLoading ? (
+            <LoadingState />
+          ) : query.isError ? (
+            <ErrorState error={query.error} onRetry={() => void query.refetch()} />
+          ) : (
             <EmptyState
               title={search ? 'Nothing matched' : 'No exercises yet'}
               body={
@@ -144,29 +199,27 @@ export default function ExercisesScreen() {
               actionLabel={search ? 'Create custom exercise' : undefined}
               onAction={search ? () => router.push('/exercise/new') : undefined}
             />
-          }
-          ListFooterComponent={
-            query.isFetchingNextPage ? <LoadingState label="Loading more…" /> : null
-          }
-          renderItem={({ item }) => (
-            <ListRow
-              title={item.name}
-              subtitle={subtitleFor(item)}
-              leading={
-                <ExerciseThumbnail mediaId={item.primaryMediaId} name={item.name} size={44} />
-              }
-              trailing={
-                item.isCustom ? (
-                  <Text variant="caption" tone="accent">
-                    Custom
-                  </Text>
-                ) : undefined
-              }
-              onPress={() => router.push(`/exercise/${item.id}`)}
-            />
-          )}
-        />
-      )}
+          )
+        }
+        ListFooterComponent={
+          query.isFetchingNextPage ? <LoadingState label="Loading more…" /> : null
+        }
+        renderItem={({ item }) => (
+          <ListRow
+            title={item.name}
+            subtitle={subtitleFor(item)}
+            leading={<ExerciseThumbnail mediaId={item.primaryMediaId} name={item.name} size={44} />}
+            trailing={
+              item.isCustom ? (
+                <Text variant="caption" tone="accent">
+                  Custom
+                </Text>
+              ) : undefined
+            }
+            onPress={() => router.push(`/exercise/${item.id}`)}
+          />
+        )}
+      />
     </Screen>
   );
 }

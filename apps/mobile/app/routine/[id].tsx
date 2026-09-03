@@ -249,7 +249,7 @@ export default function RoutineBuilderScreen() {
               label="Archive routine"
               variant="danger"
               onPress={() =>
-                archiveRoutine.mutate(id, { onSuccess: () => router.replace('/(tabs)/routines') })
+                archiveRoutine.mutate(id, { onSuccess: () => router.replace('/(tabs)/exercises') })
               }
               fullWidth
             />

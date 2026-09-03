@@ -55,7 +55,7 @@ export default function HistoryScreen() {
             title="No workouts yet"
             body="Finished sessions show up here with every set you logged."
             actionLabel="Start a workout"
-            onAction={() => router.push('/(tabs)/routines')}
+            onAction={() => router.push('/(tabs)/exercises')}
           />
         }
         ListFooterComponent={
