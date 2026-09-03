@@ -75,7 +75,7 @@
       [
         "expo-notifications",
         {
-          "color": "#C8FF4D"
+          "color": "#8CC8FF"
         }
       ],
       [
@@ -91,7 +91,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Fitness Intellisense uses the camera only to read a food barcode. Nothing is photographed or stored.",
+          "cameraPermission": "ARISE uses the camera only to read a food barcode. Nothing is photographed or stored.",
           "recordAudioAndroid": false
         }
       ]

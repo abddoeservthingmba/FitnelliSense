@@ -1,0 +1,51 @@
+# Keeps the API awake during the hours anyone is actually training.
+#
+# Render's free plan spins an instance down after ~15 minutes idle, and the
+# cold start is 25-45 seconds. That is what makes the app look broken: the
+# request does not fail, it just hangs long enough that you assume it has.
+#
+# WHY NOT AROUND THE CLOCK
+#
+# The free plan is 750 instance-hours a month across ALL free services. Awake
+# 24/7 is 730 hours, which spends essentially the entire allowance on one
+# service and leaves nothing for another. Pinging 04:00-19:00 UTC — roughly
+# 09:30 to 00:30 in IST — is about 465 hours, so the app is warm whenever
+# anyone is plausibly in a gym and there is still headroom.
+#
+# A CAVEAT WORTH KNOWING: GitHub delays scheduled workflows under load,
+# sometimes past 20 minutes, and disables schedules entirely on a repo with no
+# commits for 60 days. So this reduces cold starts rather than eliminating
+# them. An external pinger (cron-job.org, UptimeRobot — both free) fires on
+# time and does not care how quiet the repo is. This one is here because it
+# needs no third-party account and lives with the code.
+name: keep-warm
+
+on:
+  schedule:
+    # Every 10 minutes, 04:00-19:00 UTC. The idle timeout is ~15 minutes, so a
+    # 10-minute cadence survives one delayed or dropped run.
+    - cron: '*/10 4-19 * * *'
+  workflow_dispatch:
+
+# A late run is worthless — the point is to be recent. Never queue them up.
+concurrency:
+  group: keep-warm
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Wake the API
+        run: |
+          # --max-time 90 because waking it IS the slow path: a cold start can
+          # take 45s, and giving up at 10s would defeat the whole purpose.
+          code=$(curl -s -o /tmp/health.json -w '%{http_code}' --max-time 90 \
+            https://fitnellisense.onrender.com/health)
+          echo "status: $code"
+          cat /tmp/health.json || true
+          echo
+          # Non-2xx is worth failing on: this doubles as the only uptime check
+          # the project has, and a silent green tick would hide an outage.
+          test "$code" = "200"
