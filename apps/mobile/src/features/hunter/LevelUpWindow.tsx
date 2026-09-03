@@ -253,7 +253,7 @@ export function LevelBar({
     <Stack gap="sm">
       <Row justify="space-between" align="flex-end">
         <Row gap="sm" align="flex-end">
-          <Overline>level</Overline>
+          <Overline>{theme.ascension.levelWord}</Overline>
           <Text variant="metric" tone="accent">
             {level}
           </Text>

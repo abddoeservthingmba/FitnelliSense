@@ -6,6 +6,7 @@
 import type { ReactNode } from 'react';
 import { ScrollView, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { AscensionBackdrop } from '../features/ascension/AscensionBackdrop';
 import { useTheme } from '../theme';
 
 /** Beyond this, a single column of text stops being comfortable to read. */
@@ -48,24 +49,41 @@ export function Screen({
     </View>
   );
 
+  /*
+   * The Ascension's wallpaper, behind everything on every screen.
+   *
+   * Placed here rather than added per screen so no screen can forget it and no
+   * two disagree about its opacity. It is absolutely positioned and
+   * pointer-transparent, so it changes nothing about layout or touch.
+   *
+   * A scrolling screen gets it OUTSIDE the ScrollView, so it stays put while
+   * the content moves over it — inside, it would scroll away and leave the
+   * lower half bare.
+   */
   if (!scroll) {
     return (
-      <View style={{ flex: 1, backgroundColor: theme.colors.background }}>{content}</View>
+      <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        <AscensionBackdrop />
+        {content}
+      </View>
     );
   }
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: theme.colors.background }}
-      contentContainerStyle={{
-        paddingTop: theme.space.md,
-        paddingBottom: insets.bottom + theme.space.xxl + footerSpace,
-      }}
-      keyboardShouldPersistTaps="handled"
-      keyboardDismissMode="on-drag"
-    >
-      {content}
-    </ScrollView>
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <AscensionBackdrop />
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          paddingTop: theme.space.md,
+          paddingBottom: insets.bottom + theme.space.xxl + footerSpace,
+        }}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+      >
+        {content}
+      </ScrollView>
+    </View>
   );
 }
 
@@ -93,7 +111,14 @@ export function ActionBar({ children }: { children: ReactNode }) {
         gap: theme.space.sm,
       }}
     >
-      <View style={{ width: '100%', maxWidth: MAX_CONTENT_WIDTH, alignSelf: 'center', gap: theme.space.sm }}>
+      <View
+        style={{
+          width: '100%',
+          maxWidth: MAX_CONTENT_WIDTH,
+          alignSelf: 'center',
+          gap: theme.space.sm,
+        }}
+      >
         {children}
       </View>
     </View>

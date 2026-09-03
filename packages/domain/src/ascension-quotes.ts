@@ -116,6 +116,36 @@ const POOLS: Readonly<Record<AscensionId, Pool>> = {
     ],
     return: ['The crew waited. Back to it.'],
   },
+  hero: {
+    home: [
+      'The boring work is the work. Go and be bored.',
+      'A hundred of everything, every day. That was the whole secret.',
+    ],
+    training: ['One more. It is meant to hurt.', 'Nothing clever. Just the next set.'],
+    finish: [
+      'Logged. Do that a few hundred more times.',
+      'No shortcut taken today. That is the point.',
+    ],
+    insights: [
+      'This is what boring, repeated, actually looks like.',
+      'You did not get lucky. You just kept turning up.',
+    ],
+    return: ['The routine is still there. Start it again.'],
+  },
+
+  successor: {
+    home: [
+      'You can be a hero without having started as one.',
+      'Somebody handed you a body. What you do with it is yours.',
+    ],
+    training: ['Go beyond. One more.', 'Control it. Then add.'],
+    finish: ['You held more today than you could last month.', 'That is the percentage going up.'],
+    insights: [
+      'You started with nothing to work with. Read the chart again.',
+      'Every bit of this was built, none of it given.',
+    ],
+    return: ['It is still yours. Pick it back up.'],
+  },
 };
 
 /**

@@ -196,7 +196,9 @@ export const athleteStatsSchema = z.object({
    * Showing another athlete's rank in the viewer's costume would misname them —
    * a Hokage displayed as a Shadow Sovereign. Null when they have not chosen.
    */
-  ascension: z.enum(['monarch', 'saiyan', 'shinobi', 'shinigami', 'pirate']).nullable(),
+  ascension: z
+    .enum(['monarch', 'saiyan', 'shinobi', 'shinigami', 'pirate', 'hero', 'successor'])
+    .nullable(),
   level: z.number().int(),
   hunterRank: rankSchema,
   totalXp: z.number().int(),

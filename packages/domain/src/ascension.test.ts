@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { RANK_THRESHOLDS, rankForLevel, type Rank } from './hunter';
 import {
   DEFAULT_ASCENSION,
+  MOTIFS,
   ASCENSIONS,
   ASCENSION_IDS,
   isAscensionId,
@@ -272,7 +273,7 @@ describe('tier forms', () => {
 
   it('gives every Ascension a motif', () => {
     for (const id of ASCENSION_IDS) {
-      expect(['spike', 'horn', 'crown', 'brim', 'band']).toContain(ASCENSIONS[id].motif);
+      expect(MOTIFS).toContain(ASCENSIONS[id].motif);
     }
   });
 

@@ -32,7 +32,7 @@ import { useTheme } from '../../src/theme';
 /** Order is the bar's order, and the index each flourish flies from. */
 const TABS = [
   { name: 'index', title: 'Home', glyph: '◆' },
-  { name: 'hunter', title: 'Hunter', glyph: '⬟' },
+  { name: 'hunter', title: 'Arc', glyph: '⬟' },
   { name: 'exercises', title: 'Train', glyph: '☰' },
   { name: 'food', title: 'Food', glyph: '◓' },
   { name: 'history', title: 'History', glyph: '◷' },

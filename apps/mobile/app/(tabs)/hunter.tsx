@@ -1,5 +1,9 @@
 /**
- * The Hunter tab — the System's status window.
+ * The Arc tab — your character's progression.
+ *
+ * Named "Arc" rather than "Hunter": the progression belongs to whichever
+ * Ascension is chosen, and "Hunter" was one of them leaking into the frame
+ * around all seven.
  *
  * Reading order: who you are (level, rank), what is asked of you today
  * (quests), what you are made of (attributes), what you have proven (badges).
@@ -63,7 +67,7 @@ export default function HunterScreen() {
     <Screen scroll>
       <Stack gap="xl" style={{ paddingTop: theme.space.lg }}>
         {/* Identity */}
-        <SystemWindow label="status" tone={hunter.rank === 'S' ? 'monarch' : 'system'}>
+        <SystemWindow label={tier.name} tone={hunter.rank === 'S' ? 'monarch' : 'system'}>
           <Stack gap="xl">
             <Row justify="space-between" align="center">
               <View style={{ flex: 1, gap: 2 }}>

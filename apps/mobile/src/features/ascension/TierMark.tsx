@@ -1,20 +1,21 @@
 /**
- * The icon for one tier — drawn, not downloaded.
+ * The icon for one tier: a character, in costume, at that form.
  *
- * Thirty distinct marks (five Ascensions × six tiers) come from thirty rows of
- * data in `@fi/domain` plus one renderer. No image files: nothing to fetch,
- * nothing that goes soft when scaled up, and every mark recolours itself from
- * the tier's own palette.
+ * The first version of this drew a head and a crest and it read as a face
+ * shape, which is not what a tier icon is for. This draws a FIGURE — head,
+ * shoulders, torso, arms, legs — wearing the tier's colours and carrying that
+ * Ascension's signature: a cape, a straw hat, a hollow mask, a headband,
+ * lightning down the limbs. At 28px you read the silhouette; at 64px you read
+ * the costume.
  *
- * It is a SILHOUETTE, not a portrait. That is partly the honest choice — a
- * drawing of someone else's character is the one asset that cannot be swapped
- * later without redrawing every screen around it — and partly the practical
- * one: a crest that gains elements and reaches further as the rank climbs reads
- * as *the next form of the same thing*, which is exactly what a tier ladder is.
- * Six unrelated portraits would not.
+ * These are original stylised figures rather than the licensed artwork, which
+ * is the one honest thing to say about them. It is also the practical shape:
+ * seven Ascensions × six tiers is forty-two icons, they weigh nothing, they
+ * stay sharp at every size, and each one recolours from its own tier.
  *
- * The motif decides the geometry family; the tier's `form` decides how far
- * along that family this tier sits.
+ * The escalation is carried by the costume, not by the pose. Crest count,
+ * reach and aura climb with the rank, so the sixth form is visibly the sixth
+ * form of the same character.
  */
 import Svg, { Circle, Ellipse, G, Path, Polygon, Rect } from 'react-native-svg';
 import type { AscensionTier, Motif } from '@fi/domain';
@@ -22,242 +23,417 @@ import { useTheme } from '../../theme';
 
 export interface TierMarkProps {
   tier: AscensionTier;
-  /** Overrides the current Ascension's motif — the picker shows all five. */
+  /** Overrides the current Ascension's motif — the picker shows all seven. */
   motif?: Motif;
   size?: number;
 }
 
-/** The drawing happens in a 100×100 box and is scaled by the SVG viewBox. */
-const BOX = 100;
+/* The figure is laid out in a 100×100 box. */
 const CX = 50;
-/** The head sits low so the crest has room above it without leaving the box. */
-const CY = 62;
-const HEAD_R = 21;
+const HEAD_Y = 27;
+const HEAD_R = 11;
+const SHOULDER_Y = 41;
+const HIP_Y = 68;
+const FOOT_Y = 95;
+const SHOULDER_W = 15;
+const HIP_W = 9;
 
 export function TierMark({ tier, motif, size = 44 }: TierMarkProps) {
   const theme = useTheme();
   const family = motif ?? theme.ascension.motif;
   const { colour, crest, reach, aura } = tier.form;
+  const body = theme.colors.borderStrong;
 
   return (
-    <Svg width={size} height={size} viewBox={`0 0 ${BOX} ${BOX}`}>
-      {/* Aura rings, faintest first, so a high tier reads as radiating. */}
+    <Svg width={size} height={size} viewBox="0 0 100 100">
+      {/* Aura behind everything, so a late form radiates. */}
       {Array.from({ length: aura }, (_, index) => (
         <Circle
           key={`aura-${index}`}
           cx={CX}
-          cy={CY - 4}
-          r={HEAD_R + 7 + index * 7}
+          cy={54}
+          r={30 + index * 8}
           stroke={colour}
           strokeWidth={1}
-          opacity={0.3 - index * 0.07}
+          opacity={0.26 - index * 0.06}
           fill="none"
         />
       ))}
 
-      {/* The crest sits BEHIND the head, so spikes emerge from it. */}
-      <G>{crestFor(family, crest, reach, colour)}</G>
+      {/* Anything worn BEHIND the figure — a cape, a coat, shadow. */}
+      {behind(family, colour, reach)}
 
-      {/* The head: neutral, so the crest carries the identity. */}
-      <Circle cx={CX} cy={CY} r={HEAD_R} fill={theme.colors.surfaceRaised} />
-      <Circle
-        cx={CX}
-        cy={CY}
-        r={HEAD_R}
-        stroke={theme.colors.borderStrong}
-        strokeWidth={1.5}
-        fill="none"
+      {/* Legs and arms first: the torso overlaps them at the joints. */}
+      <Path
+        d={`M ${CX - 4} ${HIP_Y} L ${CX - 6} ${FOOT_Y} M ${CX + 4} ${HIP_Y} L ${CX + 6} ${FOOT_Y}`}
+        stroke={body}
+        strokeWidth={7}
+        strokeLinecap="round"
+      />
+      <Path
+        d={`M ${CX - SHOULDER_W + 2} ${SHOULDER_Y + 2} L ${CX - SHOULDER_W - 3} ${HIP_Y - 2}
+            M ${CX + SHOULDER_W - 2} ${SHOULDER_Y + 2} L ${CX + SHOULDER_W + 3} ${HIP_Y - 2}`}
+        stroke={body}
+        strokeWidth={6}
+        strokeLinecap="round"
       />
 
-      {/* Face detail belongs to the motif — a mask reads very differently
-          from a headband, and this is where that difference lands. */}
-      {faceFor(family, colour, reach)}
+      {/* The torso, in the tier's colour — this is the costume. */}
+      <Path
+        d={`M ${CX - SHOULDER_W} ${SHOULDER_Y}
+            L ${CX + SHOULDER_W} ${SHOULDER_Y}
+            L ${CX + HIP_W} ${HIP_Y}
+            L ${CX - HIP_W} ${HIP_Y} Z`}
+        fill={colour}
+      />
+
+      {/* Costume detail on the torso: belt, emblem, sash. */}
+      {torso(family, colour, body, reach)}
+
+      {/* The head, then whatever sits on or around it. */}
+      <Circle cx={CX} cy={HEAD_Y} r={HEAD_R} fill={body} />
+      <G>{above(family, crest, reach, colour, body)}</G>
+      {face(family, colour)}
     </Svg>
   );
 }
 
-/**
- * The crest, in the motif's own geometry.
- *
- * `reach` scales length rather than count, so the same number of elements can
- * describe an early and a late form of one shape — which is what makes a third
- * form read as "longer" rather than "different".
- */
-function crestFor(motif: Motif, count: number, reach: number, colour: string) {
-  if (count === 0 && motif !== 'brim') return null;
-
+/** Worn behind the body — drawn before the figure so it reads as behind. */
+function behind(motif: Motif, colour: string, reach: number) {
   switch (motif) {
-    /* Hair. Spikes fan across the top, longest in the middle, swept upward. */
-    case 'spike': {
-      const length = 16 + reach * 46;
-      return Array.from({ length: count }, (_, index) => {
-        const spread = count === 1 ? 0 : index / (count - 1) - 0.5;
-        const baseX = CX + spread * HEAD_R * 1.7;
-        // The middle spikes are the long ones; the outer ones fall away.
-        const taper = 1 - Math.abs(spread) * 0.85;
-        const tipY = CY - HEAD_R - length * taper;
-        const tipX = baseX + spread * 26;
-        return (
-          <Polygon
-            key={index}
-            points={`${baseX - 6},${CY - HEAD_R + 5} ${tipX},${tipY} ${baseX + 6},${CY - HEAD_R + 5}`}
-            fill={colour}
-          />
-        );
-      });
-    }
+    /* A cape, widening with the rank. The Hero's whole silhouette. */
+    case 'cape':
+      return (
+        <Path
+          d={`M ${CX - SHOULDER_W - 1} ${SHOULDER_Y}
+              Q ${CX - 30 - reach * 14} ${HIP_Y + 12} ${CX - 16 - reach * 8} ${FOOT_Y - 2}
+              L ${CX + 16 + reach * 8} ${FOOT_Y - 2}
+              Q ${CX + 30 + reach * 14} ${HIP_Y + 12} ${CX + SHOULDER_W + 1} ${SHOULDER_Y} Z`}
+          fill={colour}
+          opacity={0.32}
+        />
+      );
 
-    /* Horns, curving outward from the temples. A mask growing into a form. */
-    case 'horn': {
-      const length = 10 + reach * 34;
-      return Array.from({ length: count }, (_, index) => {
+    /* A long coat, split at the front. */
+    case 'horn':
+      return (
+        <Path
+          d={`M ${CX - SHOULDER_W - 2} ${SHOULDER_Y}
+              L ${CX - 18 - reach * 5} ${FOOT_Y - 4}
+              L ${CX - 3} ${FOOT_Y - 4} L ${CX - 3} ${SHOULDER_Y}
+              M ${CX + SHOULDER_W + 2} ${SHOULDER_Y}
+              L ${CX + 18 + reach * 5} ${FOOT_Y - 4}
+              L ${CX + 3} ${FOOT_Y - 4} L ${CX + 3} ${SHOULDER_Y}`}
+          fill={colour}
+          opacity={0.4}
+        />
+      );
+
+    /* Shadow: the Monarch's army, implied. */
+    case 'crown':
+      return (
+        <Ellipse
+          cx={CX}
+          cy={FOOT_Y - 4}
+          rx={20 + reach * 12}
+          ry={5 + reach * 3}
+          fill={colour}
+          opacity={0.22}
+        />
+      );
+
+    /* Lightning arcing off the body — Full Cowl. */
+    case 'bolt': {
+      const arcs = Math.max(2, Math.round(reach * 6));
+      return Array.from({ length: arcs }, (_, index) => {
         const side = index % 2 === 0 ? -1 : 1;
-        const tier = Math.floor(index / 2);
-        const rootX = CX + side * (HEAD_R - 4 - tier * 5);
-        const rootY = CY - HEAD_R + 6 + tier * 5;
-        const tipX = rootX + side * (8 + length * 0.5);
-        const tipY = rootY - length;
+        const y = SHOULDER_Y + (index / arcs) * (FOOT_Y - SHOULDER_Y);
+        const span = 10 + reach * 14;
         return (
           <Path
             key={index}
-            d={`M ${rootX} ${rootY} Q ${rootX + side * 14} ${rootY - length * 0.7} ${tipX} ${tipY}`}
+            d={`M ${CX + side * 13} ${y}
+                l ${side * span * 0.4} ${-5}
+                l ${side * span * 0.25} ${7}
+                l ${side * span * 0.35} ${-4}`}
             stroke={colour}
-            strokeWidth={5 - tier}
+            strokeWidth={2}
             strokeLinecap="round"
             fill="none"
+            opacity={0.85}
           />
         );
       });
     }
 
-    /* A crown: points rising from a band, the centre tallest. */
-    case 'crown': {
-      const height = 12 + reach * 30;
-      const width = HEAD_R * 1.8;
-      const points = Array.from({ length: count }, (_, index) => {
-        const spread = count === 1 ? 0 : index / (count - 1) - 0.5;
-        const x = CX + spread * width;
-        const taper = 1 - Math.abs(spread) * 0.55;
-        return `${x},${CY - HEAD_R - height * taper}`;
-      });
-      const baseY = CY - HEAD_R + 4;
+    default:
+      return null;
+  }
+}
+
+/** Costume detail across the chest and waist. */
+function torso(motif: Motif, colour: string, body: string, reach: number) {
+  const beltY = HIP_Y - 7;
+
+  switch (motif) {
+    /* Belt and gloves — the Hero's suit. */
+    case 'cape':
       return (
         <>
-          <Polygon
-            points={`${CX - width / 2},${baseY} ${points.join(' ')} ${CX + width / 2},${baseY}`}
-            fill={colour}
-          />
-          <Rect
-            x={CX - width / 2 - 2}
-            y={baseY - 1}
-            width={width + 4}
-            height={5}
-            rx={2}
-            fill={colour}
-          />
+          <Rect x={CX - 12} y={beltY} width={24} height={5} fill={body} />
+          <Circle cx={CX} cy={beltY + 2.5} r={2.4} fill={colour} />
         </>
       );
-    }
 
-    /* A brim: one wide ellipse, plus bands stacked on the crown. */
-    case 'brim': {
-      const brimW = HEAD_R * (1.5 + reach);
+    /* A gi: crossed lapels, and a sash. */
+    case 'spike':
       return (
         <>
-          <Ellipse
-            cx={CX}
-            cy={CY - HEAD_R + 6}
-            rx={brimW}
-            ry={7 + reach * 3}
-            fill={colour}
-            opacity={0.95}
+          <Path
+            d={`M ${CX - 9} ${SHOULDER_Y + 1} L ${CX} ${SHOULDER_Y + 13} L ${CX + 9} ${SHOULDER_Y + 1}`}
+            stroke={body}
+            strokeWidth={3}
+            fill="none"
           />
-          <Rect
-            x={CX - HEAD_R * 0.8}
-            y={CY - HEAD_R - 12}
-            width={HEAD_R * 1.6}
-            height={18}
-            rx={4}
-            fill={colour}
+          <Rect x={CX - 11} y={beltY} width={22} height={4.5} fill={body} opacity={0.85} />
+        </>
+      );
+
+    /* An open vest over a bare chest. */
+    case 'brim':
+      return (
+        <Path
+          d={`M ${CX - 5} ${SHOULDER_Y} L ${CX - 5} ${HIP_Y} M ${CX + 5} ${SHOULDER_Y} L ${CX + 5} ${HIP_Y}`}
+          stroke={body}
+          strokeWidth={3}
+        />
+      );
+
+    /* A flak vest with a high collar. */
+    case 'band':
+      return (
+        <>
+          <Rect x={CX - 8} y={SHOULDER_Y} width={16} height={9} rx={2} fill={body} opacity={0.7} />
+          <Rect x={CX - 11} y={beltY} width={22} height={4} fill={body} />
+        </>
+      );
+
+    /* A hero costume: a mask-green suit with a chest line. */
+    case 'bolt':
+      return (
+        <>
+          <Path
+            d={`M ${CX} ${SHOULDER_Y + 2} L ${CX} ${HIP_Y - 2}`}
+            stroke={body}
+            strokeWidth={2}
+            opacity={0.6}
           />
-          {Array.from({ length: count }, (_, index) => (
-            <Rect
+          <Rect x={CX - 12} y={beltY} width={24} height={4.5} fill={body} />
+        </>
+      );
+
+    /* Armour plates, gaining a line as the rank climbs. */
+    case 'crown':
+      return (
+        <>
+          {Array.from({ length: Math.max(1, Math.round(reach * 4)) }, (_, index) => (
+            <Path
               key={index}
-              x={CX - HEAD_R * 0.8}
-              y={CY - HEAD_R - 6 + index * 3.2}
-              width={HEAD_R * 1.6}
-              height={2}
-              fill="rgba(0,0,0,0.45)"
+              d={`M ${CX - 12 + index} ${SHOULDER_Y + 6 + index * 6} L ${CX + 12 - index} ${SHOULDER_Y + 6 + index * 6}`}
+              stroke={body}
+              strokeWidth={1.6}
+              opacity={0.55}
             />
           ))}
+          <Rect x={CX - 10} y={beltY} width={20} height={4} fill={body} />
+        </>
+      );
+
+    default:
+      return <Rect x={CX - 11} y={beltY} width={22} height={4} fill={body} opacity={0.8} />;
+  }
+}
+
+/** Hair, headwear and horns — the part that identifies the form. */
+function above(motif: Motif, count: number, reach: number, colour: string, body: string) {
+  switch (motif) {
+    /* Hair. Spikes fan upward, longest in the middle. */
+    case 'spike': {
+      const length = 9 + reach * 30;
+      if (count === 0) return null;
+      return Array.from({ length: count }, (_, index) => {
+        const spread = count === 1 ? 0 : index / (count - 1) - 0.5;
+        const baseX = CX + spread * HEAD_R * 1.8;
+        const taper = 1 - Math.abs(spread) * 0.8;
+        return (
+          <Polygon
+            key={index}
+            points={`${baseX - 4},${HEAD_Y - HEAD_R + 3} ${baseX + spread * 18},${HEAD_Y - HEAD_R - length * taper} ${baseX + 4},${HEAD_Y - HEAD_R + 3}`}
+            fill={colour}
+          />
+        );
+      });
+    }
+
+    /* A hollow mask, growing horns. */
+    case 'horn': {
+      const length = 6 + reach * 20;
+      return (
+        <>
+          <Circle cx={CX} cy={HEAD_Y} r={HEAD_R + 1} fill={colour} opacity={0.92} />
+          {Array.from({ length: count }, (_, index) => {
+            const side = index % 2 === 0 ? -1 : 1;
+            const rank = Math.floor(index / 2);
+            const rootX = CX + side * (HEAD_R - 3 - rank * 3);
+            const rootY = HEAD_Y - HEAD_R + 3 + rank * 3;
+            return (
+              <Path
+                key={index}
+                d={`M ${rootX} ${rootY} Q ${rootX + side * 9} ${rootY - length * 0.7} ${rootX + side * (5 + length * 0.4)} ${rootY - length}`}
+                stroke={colour}
+                strokeWidth={4 - rank * 0.8}
+                strokeLinecap="round"
+                fill="none"
+              />
+            );
+          })}
         </>
       );
     }
 
-    /* A headband, gaining a mark per rank. */
-    case 'band': {
-      const y = CY - HEAD_R + 9;
+    /* A crown, centre point tallest. */
+    case 'crown': {
+      const height = 7 + reach * 18;
+      const width = HEAD_R * 1.9;
+      const points = Array.from({ length: Math.max(2, count) }, (_, index) => {
+        const spread = index / (Math.max(2, count) - 1) - 0.5;
+        const taper = 1 - Math.abs(spread) * 0.5;
+        return `${CX + spread * width},${HEAD_Y - HEAD_R - height * taper}`;
+      });
+      const baseY = HEAD_Y - HEAD_R + 2;
+      return (
+        <Polygon
+          points={`${CX - width / 2},${baseY} ${points.join(' ')} ${CX + width / 2},${baseY}`}
+          fill={colour}
+        />
+      );
+    }
+
+    /* A straw hat with a band. */
+    case 'brim':
       return (
         <>
           <Rect
-            x={CX - HEAD_R - 3}
-            y={y}
-            width={(HEAD_R + 3) * 2}
-            height={9 + reach * 5}
+            x={CX - HEAD_R + 1}
+            y={HEAD_Y - HEAD_R - 7}
+            width={(HEAD_R - 1) * 2}
+            height={10}
             rx={3}
             fill={colour}
           />
-          {/* The tails, longer as the rank climbs. */}
-          <Path
-            d={`M ${CX + HEAD_R} ${y + 6} L ${CX + HEAD_R + 6 + reach * 16} ${y + 16 + reach * 20}`}
-            stroke={colour}
-            strokeWidth={4}
-            strokeLinecap="round"
+          <Ellipse
+            cx={CX}
+            cy={HEAD_Y - HEAD_R + 3}
+            rx={HEAD_R * (1.5 + reach * 0.6)}
+            ry={4 + reach * 2}
+            fill={colour}
+          />
+          <Rect
+            x={CX - HEAD_R + 1}
+            y={HEAD_Y - HEAD_R - 1}
+            width={(HEAD_R - 1) * 2}
+            height={2.5}
+            fill={body}
+            opacity={0.7}
+          />
+        </>
+      );
+
+    /* A headband with tails down the back. */
+    case 'band':
+      return (
+        <>
+          <Rect
+            x={CX - HEAD_R - 2}
+            y={HEAD_Y - HEAD_R + 1}
+            width={(HEAD_R + 2) * 2}
+            height={6}
+            rx={2}
+            fill={colour}
           />
           {Array.from({ length: count }, (_, index) => (
             <Circle
               key={index}
-              cx={CX - (count - 1) * 4 + index * 8}
-              cy={y + 5 + reach * 2}
-              r={1.8}
-              fill="rgba(0,0,0,0.5)"
+              cx={CX - (count - 1) * 2.6 + index * 5.2}
+              cy={HEAD_Y - HEAD_R + 4}
+              r={1.2}
+              fill={body}
+              opacity={0.7}
             />
           ))}
+          <Path
+            d={`M ${CX + HEAD_R} ${HEAD_Y - HEAD_R + 5} L ${CX + HEAD_R + 5 + reach * 10} ${HEAD_Y + 8 + reach * 14}`}
+            stroke={colour}
+            strokeWidth={3}
+            strokeLinecap="round"
+          />
         </>
       );
-    }
-  }
-}
 
-/** Motif-specific detail on the face itself. */
-function faceFor(motif: Motif, colour: string, reach: number) {
-  // A hollow mask: stripes across the face, heavier at higher tiers.
-  if (motif === 'horn') {
-    return (
-      <>
+    /* The Hero: bald, so the head reads by its shine and jaw alone. */
+    case 'cape':
+      return (
         <Path
-          d={`M ${CX - 12} ${CY - 4} L ${CX + 12} ${CY - 4}`}
-          stroke={colour}
-          strokeWidth={2.5}
-          strokeLinecap="round"
-          opacity={0.9}
-        />
-        <Path
-          d={`M ${CX - 9} ${CY + 5 + reach * 4} L ${CX + 9} ${CY + 5 + reach * 4}`}
+          d={`M ${CX - 5} ${HEAD_Y - HEAD_R + 3} Q ${CX - 1} ${HEAD_Y - HEAD_R} ${CX + 3} ${HEAD_Y - HEAD_R + 2}`}
           stroke={colour}
           strokeWidth={2}
           strokeLinecap="round"
-          opacity={0.55}
+          fill="none"
+          opacity={0.8}
         />
-      </>
+      );
+
+    /* A mask with two long ears, and hair tufts. */
+    case 'bolt':
+      return (
+        <>
+          {Array.from({ length: Math.max(2, count) }, (_, index) => {
+            const side = index % 2 === 0 ? -1 : 1;
+            return (
+              <Path
+                key={index}
+                d={`M ${CX + side * 6} ${HEAD_Y - HEAD_R + 1} L ${CX + side * (9 + reach * 5)} ${HEAD_Y - HEAD_R - 9 - reach * 9}`}
+                stroke={colour}
+                strokeWidth={3.5}
+                strokeLinecap="round"
+              />
+            );
+          })}
+          <Path
+            d={`M ${CX - HEAD_R} ${HEAD_Y - 2} Q ${CX} ${HEAD_Y - HEAD_R - 3} ${CX + HEAD_R} ${HEAD_Y - 2}`}
+            fill={colour}
+          />
+        </>
+      );
+  }
+}
+
+/** Eyes, or a mask's markings. */
+function face(motif: Motif, colour: string) {
+  if (motif === 'horn') {
+    return (
+      <Path
+        d={`M ${CX - 7} ${HEAD_Y - 1} L ${CX + 7} ${HEAD_Y - 1}`}
+        stroke="rgba(0,0,0,0.65)"
+        strokeWidth={2.4}
+        strokeLinecap="round"
+      />
     );
   }
-
-  // Everything else: two eyes in the tier's colour, so the mark has a gaze.
   return (
     <>
-      <Circle cx={CX - 7} cy={CY - 1} r={2.6} fill={colour} />
-      <Circle cx={CX + 7} cy={CY - 1} r={2.6} fill={colour} />
+      <Circle cx={CX - 4} cy={HEAD_Y} r={1.9} fill={colour} />
+      <Circle cx={CX + 4} cy={HEAD_Y} r={1.9} fill={colour} />
     </>
   );
 }

@@ -21,7 +21,8 @@
 import type { Rank } from './hunter';
 import { RANK_MIN_LEVEL, RANK_THRESHOLDS, rankForLevel } from './hunter';
 
-export type AscensionId = 'monarch' | 'saiyan' | 'shinobi' | 'shinigami' | 'pirate';
+export type AscensionId =
+  'monarch' | 'saiyan' | 'shinobi' | 'shinigami' | 'pirate' | 'hero' | 'successor';
 
 /** Every Ascension a profile may hold. The default is first. */
 export const ASCENSION_IDS: readonly AscensionId[] = [
@@ -30,6 +31,8 @@ export const ASCENSION_IDS: readonly AscensionId[] = [
   'shinobi',
   'shinigami',
   'pirate',
+  'hero',
+  'successor',
 ];
 
 export const DEFAULT_ASCENSION: AscensionId = 'monarch';
@@ -58,7 +61,16 @@ export interface TierForm {
 }
 
 /** The silhouette family a whole Ascension is drawn in. */
-export type Motif = 'spike' | 'horn' | 'crown' | 'brim' | 'band';
+/**
+ * Every silhouette family, as a value.
+ *
+ * The list and the union are declared together so a new motif cannot be added
+ * to one and forgotten in the other — which is exactly what happened when the
+ * Hero and the Successor arrived and a test was still checking five.
+ */
+export const MOTIFS = ['spike', 'horn', 'crown', 'brim', 'band', 'cape', 'bolt'] as const;
+
+export type Motif = (typeof MOTIFS)[number];
 
 export interface AscensionTier {
   /** The internal rank this tier renders. Never shown raw once an Ascension is set. */
@@ -313,6 +325,67 @@ export const ASCENSIONS: Readonly<Record<AscensionId, Ascension>> = {
       border: '#242C3A',
       borderStrong: '#3B475C',
       track: '#1E2532',
+    },
+  },
+  hero: {
+    id: 'hero',
+    name: 'The Hero',
+    systemLabel: 'The Association',
+    levelWord: 'Class',
+    tagline: 'Trained until it was boring, then kept going.',
+    motif: 'cape' as const,
+    ...ladderOf([
+      ['C-Class', 'Registered, and nobody has heard of you.', form('#9AA3B0', 0, 0.3, 0)],
+      ['B-Class', 'The results are getting hard to ignore.', form('#6FA8DC', 1, 0.4, 0)],
+      ['A-Class', 'They send you when it is serious.', form('#F2C230', 2, 0.52, 1)],
+      ['S-Class', 'There is no bracket above this one.', form('#E8A33D', 3, 0.62, 2)],
+      ['Serious', 'You have stopped holding back.', form('#D93A3A', 4, 0.74, 2)],
+      ['One Punch', 'It was only ever going to take one.', form('#FFFFFF', 5, 0.88, 3)],
+    ]),
+    palette: {
+      accent: '#F2C230',
+      accentText: '#1A1200',
+      accentSoft: '#3A2C00',
+      highlight: '#FF6B6B',
+      monarch: '#7DD3FC',
+      monarchSoft: '#0B2A38',
+      background: '#141008',
+      surface: '#221B0C',
+      surfaceRaised: '#332816',
+      border: '#3D3018',
+      borderStrong: '#615028',
+      track: '#332816',
+    },
+  },
+
+  successor: {
+    id: 'successor',
+    name: 'The Successor',
+    systemLabel: 'The Academy',
+    levelWord: 'Percentage',
+    tagline: 'Given a power he had not earned, then earned it anyway.',
+    motif: 'bolt' as const,
+    ...ladderOf([
+      ['Quirkless', 'Nothing handed to you at all.', form('#8A93A5', 0, 0.28, 0)],
+      ['Inherited', 'Something enormous, and no idea how to hold it.', form('#7BC86C', 1, 0.38, 0)],
+      ['Five Percent', 'Spread it thin and it stops breaking you.', form('#4CAF6D', 2, 0.5, 1)],
+      ['Full Cowl', 'The whole body, all at once, under control.', form('#2E9E5B', 3, 0.62, 2)],
+      ['Blackwhip', 'Powers that were never yours, answering.', form('#3D3A5C', 4, 0.76, 2)],
+      ['Ninth', 'The last one to carry it, and the strongest.', form('#B8F2C8', 5, 0.9, 3)],
+    ]),
+    palette: {
+      accent: '#4CAF6D',
+      accentText: '#04140A',
+      accentSoft: '#0E2C1A',
+      highlight: '#FFD93D',
+      monarch: '#8B7BD8',
+      monarchSoft: '#1A1533',
+      background: '#07130C',
+      surface: '#0E2216',
+      surfaceRaised: '#173322',
+      border: '#1C3D28',
+      borderStrong: '#2F6242',
+      track: '#173322',
     },
   },
 };
