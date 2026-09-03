@@ -50,11 +50,11 @@ which id.
 
 |                           |                                                                    |
 | ------------------------- | ------------------------------------------------------------------ |
-| File                      | `Ascension-1.2.0.apk`                                              |
+| File                      | `Ascension-1.3.0.apk`                                              |
 | Package                   | `com.ascension.fitness`                                            |
-| versionName / versionCode | 1.2.0 / 18                                                         |
-| Size                      | 75,089,192 bytes (71.6 MB)                                         |
-| SHA-256                   | `ea41ada51de71709e7ab453aebf5823b634f0a838d23b6fd9d422a850f84deab` |
+| versionName / versionCode | 1.3.0 / 19                                                         |
+| Size                      | 75,090,876 bytes (71.6 MB)                                         |
+| SHA-256                   | `e8f37dc55b986c9ed722d2806968e8b4d57854c73fcdfaa7102e044598d2a813` |
 | **Signing cert SHA-256**  | `c35574e619810ce487e6e92d2e3cbabced3e85356f32e4d793183335a0fee5de` |
 | API                       | `https://fitnellisense.onrender.com`                               |
 | ABIs                      | arm64-v8a, armeabi-v7a                                             |
@@ -67,7 +67,7 @@ which id.
 # apksigner is not on PATH and needs a JDK. It ships with the SDK build-tools:
 JAVA_HOME="I:/android-toolchain/jdk-17.0.20.1+1" \
   /i/android-toolchain/sdk/build-tools/36.0.0/apksigner.bat \
-  verify --print-certs build-output/Ascension-1.2.0.apk
+  verify --print-certs build-output/Ascension-1.3.0.apk
 ```
 
 Only apksigner can read it. These APKs are signed with **v2/v3 only**, so there
