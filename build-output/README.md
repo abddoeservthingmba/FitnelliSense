@@ -66,7 +66,7 @@ which id.
 # apksigner is not on PATH and needs a JDK. It ships with the SDK build-tools:
 JAVA_HOME="I:/android-toolchain/jdk-17.0.20.1+1" \
   /i/android-toolchain/sdk/build-tools/36.0.0/apksigner.bat \
-  verify --print-certs build-output/ARISE-0.5.0.apk
+  verify --print-certs build-output/Ascension-1.0.0.apk
 ```
 
 Only apksigner can read it. These APKs are signed with **v2/v3 only**, so there
@@ -93,7 +93,7 @@ it is equal.
 pnpm apk            # or: pnpm apk --clean
 # 3. Verify the certificate against the table above
 # 4. Add a row to the version log
-# 5. Attach build-output/ARISE-<version>.apk to a GitHub Release tagged v<version>
+# 5. Attach build-output/Ascension-<version>.apk to a GitHub Release tagged v<version>
 ```
 
 `pnpm apk` handles prebuild, Gradle, signing and the copy into `build-output/`,
