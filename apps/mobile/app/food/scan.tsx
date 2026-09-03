@@ -21,7 +21,7 @@
  * especially so. A failed lookup is the expected case here, not an error.
  */
 import { useRef, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import type { Food, MealSlot } from '@fi/shared';
@@ -108,7 +108,17 @@ export default function ScanFoodScreen() {
 
   // ------------------------------------------------------- manual entry --
 
-  if (typing || permission?.granted === false) {
+  /*
+   * Web lands here too. expo-camera's barcode scanner does not fire in a
+   * browser, and showing a live preview that never decodes reads as "my
+   * barcode is not being recognised" rather than "this does not work here".
+   *
+   * Routed into THIS branch rather than given its own screen: it would be the
+   * same field and the same lookup, and two copies drift.
+   */
+  const webOnly = Platform.OS === 'web';
+
+  if (typing || webOnly || permission?.granted === false) {
     const digits = manual.replace(/\D/g, '');
     return (
       <Screen scroll>
@@ -117,9 +127,11 @@ export default function ScanFoodScreen() {
             <Overline>barcode</Overline>
             <Text variant="heading">Type the number</Text>
             <Text tone="muted">
-              {permission?.granted === false
-                ? 'The camera is not available, so enter the digits under the barcode instead.'
-                : 'The digits printed under the barcode. Usually 13 of them, sometimes 8.'}
+              {webOnly
+                ? 'Camera scanning only works in the Android app. In a browser, the number under the barcode does the same job — usually 13 digits, sometimes 8.'
+                : permission?.granted === false
+                  ? 'The camera is not available, so enter the digits under the barcode instead.'
+                  : 'The digits printed under the barcode. Usually 13 of them, sometimes 8.'}
             </Text>
           </Stack>
 

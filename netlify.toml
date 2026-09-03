@@ -1,0 +1,38 @@
+# Netlify build for the web app.
+#
+# Connect the repository once in the Netlify UI and every push to main deploys.
+# Nothing here is secret: the only variable is the API's public URL.
+#
+# The security headers and the dynamic-route rewrites are NOT in this file.
+# They are generated into `_headers` and `_redirects` by the build, because the
+# Content-Security-Policy carries a hash of the bundle it ships with — see
+# apps/mobile/scripts/write-web-headers.mjs. Netlify reads both files from the
+# publish directory, so the generated policy wins and cannot drift from the
+# bundle the way a hand-written one in here would.
+
+[build]
+  # The repo root, so pnpm can resolve the workspace. Building from
+  # apps/mobile alone would fail: it depends on @fi/shared and @fi/domain.
+  base = "."
+  publish = "apps/mobile/web-build"
+  command = "corepack enable && pnpm install --frozen-lockfile --prod=false && pnpm --filter @fi/mobile build:web"
+
+[build.environment]
+  # Matches .node-version and the CI runner, so a build here cannot pass on a
+  # Node the rest of the project never uses.
+  NODE_VERSION = "24.11.1"
+  # Corepack reads `packageManager` from the root package.json (pnpm@10.34.5),
+  # so the version is pinned in one place rather than two.
+  COREPACK_ENABLE_DOWNLOAD_PROMPT = "0"
+  # Expo's export needs devDependencies; Netlify sets production otherwise.
+  NODE_ENV = "development"
+
+# A pull request gets its own URL. It still talks to the production API, which
+# is deliberate for a trial — there is no staging API to point at, and a preview
+# that cannot sign in is not a preview.
+#
+# The origin of each preview differs, so CORS will reject it until that origin
+# is added to CORS_ORIGINS on the API. That is the correct default: an allowlist
+# that quietly admits every deploy preview admits anyone who opens a PR.
+[context.deploy-preview.build.environment]
+  NODE_ENV = "development"

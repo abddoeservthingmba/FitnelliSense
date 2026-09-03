@@ -7,7 +7,7 @@
     "start": "expo start",
     "android": "expo run:android",
     "web": "expo start --web",
-    "build:web": "expo export --platform web",
+    "build:web": "bash scripts/build-web.sh",
     "typecheck": "tsc --noEmit",
     "test": "echo \"Golden path is covered by the API suite and E2E (§14.3)\" && exit 0",
     "icons": "node scripts/generate-icons.mjs",

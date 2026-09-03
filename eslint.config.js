@@ -12,6 +12,10 @@ export default tseslint.config(
       '**/.expo/**',
       '**/expo-env.d.ts',
       'apps/api/src/db/migrations/**',
+      // Build output. Generated bundles are not ours to lint, and the web
+      // export lands inside the workspace rather than beside it.
+      '**/web-build/**',
+      '**/android/**',
     ],
   },
   js.configs.recommended,

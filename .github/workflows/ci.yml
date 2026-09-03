@@ -144,3 +144,34 @@ jobs:
         # wildcard origin undeployable; this is what proves it still is.
         working-directory: apps/api
         run: pnpm vitest run tests/cors.test.ts
+
+  web:
+    name: Web build and host config
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # The web app is a shipped target, not a side effect, so a change that
+      # breaks the browser build should fail here rather than on Netlify.
+      - name: Build for web
+        working-directory: apps/mobile
+        env:
+          EXPO_PUBLIC_API_URL: https://fitnellisense.onrender.com
+        run: pnpm build:web
+
+      # The CSP allows exactly one inline script, by hash. If Expo changes that
+      # bootstrap and the hash is not regenerated, the deployed app is a blank
+      # white page — a failure no unit test would ever catch. This asserts the
+      # generated policy actually matches the bundle beside it.
+      - name: Assert the CSP matches the bundle it shipped with
+        working-directory: apps/mobile
+        run: node scripts/check-web-headers.mjs web-build
