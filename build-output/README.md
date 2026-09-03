@@ -14,7 +14,8 @@ whose update refuses to install.
 
 | Version   | Code | Package                     | Date       | What changed                                                                                                       |
 | --------- | ---- | --------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------ |
-| **0.9.0** | 15   | com.ascension.fitness       | 2026-09-03 | **Renamed Ascension.** Ascension themes, faster launch, premium transitions. New package: install is NOT an update |
+| **1.0.0** | 16   | com.ascension.fitness       | 2026-09-03 | Character select at launch, animated sigils, motivational lines per Ascension                                      |
+| 0.9.0     | 15   | com.ascension.fitness       | 2026-09-03 | **Renamed Ascension.** Ascension themes, faster launch, premium transitions. New package: install is NOT an update |
 | 0.7.0     | 13   | com.arise.fitness           | 2026-09-03 | Athlete profiles from the ranking; post-workout comparison; History back in the bar. **Leaderboard opt-ins reset** |
 | 0.6.0     | 12   | com.arise.fitness           | 2026-09-03 | Cardio logging fixed (server-side); 5 tabs not 7; tab-press flourish and sound. Native change — built `--clean`    |
 | 0.5.0     | 11   | com.arise.fitness           | 2026-09-02 | **Training insights** — volume, sets and sessions per muscle group against the previous period, with bars          |
@@ -48,11 +49,11 @@ which id.
 
 |                           |                                                                    |
 | ------------------------- | ------------------------------------------------------------------ |
-| File                      | `Ascension-0.9.0.apk`                                              |
+| File                      | `Ascension-1.0.0.apk`                                              |
 | Package                   | `com.ascension.fitness`                                            |
-| versionName / versionCode | 0.9.0 / 15                                                         |
-| Size                      | 75,065,172 bytes (71.6 MB)                                         |
-| SHA-256                   | `c97af8f63dfe443638c2c60d6cfd5e2e5df755eae01188a71b8355eabdc8236e` |
+| versionName / versionCode | 1.0.0 / 16                                                         |
+| Size                      | 75,073,336 bytes (71.6 MB)                                         |
+| SHA-256                   | `25dfcf9d97da6d4a514e882ed8c54fe756bedb19f340e4f7b4d4a1dc6396bf2c` |
 | **Signing cert SHA-256**  | `c35574e619810ce487e6e92d2e3cbabced3e85356f32e4d793183335a0fee5de` |
 | API                       | `https://fitnellisense.onrender.com`                               |
 | ABIs                      | arm64-v8a, armeabi-v7a                                             |
