@@ -1,9 +1,9 @@
 /**
- * Choosing a Path (FR-HP-11).
+ * Choosing a Ascension (FR-HP-11).
  *
  * The screen's job is to make clear that this is a costume, not a class: the
  * banner says so, and every card shows the SAME six unlock levels, so you can
- * see at a glance that no Path levels faster than another. Someone who thinks
+ * see at a glance that no Ascension levels faster than another. Someone who thinks
  * one might be stronger will pick that one over the one they actually want.
  *
  * The palette turns over the instant a card is tapped, before the profile save
@@ -13,7 +13,13 @@
  */
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { PATHS, PATH_IDS, pathLadder, tierForLevel, type PathId } from '@fi/domain';
+import {
+  ASCENSIONS,
+  ASCENSION_IDS,
+  ascensionLadder,
+  tierForLevel,
+  type AscensionId,
+} from '@fi/domain';
 import { Card, Row, Stack } from '../src/components/Card';
 import { Reveal } from '../src/components/Reveal';
 import { Screen } from '../src/components/Screen';
@@ -21,107 +27,110 @@ import { Section } from '../src/components/Section';
 import { Overline, Text } from '../src/components/Text';
 import { useHunterStatus } from '../src/api/hooks/use-hunter';
 import { useMe, useUpdateProfile } from '../src/api/hooks/use-profile';
-import { usePathContext } from '../src/theme/path-context';
+import { useAscensionContext } from '../src/theme/ascension-context';
 import { useTheme } from '../src/theme';
 
-export default function PathScreen() {
+export default function AscensionScreen() {
   const theme = useTheme();
-  const { pathId, setPathLocally } = usePathContext();
+  const { ascensionId, setAscensionLocally } = useAscensionContext();
   const updateProfile = useUpdateProfile();
   const me = useMe();
   const status = useHunterStatus();
 
   // Which card is expanded to show its ladder. Only one at a time — six open
   // ladders is thirty-six rows and no way to compare them.
-  const [expanded, setExpanded] = useState<PathId | null>(null);
+  const [expanded, setExpanded] = useState<AscensionId | null>(null);
 
   const level = status.data?.level ?? 1;
 
-  const choose = (next: PathId) => {
-    if (next === pathId) {
+  const choose = (next: AscensionId) => {
+    if (next === ascensionId) {
       setExpanded(expanded === next ? null : next);
       return;
     }
     // Local first: the whole point of the choice is the colour change.
-    setPathLocally(next);
-    updateProfile.mutate({ progressionPath: next });
+    setAscensionLocally(next);
+    updateProfile.mutate({ ascension: next });
   };
 
   return (
     <Screen scroll>
       <Stack gap="xl" style={{ paddingTop: theme.space.lg }}>
         <Stack gap="xs">
-          <Overline>choose your path</Overline>
+          <Overline>choose your ascension</Overline>
           <Text variant="heading">The same climb</Text>
           <Text variant="caption" tone="muted">
-            A Path changes what your tiers are called and how the app looks. It changes nothing
-            about how you level — every Path unlocks at exactly the same points, so pick the one you
-            like rather than the one that sounds strongest.
+            A Ascension changes what your tiers are called and how the app looks. It changes nothing
+            about how you level — every Ascension unlocks at exactly the same points, so pick the
+            one you like rather than the one that sounds strongest.
           </Text>
         </Stack>
 
-        {me.data && me.data.profile.progressionPath !== pathId && updateProfile.isPending ? (
+        {me.data && me.data.profile.ascension !== ascensionId && updateProfile.isPending ? (
           <Text variant="caption" tone="faint">
             Saving…
           </Text>
         ) : null}
 
         <Stack gap="md">
-          {PATH_IDS.map((id) => {
-            const path = PATHS[id];
-            const selected = id === pathId;
-            const current = tierForLevel(path, level);
+          {ASCENSION_IDS.map((id) => {
+            const ascension = ASCENSIONS[id];
+            const selected = id === ascensionId;
+            const current = tierForLevel(ascension, level);
 
             return (
-              <Reveal key={id} index={PATH_IDS.indexOf(id)}>
+              <Reveal key={id} index={ASCENSION_IDS.indexOf(id)}>
                 <Pressable
                   onPress={() => choose(id)}
                   accessibilityRole="radio"
                   accessibilityState={{ selected }}
-                  accessibilityLabel={`${path.name}. You would be ${current.name}.`}
+                  accessibilityLabel={`${ascension.name}. You would be ${current.name}.`}
                   style={({ pressed }) => ({ opacity: pressed ? 0.75 : 1 })}
                 >
                   <Card
                     style={{
-                      borderColor: selected ? path.palette.accent : theme.colors.border,
+                      borderColor: selected ? ascension.palette.accent : theme.colors.border,
                       borderWidth: selected ? 2 : 1,
                     }}
                   >
                     <Stack gap="md">
                       <Row gap="md" style={{ alignItems: 'center' }}>
-                        {/* The Path's accent as the swatch — the choice is
+                        {/* The Ascension's accent as the swatch — the choice is
                           largely a colour choice, so show the colour. */}
                         <View
                           style={{
                             width: 44,
                             height: 44,
                             borderRadius: theme.radius.md,
-                            backgroundColor: path.palette.background,
+                            backgroundColor: ascension.palette.background,
                             borderWidth: 2,
-                            borderColor: path.palette.accent,
+                            borderColor: ascension.palette.accent,
                             alignItems: 'center',
                             justifyContent: 'center',
                           }}
                         >
                           <Text
                             weight="heavy"
-                            style={{ color: path.palette.accent, fontSize: theme.fontSize.callout }}
+                            style={{
+                              color: ascension.palette.accent,
+                              fontSize: theme.fontSize.callout,
+                            }}
                           >
-                            {path.name.replace(/^The /, '').slice(0, 1)}
+                            {ascension.name.replace(/^The /, '').slice(0, 1)}
                           </Text>
                         </View>
 
                         <View style={{ flex: 1, gap: 2 }}>
                           <Text variant="callout" weight="semibold">
-                            {path.name}
+                            {ascension.name}
                           </Text>
                           <Text variant="caption" tone="muted" numberOfLines={2}>
-                            {path.tagline}
+                            {ascension.tagline}
                           </Text>
                         </View>
 
                         {selected ? (
-                          <Text weight="heavy" style={{ color: path.palette.accent }}>
+                          <Text weight="heavy" style={{ color: ascension.palette.accent }}>
                             ✓
                           </Text>
                         ) : null}
@@ -129,9 +138,9 @@ export default function PathScreen() {
 
                       <Row justify="space-between">
                         <Text variant="micro" tone="faint">
-                          {path.systemLabel} · {path.levelWord}
+                          {ascension.systemLabel} · {ascension.levelWord}
                         </Text>
-                        <Text variant="micro" style={{ color: path.palette.highlight }}>
+                        <Text variant="micro" style={{ color: ascension.palette.highlight }}>
                           you would be {current.name}
                         </Text>
                       </Row>
@@ -139,7 +148,7 @@ export default function PathScreen() {
                       {expanded === id ? (
                         <Section title="The ladder">
                           <Stack gap="xs">
-                            {pathLadder(path).map((step) => (
+                            {ascensionLadder(ascension).map((step) => (
                               <Row key={step.tier.rank} justify="space-between">
                                 <Text
                                   variant="caption"
@@ -149,7 +158,7 @@ export default function PathScreen() {
                                   {step.tier.name}
                                 </Text>
                                 <Text variant="micro" tone="faint">
-                                  {path.levelWord} {step.atLevel}
+                                  {ascension.levelWord} {step.atLevel}
                                 </Text>
                               </Row>
                             ))}
@@ -170,7 +179,7 @@ export default function PathScreen() {
 
         <Text variant="micro" tone="faint">
           Nothing you have earned changes when you switch. Your level, XP, records and history are
-          the same on every Path.
+          the same on every Ascension.
         </Text>
       </Stack>
     </Screen>

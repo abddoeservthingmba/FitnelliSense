@@ -19,7 +19,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { routes, type AuthResponse, type TokenPair } from '@fi/shared';
 import { api, configureClient, type Session } from '../api/client';
-import { forgetOnboarded } from './onboarding-hint';
+import { clearDevicePreferences } from './device-preferences';
 import { clearSession, loadSession, saveSession } from './token-store';
 
 export type AuthStatus = 'restoring' | 'signedIn' | 'signedOut';
@@ -83,9 +83,11 @@ export function AuthProvider({ children }: { children: ReactNode }): ReactNode {
   const signOutLocally = useCallback(() => {
     void applySession(null);
     queryClient.clear();
-    // The onboarding hint is a device fact, not an account one. Clearing it
-    // means handing the phone to someone else does not skip their onboarding.
-    void forgetOnboarded();
+    // Device preferences are facts about the person who just left: the
+    // onboarding hint would skip the next person's onboarding, and the cached
+    // Ascension would greet them in someone else's colours. The privacy policy
+    // says these are removed on sign-out, so they are.
+    void clearDevicePreferences();
   }, [applySession, queryClient]);
 
   // Wire the client once, before any screen can issue a request.

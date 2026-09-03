@@ -1,17 +1,17 @@
 /**
- * Paths — the same ladder, told six different ways.
+ * Ascensions — the same ladder, told six different ways.
  *
- * THE ONE RULE THIS MODULE EXISTS TO ENFORCE: a Path changes nothing but
+ * THE ONE RULE THIS MODULE EXISTS TO ENFORCE: a Ascension changes nothing but
  * words and colour. Every threshold, every XP award, every stat and every
- * rank boundary is identical whichever Path you pick. `Rank` stays E..S
- * internally, in the database and on the wire; a Path is a lookup from that
+ * rank boundary is identical whichever Ascension you pick. `Rank` stays E..S
+ * internally, in the database and on the wire; a Ascension is a lookup from that
  * rank to a name.
  *
- * This is what makes the feature safe. If a Path could alter a threshold, two
+ * This is what makes the feature safe. If a Ascension could alter a threshold, two
  * users' levels would stop being comparable, the leaderboard would become
- * nonsense, and someone would pick the Path that levels fastest rather than
+ * nonsense, and someone would pick the Ascension that levels fastest rather than
  * the one they like. So the tier list is exactly six entries — one per rank —
- * and a test asserts that for every Path.
+ * and a test asserts that for every Ascension.
  *
  * It also means the names are data. Swapping a tier list is a one-file change
  * that touches no logic, which matters because these particular names are
@@ -21,15 +21,21 @@
 import type { Rank } from './hunter';
 import { RANK_MIN_LEVEL, RANK_THRESHOLDS, rankForLevel } from './hunter';
 
-export type PathId = 'monarch' | 'saiyan' | 'shinobi' | 'shinigami' | 'pirate';
+export type AscensionId = 'monarch' | 'saiyan' | 'shinobi' | 'shinigami' | 'pirate';
 
-/** Every Path a profile may hold. The default is first. */
-export const PATH_IDS: readonly PathId[] = ['monarch', 'saiyan', 'shinobi', 'shinigami', 'pirate'];
+/** Every Ascension a profile may hold. The default is first. */
+export const ASCENSION_IDS: readonly AscensionId[] = [
+  'monarch',
+  'saiyan',
+  'shinobi',
+  'shinigami',
+  'pirate',
+];
 
-export const DEFAULT_PATH: PathId = 'monarch';
+export const DEFAULT_ASCENSION: AscensionId = 'monarch';
 
-export interface PathTier {
-  /** The internal rank this tier renders. Never shown raw once a Path is set. */
+export interface AscensionTier {
+  /** The internal rank this tier renders. Never shown raw once a Ascension is set. */
   readonly rank: Rank;
   readonly name: string;
   /** One line, shown when the tier is reached. */
@@ -37,21 +43,21 @@ export interface PathTier {
 }
 
 /**
- * The colours a Path overrides.
+ * The colours a Ascension overrides.
  *
  * Deliberately only the accents. Background, surfaces and text stay put: they
  * carry the contrast guarantees (NFR-U-04), and re-deriving a readable text
- * colour per Path is five chances to ship something illegible. The Path gets
+ * colour per Ascension is five chances to ship something illegible. The Ascension gets
  * to change the personality, not the readability.
  */
-export interface PathPalette {
+export interface AscensionPalette {
   readonly accent: string;
   readonly accentText: string;
   readonly accentSoft: string;
   readonly highlight: string;
   readonly monarch: string;
   readonly monarchSoft: string;
-  /** A hint of the Path in the darkest surface, so it is not only the accent. */
+  /** A hint of the Ascension in the darkest surface, so it is not only the accent. */
   readonly background: string;
   readonly surface: string;
   readonly surfaceRaised: string;
@@ -60,18 +66,18 @@ export interface PathPalette {
   readonly track: string;
 }
 
-export interface Path {
-  readonly id: PathId;
+export interface Ascension {
+  readonly id: AscensionId;
   /** Shown in the picker. */
   readonly name: string;
-  /** What this Path calls the whole progression, replacing "the System". */
+  /** What this Ascension calls the whole progression, replacing "the System". */
   readonly systemLabel: string;
   /** What it calls a level, e.g. "Power Level". */
   readonly levelWord: string;
   /** One sentence in the picker. */
   readonly tagline: string;
   /** Exactly six, ascending E to S. Derived from `byRank`, never beside it. */
-  readonly tiers: readonly PathTier[];
+  readonly tiers: readonly AscensionTier[];
   /**
    * The same six, keyed by rank.
    *
@@ -79,25 +85,25 @@ export interface Path {
    * alternative — searching the array and falling back — is a branch that can
    * never fire and therefore can never be tested.
    */
-  readonly byRank: Readonly<Record<Rank, PathTier>>;
-  readonly palette: PathPalette;
+  readonly byRank: Readonly<Record<Rank, AscensionTier>>;
+  readonly palette: AscensionPalette;
 }
 
-/** A tier as written in a Path: its name and its one line. */
+/** A tier as written in a Ascension: its name and its one line. */
 type TierSpec = readonly [name: string, blurb: string];
 
 /**
- * Builds both views of a Path's six tiers from one six-tuple.
+ * Builds both views of a Ascension's six tiers from one six-tuple.
  *
  * The tuple type is what guarantees six. Writing every rank out explicitly is
- * what makes the record total — TypeScript rejects a Path that omits one, so
+ * what makes the record total — TypeScript rejects a Ascension that omits one, so
  * the invariant is enforced at compile time as well as by a test.
  */
 function ladderOf(
   specs: readonly [TierSpec, TierSpec, TierSpec, TierSpec, TierSpec, TierSpec],
-): Pick<Path, 'tiers' | 'byRank'> {
+): Pick<Ascension, 'tiers' | 'byRank'> {
   const [e, d, c, b, a, s] = specs;
-  const tier = (rank: Rank, spec: TierSpec): PathTier => ({
+  const tier = (rank: Rank, spec: TierSpec): AscensionTier => ({
     rank,
     name: spec[0],
     blurb: spec[1],
@@ -115,10 +121,10 @@ function ladderOf(
   return { byRank, tiers: [byRank.E, byRank.D, byRank.C, byRank.B, byRank.A, byRank.S] };
 }
 
-export const PATHS: Readonly<Record<PathId, Path>> = {
+export const ASCENSIONS: Readonly<Record<AscensionId, Ascension>> = {
   /**
    * The original ladder, kept as the default so an existing account looks
-   * exactly as it did before Paths existed.
+   * exactly as it did before Ascensions existed.
    */
   monarch: {
     id: 'monarch',
@@ -271,38 +277,41 @@ export const PATHS: Readonly<Record<PathId, Path>> = {
   },
 };
 
-/** The Path for an id, falling back to the default rather than throwing. */
-export function pathFor(id: string | null | undefined): Path {
-  const found = PATH_IDS.find((candidate) => candidate === id);
-  return PATHS[found ?? DEFAULT_PATH];
+/** The Ascension for an id, falling back to the default rather than throwing. */
+export function ascensionFor(id: string | null | undefined): Ascension {
+  const found = ASCENSION_IDS.find((candidate) => candidate === id);
+  return ASCENSIONS[found ?? DEFAULT_ASCENSION];
 }
 
-export function isPathId(value: string): value is PathId {
-  return PATH_IDS.some((candidate) => candidate === value);
+export function isAscensionId(value: string): value is AscensionId {
+  return ASCENSION_IDS.some((candidate) => candidate === value);
 }
 
-/** The tier a rank renders on this Path. Total: every Path has all six. */
-export function tierForRank(path: Path, rank: Rank): PathTier {
-  return path.byRank[rank];
+/** The tier a rank renders on this Ascension. Total: every Ascension has all six. */
+export function tierForRank(ascension: Ascension, rank: Rank): AscensionTier {
+  return ascension.byRank[rank];
 }
 
-export function tierForLevel(path: Path, level: number): PathTier {
-  return tierForRank(path, rankForLevel(level));
+export function tierForLevel(ascension: Ascension, level: number): AscensionTier {
+  return tierForRank(ascension, rankForLevel(level));
 }
 
 /**
  * The next tier up and the level it starts at, or null at the top.
  *
- * Reads the thresholds from `hunter` rather than restating them, so a Path can
+ * Reads the thresholds from `hunter` rather than restating them, so a Ascension can
  * never disagree with the ladder it is decorating.
  */
-export function nextTier(path: Path, level: number): { tier: PathTier; atLevel: number } | null {
+export function nextTier(
+  ascension: Ascension,
+  level: number,
+): { tier: AscensionTier; atLevel: number } | null {
   const ascending = [...RANK_THRESHOLDS].reverse();
   const next = ascending.find((entry) => entry.minLevel > level);
-  return next ? { tier: tierForRank(path, next.rank), atLevel: next.minLevel } : null;
+  return next ? { tier: tierForRank(ascension, next.rank), atLevel: next.minLevel } : null;
 }
 
-/** Every tier with the level it unlocks at — the ladder, for the Path screen. */
-export function pathLadder(path: Path): { tier: PathTier; atLevel: number }[] {
-  return path.tiers.map((tier) => ({ tier, atLevel: RANK_MIN_LEVEL[tier.rank] }));
+/** Every tier with the level it unlocks at — the ladder, for the Ascension screen. */
+export function ascensionLadder(ascension: Ascension): { tier: AscensionTier; atLevel: number }[] {
+  return ascension.tiers.map((tier) => ({ tier, atLevel: RANK_MIN_LEVEL[tier.rank] }));
 }

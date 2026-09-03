@@ -28,14 +28,14 @@ export const profileSchema = z.object({
   /** Appearing on the leaderboard publishes training stats; off by default. */
   leaderboardOptIn: z.boolean(),
   /**
-   * Which Path the progression is dressed as (FR-HP-11).
+   * Which Ascension the progression is dressed as (FR-HP-11).
    *
    * Presentation only. Every threshold, XP award and rank boundary is
-   * identical on every Path, so this can be changed as often as the user
+   * identical on every Ascension, so this can be changed as often as the user
    * likes and nothing they have earned moves. Validated as a plain enum
    * rather than against `@fi/domain` so the contract stays dependency-free.
    */
-  progressionPath: z.enum(['monarch', 'saiyan', 'shinobi', 'shinigami', 'pirate']),
+  ascension: z.enum(['monarch', 'saiyan', 'shinobi', 'shinigami', 'pirate']),
 });
 
 export const meResponseSchema = z.object({

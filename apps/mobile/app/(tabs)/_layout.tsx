@@ -21,7 +21,7 @@ import { useMe } from '../../src/api/hooks/use-profile';
 import { Text } from '../../src/components/Text';
 import { LaunchScreen } from '../../src/components/LaunchScreen';
 import { TabFlourishProvider, useTabFlourish } from '../../src/features/nav/TabFlourish';
-import { usePathSync } from '../../src/theme/path-context';
+import { useAscensionSync } from '../../src/theme/ascension-context';
 import {
   readOnboardingHint,
   rememberOnboarded,
@@ -43,8 +43,8 @@ export default function TabsLayout() {
   const { status } = useAuth();
   const me = useMe();
 
-  // The account's Path overrides the device's cached one once it is known.
-  usePathSync(me.data?.profile.progressionPath);
+  // The account's Ascension overrides the device's cached one once it is known.
+  useAscensionSync(me.data?.profile.ascension);
 
   const [hint, setHint] = useState<OnboardingHint | null>(null);
   useEffect(() => {

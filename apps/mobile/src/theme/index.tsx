@@ -6,8 +6,8 @@
  * rebuilds its stylesheet on every render.
  */
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
-import { pathFor, type Path } from '@fi/domain';
-import { usePathContext } from './path-context';
+import { ascensionFor, type Ascension } from '@fi/domain';
+import { useAscensionContext } from './ascension-context';
 import { StyleSheet, useColorScheme, useWindowDimensions } from 'react-native';
 import {
   fontSize,
@@ -28,8 +28,8 @@ export type Layout = 'compact' | 'medium' | 'wide';
 export interface Theme {
   scheme: ColorScheme;
   colors: ThemeColors;
-  /** The chosen Path, so a component can use its wording as well as its colour. */
-  path: Path;
+  /** The chosen Ascension, so a component can use its wording as well as its colour. */
+  ascension: Ascension;
   space: typeof space;
   radius: typeof radius;
   fontSize: typeof fontSize;
@@ -45,20 +45,20 @@ export interface Theme {
 const ThemeContext = createContext<Theme | null>(null);
 
 /**
- * The base palette with the Path's colours laid over it.
+ * The base palette with the Ascension's colours laid over it.
  *
- * In DARK mode the Path takes the accents and the surfaces, which is what
+ * In DARK mode the Ascension takes the accents and the surfaces, which is what
  * makes each one feel like its own app rather than a recolour.
  *
- * In LIGHT mode it takes ONLY the accents. Every Path palette is tuned dark —
+ * In LIGHT mode it takes ONLY the accents. Every Ascension palette is tuned dark —
  * dropping a near-black background into light mode would put pale text on a
  * dark ground with the light mode's own text colours, which is illegible. The
  * accents carry the identity; the structure stays where its contrast was
  * measured (NFR-U-04).
  */
-function colorsFor(scheme: ColorScheme, path: Path): ThemeColors {
+function colorsFor(scheme: ColorScheme, ascension: Ascension): ThemeColors {
   const base = palettes[scheme];
-  const { accent, accentText, accentSoft, highlight, monarch, monarchSoft } = path.palette;
+  const { accent, accentText, accentSoft, highlight, monarch, monarchSoft } = ascension.palette;
   const accents = { accent, accentText, accentSoft, highlight, monarch, monarchSoft };
 
   if (scheme === 'light') return { ...base, ...accents };
@@ -66,13 +66,13 @@ function colorsFor(scheme: ColorScheme, path: Path): ThemeColors {
   return {
     ...base,
     ...accents,
-    background: path.palette.background,
-    surface: path.palette.surface,
-    surfaceRaised: path.palette.surfaceRaised,
-    border: path.palette.border,
-    borderStrong: path.palette.borderStrong,
+    background: ascension.palette.background,
+    surface: ascension.palette.surface,
+    surfaceRaised: ascension.palette.surfaceRaised,
+    border: ascension.palette.border,
+    borderStrong: ascension.palette.borderStrong,
     borderGlow: accent,
-    track: path.palette.track,
+    track: ascension.palette.track,
   };
 }
 
@@ -85,15 +85,15 @@ function layoutFor(width: number): Layout {
 export function ThemeProvider({ children }: { children: ReactNode }): ReactNode {
   const scheme: ColorScheme = useColorScheme() === 'light' ? 'light' : 'dark';
   const { width } = useWindowDimensions();
-  const { pathId } = usePathContext();
+  const { ascensionId } = useAscensionContext();
 
   const theme = useMemo<Theme>(() => {
     const layout = layoutFor(width);
-    const path = pathFor(pathId);
+    const ascension = ascensionFor(ascensionId);
     return {
       scheme,
-      path,
-      colors: colorsFor(scheme, path),
+      ascension,
+      colors: colorsFor(scheme, ascension),
       space,
       radius,
       fontSize,
@@ -104,7 +104,7 @@ export function ThemeProvider({ children }: { children: ReactNode }): ReactNode 
       layout,
       isWide: layout === 'wide',
     };
-  }, [scheme, width, pathId]);
+  }, [scheme, width, ascensionId]);
 
   return <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>;
 }

@@ -14,7 +14,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '../src/auth/auth-context';
 import { createQueryClient } from '../src/api/query-client';
 import { ThemeProvider, useTheme } from '../src/theme';
-import { PathProvider } from '../src/theme/path-context';
+import { AscensionProvider } from '../src/theme/ascension-context';
 
 export default function RootLayout() {
   // One client for the app's lifetime; recreating it would drop every cache.
@@ -24,14 +24,14 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
-          {/* Outside ThemeProvider, which reads the Path to build the palette. */}
-          <PathProvider>
+          {/* Outside ThemeProvider, which reads the Ascension to build the palette. */}
+          <AscensionProvider>
             <ThemeProvider>
               <AuthProvider>
                 <ThemedShell />
               </AuthProvider>
             </ThemeProvider>
-          </PathProvider>
+          </AscensionProvider>
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
@@ -82,7 +82,7 @@ function ThemedShell() {
         <Stack.Screen name="routine/[id]" options={{ title: 'Routine' }} />
         <Stack.Screen name="progress/[exerciseId]" options={{ title: 'Progress' }} />
         <Stack.Screen name="leaderboard" options={{ title: 'Ranking' }} />
-        <Stack.Screen name="path" options={{ title: 'Your Path' }} />
+        <Stack.Screen name="ascension" options={{ title: 'Your Ascension' }} />
         {/* Title comes from the screen itself — it is the athlete's name. */}
         <Stack.Screen name="athlete/[id]" options={{ title: 'Athlete' }} />
         <Stack.Screen name="food/add" options={{ title: 'Add food' }} />

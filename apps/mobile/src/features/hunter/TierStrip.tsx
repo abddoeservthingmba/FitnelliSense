@@ -1,7 +1,7 @@
 /**
  * The current tier, in one line.
  *
- * The tier NAME comes from the chosen Path, while the rank behind it stays
+ * The tier NAME comes from the chosen Ascension, while the rank behind it stays
  * E..S — so the wording changes and the ladder does not.
  *
  * The Hunter tab shows the full status; this is the version that belongs at the
@@ -29,15 +29,15 @@ export function TierStrip() {
   if (!status.data) return null;
 
   const { level, rank, fraction, xpIntoLevel, xpForThisLevel } = status.data;
-  const tier = tierForRank(theme.path, rank);
-  const next = nextTier(theme.path, level);
+  const tier = tierForRank(theme.ascension, rank);
+  const next = nextTier(theme.ascension, level);
   const colour = theme.colors[RANK_COLORS[rank] ?? 'text'];
 
   return (
     <Pressable
       onPress={() => router.push('/(tabs)/hunter')}
       accessibilityRole="button"
-      accessibilityLabel={`${tier.name}, ${theme.path.levelWord.toLowerCase()} ${level}. ${xpIntoLevel} of ${xpForThisLevel} XP into this level. Opens your status.`}
+      accessibilityLabel={`${tier.name}, ${theme.ascension.levelWord.toLowerCase()} ${level}. ${xpIntoLevel} of ${xpForThisLevel} XP into this level. Opens your status.`}
       style={{
         flexDirection: 'row',
         alignItems: 'center',
@@ -65,7 +65,7 @@ export function TierStrip() {
             {tier.name.toUpperCase()}
           </Text>
           <Text variant="caption" tone="muted">
-            {`${theme.path.levelWord} ${level}`}
+            {`${theme.ascension.levelWord} ${level}`}
           </Text>
         </View>
 
@@ -89,8 +89,8 @@ export function TierStrip() {
 
         <Text variant="micro" tone="faint">
           {next
-            ? `${xpForThisLevel - xpIntoLevel} XP to ${theme.path.levelWord.toLowerCase()} ${level + 1} · ${next.tier.name} at ${next.atLevel}`
-            : `${xpForThisLevel - xpIntoLevel} XP to ${theme.path.levelWord.toLowerCase()} ${level + 1}`}
+            ? `${xpForThisLevel - xpIntoLevel} XP to ${theme.ascension.levelWord.toLowerCase()} ${level + 1} · ${next.tier.name} at ${next.atLevel}`
+            : `${xpForThisLevel - xpIntoLevel} XP to ${theme.ascension.levelWord.toLowerCase()} ${level + 1}`}
         </Text>
       </View>
 

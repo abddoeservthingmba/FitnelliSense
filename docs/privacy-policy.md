@@ -1,6 +1,6 @@
 # ARISE — Privacy Policy
 
-**Last updated: 2 September 2026**
+**Last updated: 3 September 2026**
 
 ARISE is a training log. This policy describes exactly what it stores, where,
 who else sees it, and how to get rid of it.
@@ -36,7 +36,7 @@ anything in the background.**
 | ------------- | ------------------------------------------------------------------------------------------- |
 | Email address | Signing in, and sending password reset or verification codes                                |
 | Password      | Stored only as an **argon2id hash**. Nobody, including the operator, can read your password |
-| Display name  | Shown to you, and to others only if you opt in to the leaderboard                           |
+| Display name  | Shown to you, and to others only if you opt in to the ranking                               |
 
 ### Profile — all optional
 
@@ -59,8 +59,13 @@ create yourself. Custom foods are private to you.
 
 ### Progress mechanics
 
-Experience points, levels, ranks, badges, daily quests, and streaks. All of it
+Experience points, levels, tiers, badges, daily quests, and streaks. All of it
 is derived from the training data above.
+
+Which **Ascension** you have chosen — the theme that renames your tiers and
+recolours the app. It is a display preference and nothing else: every level and
+threshold is identical whichever one you pick, so changing it moves nothing you
+have earned.
 
 ### Technical
 
@@ -70,6 +75,16 @@ identifier, and a **hashed** user id.
 
 **Server logs never contain** your email, your password, a verification code, a
 request body, or your name.
+
+### On your device only
+
+Three small preferences are kept in ordinary app storage on your phone, are
+never sent anywhere, and are removed when you sign out or uninstall:
+
+- whether the navigation sound is on
+- that this device has finished onboarding — so the app can open straight away
+  instead of waiting for the server to answer
+- which Ascension to colour the app with before your profile has loaded
 
 ## 3. What ARISE does NOT do
 
@@ -127,32 +142,59 @@ you, and never learns who searched or what account it was for.
 They hold the data because they host the database and the server. Neither
 analyses it.
 
-## 6. The leaderboard publishes some of your data
+## 6. The ranking publishes some of your data
 
-The leaderboard is **off by default**. Nothing about you is visible to another
-user until you turn it on in your profile.
+The ranking is **off by default**. Nothing about you is visible to another user
+until you turn it on in your profile.
 
-If you turn it on, other users of ARISE can see exactly these fields, and
-nothing else:
+> **This section changed on 3 September 2026, and it now covers more than it
+> did.** Ranking profiles were added, which publish personal records — and the
+> previous version of this policy said individual lifts were never published.
+> Because that promise no longer held, **every existing opt-in was switched
+> off** and everyone has to opt in again against the list below. Nobody's
+> records were published under the old wording.
+
+If you turn it on, other users of ARISE can see the following, and nothing
+else.
+
+**On the ranking list:**
 
 - your display name
-- your level and rank
+- your level and tier
 - your experience points
 - your total volume lifted
 - your number of sessions in the window
 
-**Never published, even when opted in:** your email, bodyweight, measurements,
-date of birth, individual exercises, weights, nutrition, or anything you have
-written in a note.
+**On your profile, which any signed-in user can open from the ranking:**
 
-Switching it off removes you from everyone else's view immediately.
+- your personal records — the exercise name, the record type, the weight and
+  the reps
+- how much volume you have done per muscle group, and how many sets
+- the same level, tier and totals as the list
 
-## 7. Other users can never see your data
+**Never published, even when opted in:** your email address, your bodyweight,
+your date of birth, anything you eat or log in Food, any note you have written,
+the dates and times you trained, your individual sessions, or your custom
+exercises and foods.
 
-Every request is scoped to the account making it. One account cannot read or
-change another's workouts, routines, foods or profile — this is enforced at the
-database query level and covered by automated tests that attempt exactly that
-and require it to fail.
+Bodyweight is excluded deliberately. It would make the strength figures more
+meaningful, and it is still not shared: it is information about your body
+rather than about your training, and agreeing to be ranked on training is not
+agreeing to publish it.
+
+Switching the ranking off removes you from the list and makes your profile
+unavailable again, immediately.
+
+## 7. Other users cannot see anything else
+
+Beyond section 6, every request is scoped to the account making it. One account
+cannot read or change another's workouts, routines, foods, notes or profile —
+enforced at the database query level, and covered by automated tests that
+attempt exactly that and require it to fail.
+
+A profile belonging to someone who has not opted in does not merely refuse to
+load; the server answers as though the account does not exist. That is
+deliberate, so this cannot be used to find out who has an ARISE account.
 
 ## 8. How long it is kept
 
@@ -171,7 +213,7 @@ You can, at any time and without asking anyone:
 - **Correct it.** Every profile field and every logged entry is editable, and
   entries can be deleted outright.
 - **Delete your account.** Profile → _Delete account_.
-- **Leave the leaderboard.** One switch, effective immediately.
+- **Leave the ranking.** One switch, effective immediately.
 - **Object or complain.** Email the contact address above.
 
 Under India's Digital Personal Data Protection Act 2023, and the GDPR if you
@@ -205,7 +247,7 @@ address and it will be deleted.
 
 Training and nutrition information is health-adjacent, and in some countries
 counts as health data with extra protection. It is treated as sensitive
-throughout: never published without the explicit leaderboard opt-in, never sold,
+throughout: never published without the explicit ranking opt-in, never sold,
 never analysed for advertising.
 
 **ARISE gives no medical or dietary advice.** Nutrition targets are estimates

@@ -78,6 +78,13 @@
       "when": 1788430106675,
       "tag": "0010_progression_path",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1788432693565,
+      "tag": "0011_rename_ascension",
+      "breakpoints": true
     }
   ]
 }

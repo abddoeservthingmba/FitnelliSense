@@ -294,15 +294,15 @@ export default function ProfileScreen() {
         */}
         {/* FR-HP-11. Named after what it changes, and honest that it is only
             wording and colour. */}
-        <Section title="Your Path">
+        <Section title="Your Ascension">
           <Stack gap="sm">
             <Text variant="caption" tone="muted">
-              {theme.path.name} — {theme.path.tagline}
+              {theme.ascension.name} — {theme.ascension.tagline}
             </Text>
             <Button
-              label="Change your Path"
+              label="Change your Ascension"
               variant="secondary"
-              onPress={() => router.push('/path')}
+              onPress={() => router.push('/ascension')}
               fullWidth
             />
             <Text variant="micro" tone="faint">

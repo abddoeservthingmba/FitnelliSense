@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { RANK_THRESHOLDS, rankForLevel, type Rank } from './hunter';
 import {
-  DEFAULT_PATH,
-  PATHS,
-  PATH_IDS,
-  isPathId,
-  pathFor,
-  pathLadder,
+  DEFAULT_ASCENSION,
+  ASCENSIONS,
+  ASCENSION_IDS,
+  isAscensionId,
+  ascensionFor,
+  ascensionLadder,
   nextTier,
   tierForLevel,
   tierForRank,
-} from './progression';
+} from './ascension';
 
 const ALL_RANKS: Rank[] = ['E', 'D', 'C', 'B', 'A', 'S'];
 
@@ -57,65 +57,65 @@ function deltaE(a: string, b: string): number {
   return Math.hypot(l1 - l2, a1 - a2, b1 - b2);
 }
 
-describe('the Paths themselves', () => {
+describe('the Ascensions themselves', () => {
   it('offers every id it lists', () => {
-    for (const id of PATH_IDS) expect(PATHS[id].id).toBe(id);
+    for (const id of ASCENSION_IDS) expect(ASCENSIONS[id].id).toBe(id);
   });
 
   it('defaults to the original ladder, so existing accounts look unchanged', () => {
-    expect(DEFAULT_PATH).toBe('monarch');
-    expect(PATHS.monarch.palette.accent).toBe('#8CC8FF');
+    expect(DEFAULT_ASCENSION).toBe('monarch');
+    expect(ASCENSIONS.monarch.palette.accent).toBe('#8CC8FF');
   });
 
   /*
-   * THE INVARIANT. A Path decorates the ladder; it must not be able to alter
-   * it. Six tiers, one per rank, no duplicates, for every Path — so no Path
+   * THE INVARIANT. A Ascension decorates the ladder; it must not be able to alter
+   * it. Six tiers, one per rank, no duplicates, for every Ascension — so no Ascension
    * can level faster, and two users' levels stay comparable no matter what
    * they picked.
    */
-  it('gives every Path exactly one tier per rank', () => {
-    for (const id of PATH_IDS) {
-      const path = PATHS[id];
-      expect(path.tiers).toHaveLength(RANK_THRESHOLDS.length);
-      expect(path.tiers.map((tier) => tier.rank)).toEqual(ALL_RANKS);
+  it('gives every Ascension exactly one tier per rank', () => {
+    for (const id of ASCENSION_IDS) {
+      const ascension = ASCENSIONS[id];
+      expect(ascension.tiers).toHaveLength(RANK_THRESHOLDS.length);
+      expect(ascension.tiers.map((tier) => tier.rank)).toEqual(ALL_RANKS);
     }
   });
 
-  it('names every tier and every Path distinctly within itself', () => {
-    for (const id of PATH_IDS) {
-      const path = PATHS[id];
-      const names = path.tiers.map((tier) => tier.name);
+  it('names every tier and every Ascension distinctly within itself', () => {
+    for (const id of ASCENSION_IDS) {
+      const ascension = ASCENSIONS[id];
+      const names = ascension.tiers.map((tier) => tier.name);
       expect(new Set(names).size).toBe(names.length);
-      for (const tier of path.tiers) {
+      for (const tier of ascension.tiers) {
         expect(tier.name.length).toBeGreaterThan(0);
         expect(tier.blurb.length).toBeGreaterThan(0);
       }
     }
   });
 
-  it('gives every Path its own identity in the picker', () => {
-    const names = PATH_IDS.map((id) => PATHS[id].name);
+  it('gives every Ascension its own identity in the picker', () => {
+    const names = ASCENSION_IDS.map((id) => ASCENSIONS[id].name);
     expect(new Set(names).size).toBe(names.length);
-    const accents = PATH_IDS.map((id) => PATHS[id].palette.accent);
+    const accents = ASCENSION_IDS.map((id) => ASCENSIONS[id].palette.accent);
     expect(new Set(accents).size).toBe(accents.length);
   });
 
   it('uses well-formed hex for every colour', () => {
-    for (const id of PATH_IDS) {
-      for (const [key, value] of Object.entries(PATHS[id].palette)) {
+    for (const id of ASCENSION_IDS) {
+      for (const [key, value] of Object.entries(ASCENSIONS[id].palette)) {
         expect(value, `${id}.${key}`).toMatch(/^#[0-9A-Fa-f]{6}$/);
       }
     }
   });
 
   /*
-   * Contrast is checked here rather than trusted, because a Path is five more
-   * chances to ship something unreadable. The accent sits on the Path's own
+   * Contrast is checked here rather than trusted, because a Ascension is five more
+   * chances to ship something unreadable. The accent sits on the Ascension's own
    * background and carries text on top of it, so both directions matter.
    */
   it('keeps every accent legible on its own background', () => {
-    for (const id of PATH_IDS) {
-      const { accent, background } = PATHS[id].palette;
+    for (const id of ASCENSION_IDS) {
+      const { accent, background } = ASCENSIONS[id].palette;
       // 4.5:1 is AA for body text; an accent is used for text as well as fills.
       expect(contrast(accent, background), `${id} accent on background`).toBeGreaterThanOrEqual(
         4.5,
@@ -124,8 +124,8 @@ describe('the Paths themselves', () => {
   });
 
   it('keeps text legible on top of every accent fill', () => {
-    for (const id of PATH_IDS) {
-      const { accent, accentText } = PATHS[id].palette;
+    for (const id of ASCENSION_IDS) {
+      const { accent, accentText } = ASCENSIONS[id].palette;
       expect(contrast(accentText, accent), `${id} accentText on accent`).toBeGreaterThanOrEqual(
         4.5,
       );
@@ -133,8 +133,8 @@ describe('the Paths themselves', () => {
   });
 
   it('keeps the highlight legible, and distinct from the accent', () => {
-    for (const id of PATH_IDS) {
-      const { highlight, accent, background } = PATHS[id].palette;
+    for (const id of ASCENSION_IDS) {
+      const { highlight, accent, background } = ASCENSIONS[id].palette;
       expect(contrast(highlight, background), `${id} highlight`).toBeGreaterThanOrEqual(4.5);
       // Records use the highlight and ranks use the accent, so they have to be
       // tellable apart. Measured perceptually, not by luminance: the monarch
@@ -146,8 +146,8 @@ describe('the Paths themselves', () => {
   });
 
   it('keeps surfaces distinguishable from the background', () => {
-    for (const id of PATH_IDS) {
-      const { background, surface, surfaceRaised } = PATHS[id].palette;
+    for (const id of ASCENSION_IDS) {
+      const { background, surface, surfaceRaised } = ASCENSIONS[id].palette;
       expect(background).not.toBe(surface);
       expect(surface).not.toBe(surfaceRaised);
       expect(luminance(surfaceRaised), `${id} raised above surface`).toBeGreaterThan(
@@ -157,94 +157,94 @@ describe('the Paths themselves', () => {
   });
 });
 
-describe('pathFor', () => {
-  it('finds a Path by id', () => {
-    expect(pathFor('saiyan').id).toBe('saiyan');
+describe('ascensionFor', () => {
+  it('finds a Ascension by id', () => {
+    expect(ascensionFor('saiyan').id).toBe('saiyan');
   });
 
   it('falls back to the default rather than throwing', () => {
     // A profile written by an older client, or a row edited by hand. A missing
-    // Path must never be able to break a render.
-    expect(pathFor(null).id).toBe(DEFAULT_PATH);
-    expect(pathFor(undefined).id).toBe(DEFAULT_PATH);
-    expect(pathFor('nonsense').id).toBe(DEFAULT_PATH);
-    expect(pathFor('').id).toBe(DEFAULT_PATH);
+    // Ascension must never be able to break a render.
+    expect(ascensionFor(null).id).toBe(DEFAULT_ASCENSION);
+    expect(ascensionFor(undefined).id).toBe(DEFAULT_ASCENSION);
+    expect(ascensionFor('nonsense').id).toBe(DEFAULT_ASCENSION);
+    expect(ascensionFor('').id).toBe(DEFAULT_ASCENSION);
   });
 });
 
-describe('isPathId', () => {
+describe('isAscensionId', () => {
   it('accepts the real ones and rejects everything else', () => {
-    expect(isPathId('pirate')).toBe(true);
-    expect(isPathId('hokage')).toBe(false);
+    expect(isAscensionId('pirate')).toBe(true);
+    expect(isAscensionId('hokage')).toBe(false);
   });
 });
 
 describe('tierForRank and tierForLevel', () => {
-  it('renders the rank the ladder gives, on the chosen Path', () => {
-    const path = PATHS.shinobi;
-    expect(tierForRank(path, 'E').name).toBe('Academy Student');
-    expect(tierForRank(path, 'S').name).toBe('Hokage');
+  it('renders the rank the ladder gives, on the chosen Ascension', () => {
+    const ascension = ASCENSIONS.shinobi;
+    expect(tierForRank(ascension, 'E').name).toBe('Academy Student');
+    expect(tierForRank(ascension, 'S').name).toBe('Hokage');
   });
 
   it('agrees with the underlying rank at every level tested', () => {
-    // The point of the whole design: the Path is a lookup, never a second
+    // The point of the whole design: the Ascension is a lookup, never a second
     // opinion about what rank you are.
-    for (const id of PATH_IDS) {
-      const path = PATHS[id];
+    for (const id of ASCENSION_IDS) {
+      const ascension = ASCENSIONS[id];
       for (const level of [1, 9, 10, 19, 20, 34, 35, 54, 55, 79, 80, 200]) {
-        expect(tierForLevel(path, level).rank).toBe(rankForLevel(level));
+        expect(tierForLevel(ascension, level).rank).toBe(rankForLevel(level));
       }
     }
   });
 
   it('puts level 1 at the bottom tier and the top threshold at the top', () => {
     const top = RANK_THRESHOLDS[0] as { rank: Rank; minLevel: number };
-    for (const id of PATH_IDS) {
-      const path = PATHS[id];
-      expect(tierForLevel(path, 1)).toBe(path.tiers[0]);
-      expect(tierForLevel(path, top.minLevel)).toBe(path.tiers[5]);
+    for (const id of ASCENSION_IDS) {
+      const ascension = ASCENSIONS[id];
+      expect(tierForLevel(ascension, 1)).toBe(ascension.tiers[0]);
+      expect(tierForLevel(ascension, top.minLevel)).toBe(ascension.tiers[5]);
     }
   });
 });
 
 describe('nextTier', () => {
   it('points at the next one up, with the level it starts at', () => {
-    const next = nextTier(PATHS.pirate, 1);
+    const next = nextTier(ASCENSIONS.pirate, 1);
     expect(next?.tier.name).toBe('Supernova');
     expect(next?.atLevel).toBe(10);
   });
 
   it('is null at the top, because there is nothing above it', () => {
-    expect(nextTier(PATHS.pirate, 80)).toBeNull();
-    expect(nextTier(PATHS.pirate, 999)).toBeNull();
+    expect(nextTier(ASCENSIONS.pirate, 80)).toBeNull();
+    expect(nextTier(ASCENSIONS.pirate, 999)).toBeNull();
   });
 
   it('never points at the tier you are already on', () => {
-    for (const id of PATH_IDS) {
-      const path = PATHS[id];
+    for (const id of ASCENSION_IDS) {
+      const ascension = ASCENSIONS[id];
       for (const level of [1, 10, 20, 35, 55]) {
-        const next = nextTier(path, level);
+        const next = nextTier(ascension, level);
         expect(next?.tier.rank).not.toBe(rankForLevel(level));
       }
     }
   });
 });
 
-describe('pathLadder', () => {
+describe('ascensionLadder', () => {
   it('lists all six with their unlock levels, ascending', () => {
-    const ladder = pathLadder(PATHS.shinigami);
+    const ladder = ascensionLadder(ASCENSIONS.shinigami);
     expect(ladder).toHaveLength(6);
-    expect(ladder[0]).toEqual({ tier: PATHS.shinigami.tiers[0], atLevel: 1 });
+    expect(ladder[0]).toEqual({ tier: ASCENSIONS.shinigami.tiers[0], atLevel: 1 });
     expect(ladder[5]?.atLevel).toBe(80);
     expect(ladder.map((step) => step.atLevel)).toEqual([1, 10, 20, 35, 55, 80]);
   });
 
-  it('gives the same unlock levels on every Path', () => {
-    // If this ever differs, a Path has changed the ladder.
-    const reference = pathLadder(PATHS.monarch).map((step) => step.atLevel);
-    for (const id of PATH_IDS) {
+  it('gives the same unlock levels on every Ascension', () => {
+    // If this ever differs, a Ascension has changed the ladder.
+    const reference = ascensionLadder(ASCENSIONS.monarch).map((step) => step.atLevel);
+    for (const id of ASCENSION_IDS) {
       expect(
-        pathLadder(PATHS[id]).map((step) => step.atLevel),
+        ascensionLadder(ASCENSIONS[id]).map((step) => step.atLevel),
         id,
       ).toEqual(reference);
     }
