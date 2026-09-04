@@ -145,7 +145,16 @@ Honest gaps, so nobody reads this as a clean bill of health:
   trivial to exhaust.
 - Neon backups are the provider's defaults; the restore procedure in the runbook
   is still marked UNVERIFIED.
-- No formal secret-rotation procedure. The keys in play — Brevo, Resend, Render,
-  the database — have been pasted into a chat and should be rotated once the
-  trial ends.
+- No formal secret-rotation procedure. Every key in play — Brevo, Resend,
+  Render, the database, and now the **Cloudflare R2 S3 credentials and account
+  API token** — has been pasted into a chat, and two of them into a screenshot.
+  All of them work, all of them should be rolled before this is anything other
+  than a private trial.
+
+  The R2 pair is the one to do first: it grants read and write on a bucket that
+  will hold video of people training. It is at least scoped to that single
+  bucket with Object Read & Write only, which is why the lifecycle
+  configuration could not be read back with it — the narrow scope is working as
+  intended and should not be widened.
+
 - No monitoring or alerting. A failure is visible only by reading logs.
