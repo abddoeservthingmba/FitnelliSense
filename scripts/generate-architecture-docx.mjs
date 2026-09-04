@@ -67,22 +67,6 @@ const p = (text, options = {}) =>
     ...(options.paragraph ?? {}),
   });
 
-/** A paragraph mixing normal and bold runs, written as [text, bold?] pairs. */
-const rich = (parts, options = {}) =>
-  new Paragraph({
-    spacing: { after: options.after ?? 140, line: 288 },
-    children: parts.map(
-      ([text, bold]) =>
-        new TextRun({
-          text,
-          font: FONT,
-          size: 21,
-          bold: Boolean(bold),
-          color: bold ? INK : MUTED,
-        }),
-    ),
-  });
-
 const h1 = (text) =>
   new Paragraph({
     heading: HeadingLevel.HEADING_1,
@@ -95,15 +79,6 @@ const h2 = (text) =>
     heading: HeadingLevel.HEADING_2,
     spacing: { before: 260, after: 120 },
     children: [new TextRun({ text, font: FONT, size: 24, bold: true, color: ACCENT })],
-  });
-
-/** A small uppercase label, for the document-control strip. */
-const label = (text) =>
-  new Paragraph({
-    spacing: { after: 20 },
-    children: [
-      new TextRun({ text: text.toUpperCase(), font: FONT, size: 14, color: FAINT, bold: true }),
-    ],
   });
 
 const bullet = (text) =>
@@ -1091,5 +1066,23 @@ const doc = new Document({
 
 const out = 'docs/Ascension-Architecture.docx';
 const buffer = await Packer.toBuffer(doc);
-writeFileSync(out, buffer);
+
+try {
+  writeFileSync(out, buffer);
+} catch (error) {
+  /*
+   * Word holds an exclusive lock on an open document, so regenerating while
+   * reading it fails with EBUSY. That is the common case, not an edge one —
+   * you look at the document, spot something, and rebuild. A stack trace makes
+   * it look like the generator is broken.
+   */
+  if (error.code === 'EBUSY' || error.code === 'EPERM') {
+    console.error(`
+${out} is open in another program — close it and run again.
+`);
+    process.exit(1);
+  }
+  throw error;
+}
+
 console.log(`wrote ${out} — ${(buffer.length / 1024).toFixed(0)} KB`);
