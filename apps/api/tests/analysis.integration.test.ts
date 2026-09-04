@@ -145,26 +145,97 @@ describeIntegration('form analysis', () => {
 
   it('says the feature is unavailable rather than telling the client to retry', async () => {
     /*
-     * With no R2 credentials, `storage.configured` is false. The answer must
-     * be a 409 and NOT a 503: SERVICE_UNAVAILABLE is in RETRYABLE_ERROR_CODES,
-     * so a 503 would have the client retrying forever against a deployment
-     * where storage is simply not set up.
+     * Consent FIRST, or this never reaches the storage check — the gate runs
+     * before it, and the test would pass on a 403 while claiming to be about
+     * the bucket. It failed exactly that way when the gate was added, which
+     * is the useful kind of failure.
      *
-     * If this test starts failing with a 201, credentials have been added to
-     * the test environment — at which point the skipped tests below are the
-     * ones to write.
+     * With no R2 credentials, `storage.configured` is false, and the answer
+     * must be 409 and NOT 503: SERVICE_UNAVAILABLE is in
+     * RETRYABLE_ERROR_CODES, so a 503 would have the client retrying forever
+     * against a deployment where storage is simply not set up.
+     *
+     * If this starts failing with a 201, credentials have reached the test
+     * environment — at which point the skipped test below is the one to write.
      */
+    await api.post('/api/v1/me/video-consent');
+
     const response = await api.post(`/api/v1/sets/${setId}/video`, VALID_REQUEST);
     expect(response.statusCode).toBe(409);
     expect(response.json<{ error: { code: string } }>().error.code).toBe('CONFLICT');
   });
 
   it('writes no row when storage is unavailable', async () => {
-    // The check happens before the insert, so a misconfigured bucket cannot
-    // leave a trail of analyses that can never receive a video.
+    // Consent first, for the same reason: without it this would be testing
+    // the consent gate and passing for the wrong reason.
+    await api.post('/api/v1/me/video-consent');
+
+    // The storage check happens before the insert, so a misconfigured bucket
+    // cannot leave a trail of analyses that can never receive a video.
     await api.post(`/api/v1/sets/${setId}/video`, VALID_REQUEST);
     const listed = await api.get(`/api/v1/sets/${setId}/analyses`);
     expect(listed.json<{ items: unknown[] }>().items).toEqual([]);
+  });
+
+  // -------------------------------------------------------- the consent --
+
+  /*
+   * The privacy policy states that video 'stays off until you agree to it in
+   * the app'. These are the tests that make that a fact rather than a claim —
+   * without them the sentence is a promise with nothing behind it.
+   */
+  it('refuses to issue an upload target without recorded consent', async () => {
+    const response = await api.post(`/api/v1/sets/${setId}/video`, VALID_REQUEST);
+    // 403 and not 404: the caller is asking about their own account, already
+    // knows it exists, and needs the reason so the app can show the consent
+    // screen rather than an unexplained failure.
+    expect(response.statusCode).toBe(403);
+    expect(response.json<{ error: { code: string } }>().error.code).toBe('FORBIDDEN');
+  });
+
+  it('records consent as a timestamp, not a flag', async () => {
+    const granted = await api.post('/api/v1/me/video-consent');
+    expect(granted.statusCode).toBe(200);
+    const at = granted.json<{ profile: { videoConsentAt: string | null } }>().profile
+      .videoConsentAt;
+    expect(at).not.toBeNull();
+    // A date, so it is possible to say WHICH wording someone agreed to.
+    expect(Number.isFinite(Date.parse(at as string))).toBe(true);
+  });
+
+  it('starts every account with no consent', async () => {
+    // Nobody is defaulted into being recorded — the failure that 0009's
+    // leaderboard reconsent existed to correct.
+    const me = await api.get('/api/v1/me');
+    expect(
+      me.json<{ profile: { videoConsentAt: string | null } }>().profile.videoConsentAt,
+    ).toBeNull();
+  });
+
+  it('withdraws consent without deleting anything', async () => {
+    await api.post('/api/v1/me/video-consent');
+    const withdrawn = await api.del('/api/v1/me/video-consent');
+    expect(withdrawn.statusCode).toBe(200);
+    expect(
+      withdrawn.json<{ profile: { videoConsentAt: string | null } }>().profile.videoConsentAt,
+    ).toBeNull();
+
+    // And the gate closes again immediately.
+    expect((await api.post(`/api/v1/sets/${setId}/video`, VALID_REQUEST)).statusCode).toBe(403);
+  });
+
+  it('cannot be granted by PATCHing a timestamp', async () => {
+    // The field is omitted from the update schema, so an attempt to set it is
+    // an unknown key and rejected outright (NFR-S-05).
+    const response = await api.patch('/api/v1/me', {
+      videoConsentAt: '2020-01-01T00:00:00.000Z',
+    });
+    expect(response.statusCode).toBe(400);
+
+    const me = await api.get('/api/v1/me');
+    expect(
+      me.json<{ profile: { videoConsentAt: string | null } }>().profile.videoConsentAt,
+    ).toBeNull();
   });
 
   /*

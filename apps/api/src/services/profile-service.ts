@@ -35,6 +35,7 @@ export async function getMe(deps: ProfileDeps, userId: string): Promise<MeRespon
       aiEnabled: userProfiles.aiEnabled,
       leaderboardOptIn: userProfiles.leaderboardOptIn,
       ascension: userProfiles.ascension,
+      videoConsentAt: userProfiles.videoConsentAt,
       avatarR2Key: userProfiles.avatarR2Key,
     })
     .from(users)
@@ -78,6 +79,7 @@ export async function getMe(deps: ProfileDeps, userId: string): Promise<MeRespon
        * failing the response schema.
        */
       ascension: row.ascension === null ? null : ascensionFor(row.ascension).id,
+      videoConsentAt: row.videoConsentAt?.toISOString() ?? null,
     },
     avatarUrl,
   };
@@ -129,4 +131,40 @@ export async function markAccountDeleted(deps: ProfileDeps, userId: string): Pro
       passwordHash: 'deleted',
     })
     .where(eq(users.id, userId));
+}
+
+/**
+ * Records consent to video and form analysis (FR-VID-01).
+ *
+ * Stamped from the server's clock. A client-supplied timestamp would let a
+ * consent be back-dated, which makes the record useless as evidence that
+ * anyone agreed to anything.
+ *
+ * Re-granting refreshes the date rather than erroring: agreeing again is a
+ * fact worth recording, and a client cannot always tell whether its first
+ * attempt landed.
+ */
+export async function grantVideoConsent(deps: ProfileDeps, userId: string): Promise<MeResponse> {
+  await deps.db
+    .update(userProfiles)
+    .set({ videoConsentAt: new Date() })
+    .where(eq(userProfiles.userId, userId));
+  return getMe(deps, userId);
+}
+
+/**
+ * Withdraws it.
+ *
+ * Deliberately does NOT delete existing clips. Withdrawing stops new
+ * recording; deleting what is already recorded is a separate, explicit act.
+ * Doing both from one switch would destroy someone's data as a side effect of
+ * changing a setting — and the privacy policy says exactly this, so the code
+ * has to match it.
+ */
+export async function withdrawVideoConsent(deps: ProfileDeps, userId: string): Promise<MeResponse> {
+  await deps.db
+    .update(userProfiles)
+    .set({ videoConsentAt: null })
+    .where(eq(userProfiles.userId, userId));
+  return getMe(deps, userId);
 }

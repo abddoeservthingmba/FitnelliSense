@@ -50,6 +50,25 @@ export async function meRoutes(app: FastifyInstance): Promise<void> {
     async (request) => profileService.getMe(profileDeps, currentUser(request).id),
   );
 
+  /**
+   * Consent to video and form analysis (FR-VID-01).
+   *
+   * Its own endpoints rather than a field on PATCH /me, so a client cannot
+   * back-date a consent by sending a timestamp — the server stamps its own
+   * clock, which is the only thing that makes the record evidence.
+   */
+  typed.post(
+    '/me/video-consent',
+    { preHandler: app.requireUser, schema: { response: { 200: meResponseSchema } } },
+    async (request) => profileService.grantVideoConsent(profileDeps, currentUser(request).id),
+  );
+
+  typed.delete(
+    '/me/video-consent',
+    { preHandler: app.requireUser, schema: { response: { 200: meResponseSchema } } },
+    async (request) => profileService.withdrawVideoConsent(profileDeps, currentUser(request).id),
+  );
+
   typed.patch(
     routes.me.root,
     {

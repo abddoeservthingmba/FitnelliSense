@@ -136,6 +136,20 @@ export const userProfiles = pgTable('user_profiles', {
    */
   ascension: text('ascension'),
   /**
+   * When the user agreed to video and form analysis (FR-VID-01).
+   *
+   * A TIMESTAMP rather than a boolean, because that is what a consent record
+   * has to be: "they agreed" is worth very little without "when", and if the
+   * wording of the ask ever changes, the date is the only way to tell who
+   * agreed to which version.
+   *
+   * NULL means never asked or refused, and the API refuses to issue an upload
+   * target while it is null. The privacy policy states that video stays off
+   * until it is turned on; this column is what makes that true rather than a
+   * claim.
+   */
+  videoConsentAt: timestamp('video_consent_at', { withTimezone: true }),
+  /**
    * Nutrition target overrides (FR-NUT-10). Null means "derive it from the
    * profile" — the estimate is not copied in, so it stays correct when
    * bodyweight changes. Nullable per field, so protein can be pinned while the

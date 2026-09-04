@@ -38,6 +38,18 @@ export const profileSchema = z.object({
   ascension: z
     .enum(['monarch', 'saiyan', 'shinobi', 'shinigami', 'pirate', 'hero', 'successor'])
     .nullable(),
+  /**
+   * When video and form analysis was agreed to (FR-VID-01). Null means never.
+   *
+   * A timestamp rather than a boolean, because that is what a consent record
+   * has to be — "they agreed" is worth little without "when", and if the
+   * wording of the ask changes the date is the only way to tell who agreed to
+   * which version.
+   *
+   * Not settable through PATCH /me: it is granted and withdrawn by its own
+   * endpoints, so a client cannot back-date a consent by sending a timestamp.
+   */
+  videoConsentAt: isoDateTimeSchema.nullable(),
 });
 
 export const meResponseSchema = z.object({
@@ -60,7 +72,13 @@ export const meResponseSchema = z.object({
  * sends `markOnboarded` and the server stamps the time.
  */
 export const updateProfileRequestSchema = profileSchema
-  .omit({ onboardedAt: true })
+  /*
+   * `videoConsentAt` is omitted for the same reason as `onboardedAt`: it is a
+   * record of something that happened, not a preference. Leaving it settable
+   * would let a client PATCH itself a consent — or back-date one — which makes
+   * the record worthless as evidence that anyone agreed to anything.
+   */
+  .omit({ onboardedAt: true, videoConsentAt: true })
   .extend({ markOnboarded: z.boolean().optional() })
   .partial()
   .refine((value) => Object.keys(value).length > 0, { message: 'Nothing to update' });

@@ -13,9 +13,9 @@
  */
 import { and, desc, eq } from 'drizzle-orm';
 import type { Analysis, RequestVideoUpload, VideoUploadTarget } from '@fi/shared';
-import { cvAnalyses, workoutExercises, workoutSets, workouts } from '../db/schema';
+import { cvAnalyses, userProfiles, workoutExercises, workoutSets, workouts } from '../db/schema';
 import { keys, type Storage } from '../lib/r2';
-import { conflict, notFound, serviceUnavailable } from '../lib/errors';
+import { conflict, forbidden, notFound, serviceUnavailable } from '../lib/errors';
 import { newId } from '../lib/ids';
 import type { Database } from '../db/client';
 
@@ -60,6 +60,7 @@ export async function requestVideoUpload(
   input: RequestVideoUpload,
 ): Promise<VideoUploadTarget> {
   await ownedSet(db, userId, setId);
+  await requireVideoConsent(db, userId);
 
   /*
    * Checked before a row is written, so a misconfigured bucket does not leave
@@ -223,4 +224,29 @@ async function toWire(
     error: row.error,
     videoUrl,
   };
+}
+
+/**
+ * Refuses to issue an upload target without recorded consent (FR-VID-01).
+ *
+ * This function is the privacy policy's claim — "it stays off until you agree
+ * to it in the app" — expressed as code. Without it that sentence is a promise
+ * with nothing behind it, and a client could upload video from an account that
+ * never agreed to being recorded.
+ *
+ * FORBIDDEN, not NOT_FOUND. The usual rule in this API is 404 so an id cannot
+ * be probed, but there is no id here to protect: the caller is asking about
+ * their OWN account, already knows it exists, and needs to be told the reason
+ * so the app can show the consent screen rather than an unexplained failure.
+ */
+async function requireVideoConsent(db: Database, userId: string): Promise<void> {
+  const [profile] = await db
+    .select({ consentedAt: userProfiles.videoConsentAt })
+    .from(userProfiles)
+    .where(eq(userProfiles.userId, userId))
+    .limit(1);
+
+  if (!profile?.consentedAt) {
+    throw forbidden('Turn on form analysis before recording a set');
+  }
 }

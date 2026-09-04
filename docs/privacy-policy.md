@@ -1,6 +1,6 @@
 # Ascension — Privacy Policy
 
-**Last updated: 3 September 2026**
+**Last updated: 4 September 2026**
 
 Ascension is a training log. This policy describes exactly what it stores, where,
 who else sees it, and how to get rid of it.
@@ -61,6 +61,40 @@ exercises.
 Food entries with quantities and their nutrition figures, plus any foods you
 create yourself. Custom foods are private to you.
 
+### Set videos and form analysis — off until you turn it on
+
+**This is the only part of Ascension that records you.** It is switched off,
+and it stays off until you agree to it in the app — a separate, explicit ask,
+not a line buried in this document.
+
+If you turn it on and record a set:
+
+| Data                       | Where                                                               |
+| -------------------------- | ------------------------------------------------------------------- |
+| The video clip             | **Cloudflare R2**, in a private bucket. Never public, never indexed |
+| Measurements taken from it | Our database — bar path, range of motion, rep count, rep speed      |
+
+**A video of you training shows your face, your body and the room you are in.**
+That is a great deal more than a number in a table, which is why it is
+separately consented, separately deletable, and deleted automatically.
+
+- **You choose to record each clip.** Nothing is captured in the background,
+  and the camera is never opened without you opening it.
+- **It is never shown to anyone else.** Not on the ranking, not on your
+  athlete profile, not to people you train with. There is no sharing feature.
+- **Clips are deleted after 90 days**, automatically, by a rule on the bucket
+  itself rather than by anything remembering to run.
+- **The measurements are kept**, because they are what your progress charts
+  read and they are a few kilobytes of numbers with nothing identifying in
+  them. You keep the analysis; the footage goes.
+- **You can delete any clip immediately**, and that deletes the video and its
+  analysis together.
+- **Turning the feature back off** stops any new recording. It does not delete
+  what you already recorded — use delete for that, or wait 90 days.
+
+Analysis runs on our own infrastructure. **No video is sent to any third-party
+AI or vision service**, and none is used to train anything.
+
 ### Progress mechanics
 
 Experience points, levels, tiers, badges, daily quests, and streaks. All of it
@@ -82,13 +116,14 @@ request body, or your name.
 
 ### On your device only
 
-Three small preferences are kept in ordinary app storage on your phone, are
+Four small preferences are kept in ordinary app storage on your phone, are
 never sent anywhere, and are removed when you sign out or uninstall:
 
 - whether the navigation sound is on
 - that this device has finished onboarding — so the app can open straight away
   instead of waiting for the server to answer
 - which Ascension to colour the app with before your profile has loaded
+- that the introductory tour has been shown
 
 ## 3. What Ascension does NOT do
 
@@ -98,24 +133,32 @@ never sent anywhere, and are removed when you sign out or uninstall:
 - No contacts, no photo library, no microphone.
 - No profiling, and no automated decision-making with legal effects.
 - No cookies, and no cross-site tracking.
-- **The camera is used only to read a food barcode.** No image is stored,
-  transmitted, or seen by anyone — only the decoded number is sent, and only
-  to our own server.
+- **The camera is used for two things only:** reading a food barcode, and
+  recording a set if you have turned form analysis on. For a barcode, no image
+  is stored or transmitted — only the decoded number, and only to our own
+  server.
+- **No video, image or audio is used to train any model**, ours or anyone
+  else's.
+- **No face recognition, and no identification of anyone** in a clip. The
+  analysis follows a barbell, not a person.
 
 ## 4. Where it is stored
 
-|                    |                                                     |
-| ------------------ | --------------------------------------------------- |
-| Database           | **Neon** (PostgreSQL), Singapore (`ap-southeast-1`) |
-| Application server | **Render**, Singapore                               |
+|                    |                                                          |
+| ------------------ | -------------------------------------------------------- |
+| Database           | **Neon** (PostgreSQL), Singapore (`ap-southeast-1`)      |
+| Application server | **Render**, Singapore                                    |
+| Set videos         | **Cloudflare R2**, private bucket, deleted after 90 days |
+| Web app            | **Netlify**                                              |
 
 If you are in India or the EU, your data is therefore processed **outside your
-country**, in Singapore. Both providers encrypt data at rest, and every
-connection between the app and the server uses HTTPS.
+country** — the database and server in Singapore, video and the web app on
+global networks. Every provider encrypts data at rest, and every connection
+between the app and the server uses HTTPS.
 
 ## 5. Who else can see it
 
-Four third parties are involved. Each is listed with exactly what reaches it.
+Seven third parties are involved. Each is listed with exactly what reaches it.
 
 ### Brevo — sending email
 
@@ -140,6 +183,23 @@ and it exists because it avoids copying and re-hosting several hundred images.
 **Your device never contacts Open Food Facts.** Searches and barcode lookups go
 to our server, which asks on your behalf. Open Food Facts sees our server, not
 you, and never learns who searched or what account it was for.
+
+### Cloudflare R2 — set videos, and exercise images
+
+Holds your set videos if you turn form analysis on, in a **private** bucket.
+Access is by short-lived signed links generated for you alone; there is no
+public URL, and the bucket is not browsable.
+
+Your device uploads directly to R2 rather than through our server, which is why
+R2 sees your IP address. It receives the video and nothing else: not your name,
+not your email, not your account.
+[Cloudflare privacy policy](https://www.cloudflare.com/privacypolicy/)
+
+### Netlify — the web app
+
+Serves the browser version. As any web host does, it sees the IP address and
+browser of anyone who opens the site.
+[Netlify privacy policy](https://www.netlify.com/privacy/)
 
 ### Neon and Render — the infrastructure above
 
@@ -202,6 +262,11 @@ deliberate, so this cannot be used to find out who has an Ascension account.
 
 ## 8. How long it is kept
 
+**Set videos are deleted after 90 days**, whatever else you do. That is
+enforced by a lifecycle rule on the storage bucket, not by a scheduled job that
+could fail quietly. The measurements taken from a clip outlive it, because they
+carry no image of you.
+
 Your data is kept until you delete it.
 
 **Deleting your account** immediately anonymises it: the email address is
@@ -218,6 +283,8 @@ You can, at any time and without asking anyone:
   entries can be deleted outright.
 - **Delete your account.** Profile → _Delete account_.
 - **Leave the ranking.** One switch, effective immediately.
+- **Turn off form analysis.** One switch. No new clip can be recorded after it.
+- **Delete a clip.** Immediate, and it takes its analysis with it.
 - **Object or complain.** Email the contact address above.
 
 Under India's Digital Personal Data Protection Act 2023, and the GDPR if you
