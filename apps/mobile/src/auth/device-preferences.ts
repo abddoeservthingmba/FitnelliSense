@@ -26,6 +26,7 @@ export const DEVICE_PREFERENCE_KEYS = [
   'arise.nav.sound',
   'arise.onboarded',
   'arise.ascension',
+  'arise.tour',
 ] as const;
 
 export async function clearDevicePreferences(): Promise<void> {
@@ -34,5 +35,33 @@ export async function clearDevicePreferences(): Promise<void> {
   } catch {
     // Sign-out must complete regardless. Failing to clear a colour preference
     // is not a reason to keep someone signed in.
+  }
+}
+
+const TOUR_KEY = 'arise.tour';
+
+/**
+ * Whether the first-run tour has been shown on this device.
+ *
+ * Device-local rather than on the profile, because it is not worth a migration
+ * and a column: seeing the tour twice costs a tap, and a reinstall showing it
+ * again is arguably correct. It is cleared with everything else on sign-out,
+ * so the next person on this phone gets shown around.
+ */
+export async function hasSeenTour(): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(TOUR_KEY)) === '1';
+  } catch {
+    // Unreadable storage means "show it" — a second tour is a smaller cost
+    // than never explaining the app at all.
+    return false;
+  }
+}
+
+export async function rememberTourSeen(): Promise<void> {
+  try {
+    await AsyncStorage.setItem(TOUR_KEY, '1');
+  } catch {
+    // The tour will simply be offered again.
   }
 }

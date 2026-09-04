@@ -25,3 +25,4 @@ export * from './session-comparison';
 export * from './ascension';
 export * from './ascension-quotes';
 export * from './format-number';
+export * from './voice-log';

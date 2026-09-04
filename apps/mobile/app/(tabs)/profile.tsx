@@ -348,6 +348,21 @@ export default function ProfileScreen() {
         */}
         {/* FR-HP-11. Named after what it changes, and honest that it is only
             wording and colour. */}
+        {/* For anyone who skipped it, or who forgot what a tab was for. */}
+        <Section title="Getting around">
+          <Stack gap="sm">
+            <Button
+              label="Show me around again"
+              variant="secondary"
+              onPress={() => router.push('/tour')}
+              fullWidth
+            />
+            <Text variant="micro" tone="faint">
+              A one-minute tour of what each tab is for.
+            </Text>
+          </Stack>
+        </Section>
+
         <Section title="Training insights">
           <Stack gap="sm">
             <Text variant="caption" tone="muted">

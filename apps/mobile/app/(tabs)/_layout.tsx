@@ -27,6 +27,7 @@ import {
   rememberOnboarded,
   type OnboardingHint,
 } from '../../src/auth/onboarding-hint';
+import { hasSeenTour } from '../../src/auth/device-preferences';
 import { useTheme } from '../../src/theme';
 
 /** Order is the bar's order, and the index each flourish flies from. */
@@ -49,6 +50,12 @@ export default function TabsLayout() {
   const [hint, setHint] = useState<OnboardingHint | null>(null);
   useEffect(() => {
     void readOnboardingHint().then(setHint);
+  }, []);
+
+  // Null until storage answers; the gate below waits rather than guessing.
+  const [tourSeen, setTourSeen] = useState<boolean | null>(null);
+  useEffect(() => {
+    void hasSeenTour().then(setTourSeen);
   }, []);
 
   // Record it once the profile confirms it, so the next launch skips the wait.
@@ -89,6 +96,13 @@ export default function TabsLayout() {
   if (me.data && me.data.profile.ascension === null) {
     return <Redirect href="/ascension?first=1" />;
   }
+
+  /*
+   * The tour runs last, after the Ascension is set, so it appears in the
+   * user's own colours rather than teaching them a palette they then lose.
+   * Once only, and skippable — "Show me around" lives in Profile afterwards.
+   */
+  if (tourSeen === false) return <Redirect href="/tour" />;
 
   return (
     <TabFlourishProvider>
