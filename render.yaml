@@ -87,3 +87,26 @@ services:
         generateValue: true
       - key: JWT_REFRESH_PEPPER
         generateValue: true
+
+      # Cloudflare R2 — exercise media, avatars and set videos.
+      #
+      # `sync: false` on all four, including the two that are not secret. The
+      # account id and bucket name are harmless on their own, but a Blueprint
+      # that declares them without values is what makes Render PROMPT for
+      # them; listing a value here would put the pair half in the repo and
+      # half in the dashboard, which is the arrangement most likely to end
+      # with someone committing the other half.
+      #
+      # With none of them set the app still runs: `createStorage` returns a
+      # DisabledStorage, media degrades to placeholders (NFR-B-06), and the
+      # video endpoints answer 409 rather than failing. /health/deep reports
+      # r2 as `degraded` with "R2 is not configured", which is how to tell
+      # these are missing rather than wrong.
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_BUCKET
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
