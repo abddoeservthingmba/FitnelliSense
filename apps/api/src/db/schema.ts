@@ -63,6 +63,8 @@ export const insightType = pgEnum('insight_type', [
   'summary',
 ]);
 export const analysisStatus = pgEnum('analysis_status', [
+  // The state between the row being created and the video arriving (0013).
+  'awaiting_upload',
   'queued',
   'processing',
   'complete',
@@ -555,7 +557,31 @@ export const cvAnalyses = pgTable(
     workoutExerciseId: uuid('workout_exercise_id').references(() => workoutExercises.id, {
       onDelete: 'set null',
     }),
+    /**
+     * The set this analysis is of (0013).
+     *
+     * Rep count, per-rep velocity and velocity loss are all properties of one
+     * set, so the exercise-level link above is too coarse to tell two videos
+     * of the same exercise apart.
+     */
+    workoutSetId: uuid('workout_set_id').references(() => workoutSets.id, {
+      onDelete: 'set null',
+    }),
     videoR2Key: text('video_r2_key').notNull(),
+    /*
+     * The default stays 'queued' even though a new row is really
+     * 'awaiting_upload', and that is not an oversight.
+     *
+     * Changing it would need a migration that USES the enum value 0013 adds,
+     * and Postgres refuses that with 55P04 — "new enum values must be
+     * committed before they can be used". Splitting it into a second
+     * migration file does not help: Drizzle runs all pending migrations in
+     * ONE transaction, so the value is still uncommitted. I tried exactly
+     * that and the test suite caught it.
+     *
+     * The default is dead weight regardless: every insert comes from
+     * analysis-service, which always states the status explicitly.
+     */
     status: analysisStatus('status').notNull().default('queued'),
     repCount: smallint('rep_count'),
     result: jsonb('result'),
@@ -563,7 +589,10 @@ export const cvAnalyses = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     completedAt: timestamp('completed_at', { withTimezone: true }),
   },
-  (table) => [index('idx_cv_user').on(table.userId, table.createdAt.desc())],
+  (table) => [
+    index('idx_cv_user').on(table.userId, table.createdAt.desc()),
+    index('idx_cv_set').on(table.workoutSetId, table.createdAt.desc()),
+  ],
 );
 
 // ============ Admin audit (FR-ADM-08) ============

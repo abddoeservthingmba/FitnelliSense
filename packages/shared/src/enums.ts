@@ -20,7 +20,18 @@ export const prTypeSchema = z.enum([
   'best_pace',
 ]);
 export const insightTypeSchema = z.enum(['plateau', 'progression', 'imbalance', 'summary']);
-export const analysisStatusSchema = z.enum(['queued', 'processing', 'complete', 'failed']);
+/**
+ * Form-analysis lifecycle. `awaiting_upload` is the state between the row
+ * being created — which is what issues the reference id — and the video
+ * actually arriving in the bucket (0013).
+ */
+export const analysisStatusSchema = z.enum([
+  'awaiting_upload',
+  'queued',
+  'processing',
+  'complete',
+  'failed',
+]);
 export const mediaKindSchema = z.enum(['image', 'gif', 'video']);
 export const mediaDeliverySchema = z.enum(['r2_copy', 'external_embed']);
 export const mediaStateSchema = z.enum(['pending_review', 'active', 'broken', 'removed']);

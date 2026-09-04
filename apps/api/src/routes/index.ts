@@ -8,6 +8,7 @@ import { exerciseRoutes } from './exercises';
 import { routineRoutes } from './routines';
 import { workoutRoutes } from './workouts';
 import { progressRoutes } from './progress';
+import { analysisRoutes } from './analysis';
 import { insightsRoutes } from './insights';
 import { hunterRoutes } from './hunter';
 import { nutritionRoutes } from './nutrition';
@@ -23,6 +24,7 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
   await app.register(routineRoutes);
   await app.register(workoutRoutes);
   await app.register(progressRoutes);
+  await app.register(analysisRoutes);
   await app.register(insightsRoutes);
   await app.register(hunterRoutes);
   await app.register(nutritionRoutes);

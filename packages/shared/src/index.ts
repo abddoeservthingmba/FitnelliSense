@@ -22,3 +22,4 @@ export * from './insights';
 export * from './content';
 export * from './health';
 export * from './routes';
+export * from './analysis';
