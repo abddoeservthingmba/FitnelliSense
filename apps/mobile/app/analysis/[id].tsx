@@ -12,7 +12,7 @@
  */
 import { View } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
-import { useVideoPlayer, VideoView } from 'expo-video';
+import { useVideoPlayer } from 'expo-video';
 import type { Analysis } from '@fi/shared';
 import { Card, Row, Stack as Column } from '../../src/components/Card';
 import { Screen } from '../../src/components/Screen';
@@ -20,6 +20,7 @@ import { Section, Stat, StatRow } from '../../src/components/Section';
 import { Button } from '../../src/components/Button';
 import { Overline, Text } from '../../src/components/Text';
 import { ErrorState, LoadingState } from '../../src/components/StateViews';
+import { VideoFrame } from '../../src/features/analysis/VideoFrame';
 import { useAnalysis } from '../../src/api/hooks/use-analysis';
 import { useTheme } from '../../src/theme';
 
@@ -72,7 +73,6 @@ export default function AnalysisScreen() {
  * the platform's own scrubber is better than anything worth hand-building.
  */
 function Playback({ url }: { url: string }) {
-  const theme = useTheme();
   const player = useVideoPlayer({ uri: url }, (instance) => {
     instance.loop = true;
     // Muted by default: a set filmed in the app has no audio track at all, and
@@ -81,20 +81,7 @@ function Playback({ url }: { url: string }) {
     instance.muted = true;
   });
 
-  return (
-    <View
-      style={{
-        width: '100%',
-        aspectRatio: 9 / 16,
-        maxHeight: 420,
-        borderRadius: theme.radius.md,
-        overflow: 'hidden',
-        backgroundColor: '#000',
-      }}
-    >
-      <VideoView player={player} style={{ flex: 1 }} contentFit="contain" nativeControls />
-    </View>
-  );
+  return <VideoFrame player={player} maxHeight={420} nativeControls />;
 }
 
 /** Where the pipeline has got to, said plainly. */

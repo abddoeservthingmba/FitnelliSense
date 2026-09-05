@@ -49,9 +49,10 @@ const BUCKET = 'apkstorageversioning';
  * section entirely rather than printing a heading with nothing under it.
  */
 const RELEASE_NOTES = [
-  "Your Ascension version now appears at the bottom of Profile, so a screenshot shows which build you are on.",
-  "Google sign-in works — the server was refusing tokens until now; no app change was needed for that part.",
-  "Confirming from 1.8.0: the analysis screen no longer claims to be tracking the bar, and upload progress stops at 100%.",
+  "Videos now fit their own shape. A landscape clip no longer sits letterboxed inside a tall portrait box.",
+  "Your Ascension version appears at the bottom of Profile, so a screenshot shows which build you are on.",
+  "Google sign-in works. The server was refusing tokens; that part needed no app change.",
+  "The analysis screen no longer claims to be tracking the bar, and upload progress stops at 100%.",
 ];
 
 function env(name) {

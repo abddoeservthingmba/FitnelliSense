@@ -18,9 +18,10 @@
  * stated here rather than left to be discovered later.
  */
 import { useEffect, useState } from 'react';
-import { Pressable, View } from 'react-native';
-import { useVideoPlayer, VideoView } from 'expo-video';
+import { Pressable } from 'react-native';
+import { useVideoPlayer } from 'expo-video';
 import { clipSegments, clipWindow, MAX_CLIP_SECONDS, type ClipWindow } from '@fi/domain';
+import { VideoFrame } from './VideoFrame';
 import { Button } from '../../components/Button';
 import { Card, Row, Stack as Column } from '../../components/Card';
 import { Overline, Text } from '../../components/Text';
@@ -101,23 +102,9 @@ export function ClipChooser({
         </Text>
       </Column>
 
-      <View
-        style={{
-          width: '100%',
-          aspectRatio: 9 / 16,
-          maxHeight: 340,
-          borderRadius: theme.radius.md,
-          overflow: 'hidden',
-          backgroundColor: '#000',
-        }}
-      >
-        <VideoView
-          player={player}
-          style={{ flex: 1 }}
-          contentFit="contain"
-          nativeControls={false}
-        />
-      </View>
+      {/* Sized to the video, not to a shape assumed in advance — a landscape
+          clip in a portrait box is mostly black bars. */}
+      <VideoFrame player={player} maxHeight={340} nativeControls={false} />
 
       {/* Playhead and transport. Deliberately plain: this is a scrubber for
           finding one moment, not a media player. */}
