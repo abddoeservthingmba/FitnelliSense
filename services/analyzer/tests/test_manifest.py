@@ -8,6 +8,8 @@ measurement wrong in a way that looks like progress.
 
 from __future__ import annotations
 
+from itertools import pairwise
+
 import pytest
 
 from evals.harness.loader import ManifestError, load_manifest
@@ -121,7 +123,7 @@ def test_derived_phases_are_contiguous_and_in_order():
             continue
         for rep in clip.reps:
             spans = [rep.phases[name] for name in ("eccentric", "bottom", "concentric", "lockout")]
-            for (_, end), (start, _) in zip(spans, spans[1:], strict=True):
+            for (_, end), (start, _) in pairwise(spans):
                 assert end == start
             assert rep.frames == (spans[0][0], spans[-1][1])
 

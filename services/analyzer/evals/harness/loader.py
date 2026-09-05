@@ -14,6 +14,7 @@ abstain also claims to have findings. Those are the errors that actually occur.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from itertools import pairwise
 from pathlib import Path
 from typing import Any, Literal
 
@@ -121,7 +122,7 @@ def _parse_rep(raw: dict[str, Any], clip_id: str) -> RepLabel:
     # belong to no phase, which makes a boundary error undefined rather than
     # large — and G3 would then be measuring nothing.
     present = [name for name in PHASE_ORDER if name in phases]
-    for earlier, later in zip(present, present[1:], strict=False):
+    for earlier, later in pairwise(present):
         if phases[earlier][1] != phases[later][0]:
             raise ManifestError(
                 f"{where}: {earlier} ends at {phases[earlier][1]} but {later} "

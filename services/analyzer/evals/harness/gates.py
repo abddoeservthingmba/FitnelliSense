@@ -66,13 +66,29 @@ class Outcome:
     runtime_ms: int | None
     #: Second run, for the determinism gate. None when not double-run.
     repeat: dict[str, Any] | None = None
+    #: The stage does not exist yet, as opposed to existing and failing.
+    not_implemented: bool = False
 
     @property
     def ran(self) -> bool:
         return self.result is not None and self.error is None
 
+    @property
+    def crashed(self) -> bool:
+        """An actual failure, as distinct from a stage nobody has written.
 
-def _blocked(gate_id: str, severity: Severity, target: str, blocks: list[str], why: str) -> GateResult:
+        The distinction is not pedantry. Without it, `NotImplementedError` from
+        the stub makes G9 red on iteration 1 and the loop dutifully selects
+        "fix the unhandled exceptions" as the highest-severity work — when the
+        real task is to write the pipeline at all. A gate that reports the
+        absence of code as a defect in code sends the loop somewhere useless.
+        """
+        return self.error is not None and not self.not_implemented
+
+
+def _blocked(
+    gate_id: str, severity: Severity, target: str, blocks: list[str], why: str
+) -> GateResult:
     return GateResult(gate_id, severity, "blocked", None, target, blocks, why)
 
 
@@ -210,7 +226,7 @@ def gate_unsafe_recall(outcomes: Sequence[Outcome]) -> GateResult:
     if tp + fn == 0:
         return _blocked(
             "unsafe_rule_recall", "critical", ">= 0.90", [],
-            "no present clip carries a labelled `unsafe` fault (see R06)",
+            "no present clip carries a labelled `unsafe` fault (see R05)",
         )
     value = tp / (tp + fn)
     return GateResult(
@@ -243,7 +259,7 @@ def gate_no_verdict_on_low_quality(outcomes: Sequence[Outcome]) -> GateResult:
     if not eligible:
         return _blocked(
             "no_verdict_on_low_quality", "critical", "0 verdicts", [],
-            "no present clip is labelled insufficient_quality (see R11-R13, S03)",
+            "no present clip is labelled insufficient_quality (see R10-R12, S03)",
         )
 
     violations: dict[str, str] = {}
@@ -323,7 +339,16 @@ def gate_no_exceptions(outcomes: Sequence[Outcome]) -> GateResult:
     if not present:
         return _blocked("no_unhandled_exceptions", "critical", "0", blocks, "no footage present")
 
-    failures = {o.clip.id: o.error for o in present if o.error}
+    # A stage that has not been written cannot be said to crash. Reported as
+    # blocked so the loop is not sent to fix an exception that is really an
+    # absence.
+    if all(o.not_implemented for o in present):
+        return _blocked(
+            "no_unhandled_exceptions", "critical", "0", blocks,
+            "the pipeline is a stub — nothing has run to raise",
+        )
+
+    failures = {o.clip.id: o.error for o in present if o.crashed}
     return GateResult(
         "no_unhandled_exceptions", "critical",
         "green" if not failures else "red",

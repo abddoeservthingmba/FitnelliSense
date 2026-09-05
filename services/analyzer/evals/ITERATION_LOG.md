@@ -75,8 +75,56 @@ them. A wrong label on a synthetic clip does not look like a bug; it looks like
 the pipeline failing, and it would have been debugged in the wrong place.
 
 Verdict : n/a (scaffold)
-Notes   : Runtime environment is missing Python, ffmpeg and make — see
-          BLOCKERS at the foot of the handover. Nothing here has been EXECUTED,
-          only written and statically validated, and that distinction is the
-          reason iteration 1 must begin by running `make eval` rather than
-          trusting this table.
+
+## Iteration 0b — first execution
+
+Python 3.11.9 installed; the scaffold ran for the first time. Everything above
+had been written and statically validated but never executed, and that
+distinction paid for itself immediately: **five defects, none of which reading
+would have found.**
+
+1. **`numpy==2.1.3` was unresolvable.** mediapipe 0.10.18 declares `numpy<2`
+   and pip refused the resolve outright. The pin had been written from habit.
+   Now `1.26.4`.
+2. **G9 was red for the wrong reason.** The stub's `NotImplementedError` was
+   counted as an unhandled exception, so the harness selected
+   `no_unhandled_exceptions` as the highest-severity work — pointing the loop
+   at "fix the crashes" when the real task is "write the pipeline". `Outcome`
+   now separates *not implemented* from *crashed*, and G9 reports blocked
+   while the pipeline is a stub. This one mattered: it would have wasted the
+   first iteration.
+3. **Stale clip ids in two gate messages** — `see R06` and `see R11-R13`, left
+   behind when the golden set was cut from 15 real slots to 12. They pointed
+   at footage that no longer exists under those names.
+4. **A bug in my own test.** `zip(spans, spans[1:], strict=True)` can only ever
+   raise: the second list is shorter by one by construction, which is the
+   entire point of a pairwise walk. Now `itertools.pairwise`.
+5. **Em-dashes rendered as `?`** in the terminal — Windows consoles default to
+   cp1252. `report.json` was always UTF-8; only the human-readable output was
+   affected.
+
+Verified by running, not by reading:
+
+| Check | Result |
+|---|---|
+| `pytest` | 26 passed |
+| `ruff check` | all checks passed |
+| Synthetic clips generated | 3, at 1080x1920 |
+| Frame counts vs `phase_plan` | 480 / 427 / 156 — exact |
+| Regeneration byte-identical | yes, all three (SHA-256) |
+| `make eval` | runs, writes report.json, picks `next_gate` |
+
+The regeneration check matters more than it looks: G7 compares two analyzer
+runs, and if the CLIPS were not reproducible the gate would be measuring the
+generator's noise rather than the pipeline's determinism.
+
+Gate status now: **1 green, 2 red, 7 blocked.** `next_gate` is
+`no_verdict_on_low_quality`, which is the correct first target — S03 must be
+rejected at ingest for being 12 fps, and that is the smallest slice of pipeline
+that turns any gate green.
+
+Verdict : improved (scaffold now executes)
+Notes   : `make` itself is still absent on this machine; the targets are
+          invoked directly as `.venv/Scripts/python.exe -m evals.harness.*`.
+          The Makefile is unverified for that reason and is the one part of
+          the scaffold still taken on trust.

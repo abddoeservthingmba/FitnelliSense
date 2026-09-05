@@ -27,7 +27,7 @@ from .loader import Clip, ManifestError, load_manifest
 REPORT = Path(__file__).resolve().parents[1] / "report.json"
 
 
-def _analyze(clip: Clip) -> tuple[dict[str, Any] | None, str | None, int | None]:
+def _analyze(clip: Clip) -> tuple[dict[str, Any] | None, str | None, int | None, bool]:
     """Run the analyzer over one clip.
 
     Every exception is caught and recorded rather than propagated: one bad clip
@@ -44,13 +44,14 @@ def _analyze(clip: Clip) -> tuple[dict[str, Any] | None, str | None, int | None]
             view=clip.view_requested,
         )
         elapsed = int((time.perf_counter() - started) * 1000)
-        return result, None, elapsed
+        return result, None, elapsed, False
     except NotImplementedError as exc:
         # The stub. Expected until the pipeline exists, and reported as a
         # blocked gate rather than a crash.
-        return None, f"not_implemented: {exc}", None
-    except Exception:  # noqa: BLE001 — deliberately broad, see docstring
-        return None, traceback.format_exc(limit=6), int((time.perf_counter() - started) * 1000)
+        return None, f"not_implemented: {exc}", None, True
+    except Exception:
+        elapsed = int((time.perf_counter() - started) * 1000)
+        return None, traceback.format_exc(limit=6), elapsed, False
 
 
 def run(strict: bool = False) -> int:
@@ -68,12 +69,19 @@ def run(strict: bool = False) -> int:
             outcomes.append(Outcome(clip=clip, result=None, error=None, runtime_ms=None))
             continue
 
-        result, error, elapsed = _analyze(clip)
+        result, error, elapsed, stubbed = _analyze(clip)
         repeat = None
         if result is not None:
-            repeat, _, _ = _analyze(clip)
+            repeat, _, _, _ = _analyze(clip)
         outcomes.append(
-            Outcome(clip=clip, result=result, error=error, runtime_ms=elapsed, repeat=repeat)
+            Outcome(
+                clip=clip,
+                result=result,
+                error=error,
+                runtime_ms=elapsed,
+                repeat=repeat,
+                not_implemented=stubbed,
+            )
         )
 
     gates = [gate(outcomes) for gate in ALL_GATES]
@@ -113,6 +121,12 @@ def run(strict: bool = False) -> int:
 
 
 def _print(report: dict[str, Any]) -> None:
+    # Windows consoles default to cp1252 and turn the em-dashes in gate
+    # messages into replacement characters. report.json is UTF-8 either way;
+    # this only affects what a human reads in the terminal.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
     clips = report["clips"]
     print(f"\n  clips: {clips['present']}/{clips['total']} present")
     if clips["missing_footage"]:

@@ -32,7 +32,7 @@ class _FloatFinder(ast.NodeVisitor):
         self.path = path
         self.hits: list[dict[str, Any]] = []
 
-    def visit_Constant(self, node: ast.Constant) -> None:  # noqa: N802
+    def visit_Constant(self, node: ast.Constant) -> None:
         if isinstance(node.value, float) and node.value not in ALLOWED_FLOATS:
             self.hits.append(
                 {

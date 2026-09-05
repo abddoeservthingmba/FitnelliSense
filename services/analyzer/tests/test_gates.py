@@ -60,10 +60,14 @@ def test_gate_is_blocked_not_red_when_nothing_ran():
 
 def test_rep_count_requires_exact_match():
     clip = _present(true_rep_count=5)
-    close = Outcome(clip=clip, result={"set": {"rep_count": 4}}, error=None, runtime_ms=10)
+    close = Outcome(
+        clip=clip, result={"set": {"rep_count": 4}}, error=None, runtime_ms=10
+    )
     assert gate_rep_count([close]).verdict == "red"
 
-    exact = Outcome(clip=clip, result={"set": {"rep_count": 5}}, error=None, runtime_ms=10)
+    exact = Outcome(
+        clip=clip, result={"set": {"rep_count": 5}}, error=None, runtime_ms=10
+    )
     assert gate_rep_count([exact]).verdict == "green"
 
 
@@ -77,7 +81,11 @@ def test_abstain_clip_must_also_give_the_right_reason():
 
     wrong_reason = Outcome(
         clip=clip,
-        result={"status": "insufficient_quality", "quality": {"reason": "fps_below_minimum"}, "set": {"findings": []}},
+        result={
+            "status": "insufficient_quality",
+            "quality": {"reason": "fps_below_minimum"},
+            "set": {"findings": []},
+        },
         error=None,
         runtime_ms=10,
     )
@@ -85,7 +93,11 @@ def test_abstain_clip_must_also_give_the_right_reason():
 
     right = Outcome(
         clip=clip,
-        result={"status": "insufficient_quality", "quality": {"reason": "low_keypoint_confidence"}, "set": {"findings": []}},
+        result={
+            "status": "insufficient_quality",
+            "quality": {"reason": "low_keypoint_confidence"},
+            "set": {"findings": []},
+        },
         error=None,
         runtime_ms=10,
     )
