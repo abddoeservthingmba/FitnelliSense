@@ -6,9 +6,10 @@
  * people want from history: do this again.
  */
 import { useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useWorkout } from '../../src/api/hooks/use-workout';
+import { useWorkoutAnalyses } from '../../src/api/hooks/use-analysis';
 import { useRoutineFromWorkout } from '../../src/api/hooks/use-routines';
 import { Button } from '../../src/components/Button';
 import { Card, Divider, Row, Stack } from '../../src/components/Card';
@@ -33,6 +34,11 @@ export default function WorkoutDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const workout = useWorkout(id);
+  /*
+   * Which sets were filmed, in ONE request rather than one per set. Indexed by
+   * set id by the hook, so a row is a map lookup rather than a search.
+   */
+  const analyses = useWorkoutAnalyses(id ?? null);
   const createRoutine = useRoutineFromWorkout();
   const [saved, setSaved] = useState(false);
 
@@ -103,6 +109,18 @@ export default function WorkoutDetailScreen() {
                           <Text variant="caption" tone="muted">
                             RPE {set.rpe}
                           </Text>
+                        ) : null}
+                        {analyses.data?.get(set.id) ? (
+                          <Pressable
+                            onPress={() => router.push(`/analysis/${analyses.data.get(set.id)?.id}`)}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Watch the video of set ${index + 1}`}
+                            hitSlop={8}
+                          >
+                            <Text variant="caption" tone="accent">
+                              ▶ video
+                            </Text>
+                          </Pressable>
                         ) : null}
                         {!set.isCompleted ? (
                           <Text variant="caption" tone="faint">

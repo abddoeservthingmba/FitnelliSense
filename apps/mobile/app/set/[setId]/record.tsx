@@ -45,14 +45,12 @@ import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import {
-  MAX_CLIP_SECONDS,
   MAX_UPLOAD_BYTES,
-  clipSegments,
   planUpload,
   type ClipWindow,
   type PickedVideo,
 } from '@fi/domain';
-import { formatClock } from '../../../src/lib/format';
+import { ClipChooser } from '../../../src/features/analysis/ClipChooser';
 import { Button } from '../../../src/components/Button';
 import { Card, Row, Stack as Column } from '../../../src/components/Card';
 import { Screen } from '../../../src/components/Screen';
@@ -293,64 +291,23 @@ export default function RecordSetScreen() {
   // ------------------------------------------------------ choose a window --
 
   if (picked !== null && chosenWindow !== null && !upload.isPending) {
-    const total = Math.floor(picked.durationSecs);
-    const segments = clipSegments(picked.durationSecs);
-
     return (
       <>
         {header('Which part?')}
         <Screen scroll>
-          <Column gap="xl" style={{ paddingTop: theme.space.xl }}>
-            <Column gap="sm">
-              <Overline>{`${formatClock(total)} long`}</Overline>
-              <Text variant="heading">Pick the part with the set in it</Text>
-              <Text tone="muted">
-                {`Only ${MAX_CLIP_SECONDS / 60} minutes are analysed. The whole video is still uploaded — this chooses which part gets measured, and you can come back and measure a different part later.`}
-              </Text>
-            </Column>
-
-            <Column gap="sm">
-              {segments.map((segment) => {
-                const selected = segment.startSecs === chosenWindow.startSecs;
-                return (
-                  <Pressable key={segment.startSecs} onPress={() => setChosenWindow(segment)}>
-                    <Card>
-                      <Row justify="space-between">
-                        <Text variant="callout" weight={selected ? 'heavy' : 'semibold'}>
-                          {`${formatClock(segment.startSecs)} – ${formatClock(segment.endSecs)}`}
-                        </Text>
-                        <Text
-                          variant="caption"
-                          style={{ color: selected ? theme.colors.accent : theme.colors.textFaint }}
-                        >
-                          {selected ? 'selected' : 'choose'}
-                        </Text>
-                      </Row>
-                    </Card>
-                  </Pressable>
-                );
-              })}
-            </Column>
-
-            <Column gap="sm">
-              <Button
-                label="Upload this part"
-                onPress={() => startUpload(picked.uri, total, chosenWindow.startSecs)}
-                size="large"
-                haptic
-                fullWidth
-              />
-              <Button
-                label="Choose a different video"
-                variant="ghost"
-                onPress={() => {
-                  setPicked(null);
-                  setChosenWindow(null);
-                }}
-                fullWidth
-              />
-            </Column>
-          </Column>
+          <ClipChooser
+            uri={picked.uri}
+            durationSecs={picked.durationSecs}
+            window={chosenWindow}
+            onChange={setChosenWindow}
+            onConfirm={() =>
+              startUpload(picked.uri, Math.floor(picked.durationSecs), chosenWindow.startSecs)
+            }
+            onCancel={() => {
+              setPicked(null);
+              setChosenWindow(null);
+            }}
+          />
         </Screen>
       </>
     );

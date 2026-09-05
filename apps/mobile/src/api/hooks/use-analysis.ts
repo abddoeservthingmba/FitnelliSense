@@ -22,8 +22,35 @@ import { keys } from '../query-client';
 
 export const analysisKeys = {
   forSet: (setId: string) => ['analyses', 'set', setId] as const,
+  forWorkout: (workoutId: string) => ['analyses', 'workout', workoutId] as const,
   one: (analysisId: string) => ['analyses', analysisId] as const,
 } as const;
+
+/**
+ * Every analysis in a workout, in one request.
+ *
+ * Deliberately not one query per set: a history screen renders dozens of rows,
+ * and asking per row is a round trip each on a connection that is often a
+ * phone's. The caller indexes the result by `workoutSetId`.
+ */
+export function useWorkoutAnalyses(workoutId: string | null) {
+  return useQuery({
+    queryKey: analysisKeys.forWorkout(workoutId ?? 'none'),
+    queryFn: () => api.get<{ items: Analysis[] }>(`/workouts/${workoutId}/analyses`),
+    enabled: workoutId !== null,
+    select: (data) => {
+      // A set can be filmed more than once; the newest is what a history row
+      // should open, and the response is already newest-first.
+      const bySet = new Map<string, Analysis>();
+      for (const item of data.items) {
+        if (item.workoutSetId !== null && !bySet.has(item.workoutSetId)) {
+          bySet.set(item.workoutSetId, item);
+        }
+      }
+      return bySet;
+    },
+  });
+}
 
 /** Every analysis of a set, newest first. */
 export function useSetAnalyses(setId: string | null) {

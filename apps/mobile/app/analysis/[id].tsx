@@ -12,6 +12,7 @@
  */
 import { View } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
+import { useVideoPlayer, VideoView } from 'expo-video';
 import type { Analysis } from '@fi/shared';
 import { Card, Row, Stack as Column } from '../../src/components/Card';
 import { Screen } from '../../src/components/Screen';
@@ -40,6 +41,12 @@ export default function AnalysisScreen() {
       <Screen scroll>
         <Column gap="xl" style={{ paddingTop: theme.space.lg }}>
           <Status analysis={data} />
+
+          {/* The footage itself. Worth showing even before any numbers exist,
+              because until the analysis worker runs it is the only thing this
+              screen actually has — and it is the thing the user shot. */}
+          {data.videoUrl ? <Playback url={data.videoUrl} /> : null}
+
           {data.result ? <Result result={data.result} /> : null}
 
           <Button
@@ -51,6 +58,42 @@ export default function AnalysisScreen() {
         </Column>
       </Screen>
     </>
+  );
+}
+
+/**
+ * The clip, played back.
+ *
+ * `url` is presigned and short-lived, which is why the player is keyed on it:
+ * when the query refetches and the URL rotates, the key change replaces the
+ * player rather than leaving one holding a link that has since expired.
+ *
+ * Native controls here, unlike the trim screen — this is watching a video, and
+ * the platform's own scrubber is better than anything worth hand-building.
+ */
+function Playback({ url }: { url: string }) {
+  const theme = useTheme();
+  const player = useVideoPlayer({ uri: url }, (instance) => {
+    instance.loop = true;
+    // Muted by default: a set filmed in the app has no audio track at all, and
+    // one picked from a gallery may have a conversation on it that the user
+    // did not think about when they chose it.
+    instance.muted = true;
+  });
+
+  return (
+    <View
+      style={{
+        width: '100%',
+        aspectRatio: 9 / 16,
+        maxHeight: 420,
+        borderRadius: theme.radius.md,
+        overflow: 'hidden',
+        backgroundColor: '#000',
+      }}
+    >
+      <VideoView player={player} style={{ flex: 1 }} contentFit="contain" nativeControls />
+    </View>
   );
 }
 

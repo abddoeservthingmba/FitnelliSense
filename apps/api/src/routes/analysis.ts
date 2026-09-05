@@ -99,6 +99,23 @@ export async function analysisRoutes(app: FastifyInstance): Promise<void> {
   );
 
   /**
+   * Every analysis in one workout, so a history screen can show which sets
+   * were filmed without asking once per set.
+   */
+  typed.get(
+    '/workouts/:workoutId/analyses',
+    {
+      preHandler: app.requireUser,
+      schema: {
+        params: z.object({ workoutId: uuidSchema }),
+        response: { 200: analysisListSchema },
+      },
+    },
+    async (request) =>
+      analysis.listWorkoutAnalyses(db, storage, currentUser(request).id, request.params.workoutId),
+  );
+
+  /**
    * Delete an analysis and its video.
    *
    * A real delete, not an archive: this is the one thing in the app that holds

@@ -188,6 +188,40 @@ export async function listSetAnalyses(
 }
 
 /**
+ * Every analysis belonging to one workout, in a single request (FR-VID-11).
+ *
+ * The alternative — the history screen asking per set — is one round trip per
+ * row for a screen that renders dozens, and the app already carries one N+1
+ * like that. One query here, and the client indexes by `workoutSetId`.
+ *
+ * Scoped by `userId` as well as by workout, so the join cannot be talked into
+ * returning someone else's analysis through a workout id that is not theirs.
+ */
+export async function listWorkoutAnalyses(
+  db: Database,
+  storage: Storage,
+  userId: string,
+  workoutId: string,
+): Promise<{ items: Analysis[] }> {
+  const rows = await db
+    .select({ analysis: cvAnalyses })
+    .from(cvAnalyses)
+    .innerJoin(workoutSets, eq(cvAnalyses.workoutSetId, workoutSets.id))
+    .innerJoin(workoutExercises, eq(workoutSets.workoutExerciseId, workoutExercises.id))
+    .innerJoin(workouts, eq(workoutExercises.workoutId, workouts.id))
+    .where(
+      and(
+        eq(cvAnalyses.userId, userId),
+        eq(workouts.userId, userId),
+        eq(workouts.id, workoutId),
+      ),
+    )
+    .orderBy(desc(cvAnalyses.createdAt));
+
+  return { items: await Promise.all(rows.map((row) => toWire(row.analysis, storage))) };
+}
+
+/**
  * Deletes an analysis and its video.
  *
  * The object is removed before the row, so a failure leaves a row pointing at

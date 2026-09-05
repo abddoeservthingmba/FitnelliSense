@@ -83,6 +83,20 @@ services:
         sync: false
       - key: EMAIL_FROM
         sync: false
+      # Google sign-in (FR-AUTH-11). Comma-separated OAuth client ids that may
+      # appear as the `aud` of an ID token — Android and web are separate
+      # clients with separate ids and both are legitimate.
+      #
+      # NOT a secret, and there is deliberately no client secret anywhere: the
+      # app is a public client that could not keep one, and verification uses
+      # Google's PUBLIC keys. It is `sync: false` only so Render prompts for it
+      # rather than baking a value into the repo.
+      #
+      # Unset means Google sign-in is off: /auth/google answers 409 and every
+      # other way in keeps working.
+      - key: GOOGLE_CLIENT_IDS
+        sync: false
+
       - key: JWT_ACCESS_SECRET
         generateValue: true
       - key: JWT_REFRESH_PEPPER
