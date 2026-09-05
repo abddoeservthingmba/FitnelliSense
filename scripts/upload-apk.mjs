@@ -49,11 +49,12 @@ const BUCKET = 'apkstorageversioning';
  * section entirely rather than printing a heading with nothing under it.
  */
 const RELEASE_NOTES = [
-  'Film a set, or pick an existing video, for barbell form analysis.',
-  'A video longer than three minutes lets you choose which three minutes are measured.',
-  'Log a set by speaking it — uses the keyboard\'s own dictation, so the app never touches the microphone.',
-  'Camera viewfinder no longer crops the frame, and records at 1080p with zoom controls.',
-  'The analysis itself does not run yet: an uploaded clip stays on "Working on it".',
+  'Pick a long video and choose which part gets analysed — with the video playing, so you can see the set rather than guess at it.',
+  'Watch a clip back: the analysis screen now plays the footage.',
+  'A filmed set shows a video link in your workout history.',
+  'Voice logging has its own microphone button, instead of the keyboard one.',
+  'Google sign-in (turns on once the server has its client ids).',
+  'The analysis itself still does not run: an uploaded clip stays on "Working on it".',
 ];
 
 function env(name) {
