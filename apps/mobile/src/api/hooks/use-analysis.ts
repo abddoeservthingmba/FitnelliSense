@@ -15,7 +15,8 @@
  * queued. That is the right failure: nothing is charged, nothing is analysed,
  * and the row expires with the bucket's lifecycle rule.
  */
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Analysis, MeResponse, VideoUploadTarget } from '@fi/shared';
 import { api } from '../client';
 import { keys } from '../query-client';
@@ -124,16 +125,92 @@ export class UploadFailure extends Error {
   }
 }
 
+/**
+ * PUTs the file and reports how much of it has gone.
+ *
+ * XMLHttpRequest, not `fetch`, and that is the whole reason this function
+ * exists: `fetch` has no upload-progress event in React Native, so a 45 MB
+ * video over a gym's wifi is an indefinite spinner. XHR's `upload.onprogress`
+ * is the only way to know, and a real percentage is the difference between
+ * waiting and wondering whether it has hung.
+ */
+function putWithProgress(
+  url: string,
+  headers: Record<string, string>,
+  body: Blob,
+  onProgress: (fraction: number) => void,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open('PUT', url);
+
+    // Exactly the headers the presign was signed with. An extra one
+    // invalidates the signature and R2 answers 403.
+    for (const [name, value] of Object.entries(headers)) {
+      request.setRequestHeader(name, value);
+    }
+
+    request.upload.onprogress = (event) => {
+      // `lengthComputable` is false on some Android stacks; reporting a
+      // fraction derived from an unknown total would move the bar to a
+      // meaningless place, so nothing is reported at all.
+      if (event.lengthComputable && event.total > 0) {
+        onProgress(event.loaded / event.total);
+      }
+    };
+
+    request.onload = () => {
+      if (request.status >= 200 && request.status < 300) {
+        onProgress(1);
+        resolve();
+      } else {
+        reject(new UploadFailure('put', `Storage rejected the upload (${request.status})`));
+      }
+    };
+
+    request.onerror = () =>
+      reject(new UploadFailure('put', 'The upload was interrupted. Check your connection.'));
+    request.onabort = () => reject(new UploadFailure('put', 'The upload was cancelled.'));
+    request.ontimeout = () => reject(new UploadFailure('put', 'The upload timed out.'));
+
+    request.send(body);
+  });
+}
+
+/**
+ * The key every in-flight video upload shares, so other screens can ask
+ * whether one is running without holding a reference to this hook.
+ */
+export const UPLOAD_MUTATION_KEY = ['upload-set-video'] as const;
+
+/**
+ * True while any set video is still uploading, anywhere in the app.
+ *
+ * Exists so finishing a workout can be blocked until the file is safely in
+ * storage. Leaving the workout tears the screen down and with it the request,
+ * and the analysis row is then stranded in `awaiting_upload` forever — the
+ * user having done the set, filmed it, and lost it. Reading the mutation
+ * cache rather than passing state down means the check works from a screen
+ * that never started the upload.
+ */
+export function useVideoUploadInFlight(): boolean {
+  return useIsMutating({ mutationKey: UPLOAD_MUTATION_KEY }) > 0;
+}
+
 export function useUploadSetVideo() {
   const queryClient = useQueryClient();
+  /** 0 to 1, for the screen that is watching. */
+  const [progress, setProgress] = useState(0);
 
-  return useMutation({
+  const mutation = useMutation({
+    mutationKey: UPLOAD_MUTATION_KEY,
     mutationFn: async ({
       setId,
       uri,
       durationSecs,
       clipStartSecs,
     }: UploadInput): Promise<Analysis> => {
+      setProgress(0);
       /*
        * The size has to be known before asking, because the server refuses an
        * oversized file at presign time rather than after it has crossed
@@ -154,19 +231,7 @@ export function useUploadSetVideo() {
           throw new UploadFailure('ask', error instanceof Error ? error.message : 'Could not start');
         });
 
-      const put = await fetch(target.uploadUrl, {
-        method: 'PUT',
-        // Exactly the headers the presign was signed with. An extra one
-        // invalidates the signature and R2 answers 403.
-        headers: target.requiredHeaders,
-        body: blob,
-      }).catch((error: unknown) => {
-        throw new UploadFailure('put', error instanceof Error ? error.message : 'Upload failed');
-      });
-
-      if (!put.ok) {
-        throw new UploadFailure('put', `Storage rejected the upload (${put.status})`);
-      }
+      await putWithProgress(target.uploadUrl, target.requiredHeaders, blob, setProgress);
 
       return api
         .post<Analysis>(`/analyses/${target.analysisId}/uploaded`)
@@ -179,9 +244,12 @@ export function useUploadSetVideo() {
     },
     onSuccess: (analysis, { setId }) => {
       void queryClient.invalidateQueries({ queryKey: analysisKeys.forSet(setId) });
+      void queryClient.invalidateQueries({ queryKey: ['analyses', 'workout'] });
       queryClient.setQueryData(analysisKeys.one(analysis.id), analysis);
     },
   });
+
+  return { ...mutation, progress };
 }
 
 /** Deletes an analysis and its video. A real delete, not an archive. */

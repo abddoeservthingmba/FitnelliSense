@@ -316,14 +316,47 @@ export default function RecordSetScreen() {
   // ----------------------------------------------------------- uploading --
 
   if (upload.isPending) {
+    const percent = Math.round(upload.progress * 100);
+    const done = upload.progress >= 1;
+
     return (
       <>
         {header('Uploading')}
         <Screen>
-          <Column gap="md" style={{ paddingTop: theme.space.xxl }}>
-            <LoadingState label="Uploading the clip…" />
+          <Column gap="lg" style={{ paddingTop: theme.space.xxl }}>
+            <Column gap="xs" style={{ alignItems: 'center' }}>
+              {/* A real number, not a spinner. A 45 MB file on gym wifi takes
+                  long enough that "uploading…" is indistinguishable from
+                  "hung", and the difference matters because leaving this
+                  screen cancels the upload. */}
+              <Text variant="display" weight="heavy">
+                {`${percent}%`}
+              </Text>
+              <Text variant="caption" tone="muted">
+                {done ? 'Finishing off…' : 'Uploading the clip'}
+              </Text>
+            </Column>
+
+            <View
+              style={{
+                height: 8,
+                borderRadius: 4,
+                backgroundColor: theme.colors.surfaceRaised,
+                overflow: 'hidden',
+              }}
+            >
+              <View
+                style={{
+                  width: `${percent}%`,
+                  height: '100%',
+                  backgroundColor: theme.colors.accent,
+                }}
+              />
+            </View>
+
             <Text variant="caption" tone="faint" style={{ textAlign: 'center' }}>
-              Going straight to storage, so this is your connection rather than our server.
+              Going straight to storage, so this is your connection rather than our server. Stay on
+              this screen until it finishes.
             </Text>
           </Column>
         </Screen>

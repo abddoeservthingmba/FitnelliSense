@@ -49,12 +49,12 @@ const BUCKET = 'apkstorageversioning';
  * section entirely rather than printing a heading with nothing under it.
  */
 const RELEASE_NOTES = [
-  'Pick a long video and choose which part gets analysed — with the video playing, so you can see the set rather than guess at it.',
-  'Watch a clip back: the analysis screen now plays the footage.',
-  'A filmed set shows a video link in your workout history.',
-  'Voice logging has its own microphone button, instead of the keyboard one.',
-  'Google sign-in (turns on once the server has its client ids).',
-  'The analysis itself still does not run: an uploaded clip stays on "Working on it".',
+  "Sign in with Google.",
+  "Video uploads now show a real percentage instead of an endless spinner.",
+  "A workout cannot be finished while a set video is still uploading — finishing used to cancel it and lose the footage.",
+  "Pick which part of a long video gets analysed, with the video playing.",
+  "Watch a clip back, and open it from a set in your history.",
+  "The analysis itself still does not run: an uploaded clip stays queued.",
 ];
 
 function env(name) {

@@ -4,12 +4,13 @@
  * One form, inline errors, and no modal alerts — a failed sign-in should never
  * cost the user what they typed.
  */
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { KeyboardAvoidingView, Platform, View } from 'react-native';
 import { Link, router } from 'expo-router';
 import { ApiRequestError } from '../../src/api/client';
 import { useAuth } from '../../src/auth/auth-context';
 import { Button } from '../../src/components/Button';
+import { GoogleSignInButton } from '../../src/features/auth/GoogleSignInButton';
 import { Stack as VStack } from '../../src/components/Card';
 import { Screen } from '../../src/components/Screen';
 import { Overline, Text } from '../../src/components/Text';
@@ -19,11 +20,37 @@ import { useTheme } from '../../src/theme';
 
 export default function SignInScreen() {
   const theme = useTheme();
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<ApiRequestError | null>(null);
+  const [googleBusy, setGoogleBusy] = useState(false);
+  const [googleError, setGoogleError] = useState<string | null>(null);
+
+  /*
+   * Google has handed back a verified token; this is our own exchange for it.
+   * A failure here is OUR server refusing — Google already succeeded — so the
+   * message says that rather than blaming the Google account.
+   */
+  const onGoogleToken = useCallback(
+    async (idToken: string) => {
+      setGoogleBusy(true);
+      setGoogleError(null);
+      try {
+        await signInWithGoogle(idToken);
+      } catch (failure) {
+        setGoogleError(
+          failure instanceof ApiRequestError && failure.status === 409
+            ? 'Google sign-in is not switched on for this server yet.'
+            : 'That Google account could not be signed in. Try your password instead.',
+        );
+      } finally {
+        setGoogleBusy(false);
+      }
+    },
+    [signInWithGoogle],
+  );
   const [submitting, setSubmitting] = useState(false);
   const waking = useSlowRequest(submitting);
 
@@ -105,6 +132,16 @@ export default function SignInScreen() {
               loading={submitting}
               size="large"
               fullWidth
+            />
+
+            {/* Below the password form, not above it. Most people here already
+                have a password account; Google is the alternative, not the
+                default. The button renders nothing when the build has no
+                client id. */}
+            <GoogleSignInButton
+              onToken={onGoogleToken}
+              loading={googleBusy}
+              error={googleError}
             />
           </VStack>
 

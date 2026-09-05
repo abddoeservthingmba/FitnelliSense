@@ -1,6 +1,21 @@
 # Netlify build for the web app.
 #
-# Connect the repository once in the Netlify UI and every push to main deploys.
+# ── AUTO-DEPLOY IS OFF, ON PURPOSE ──────────────────────────────────────────
+#
+# Netlify bills BUILD MINUTES and the credits on this account are nearly gone.
+# Building here on every push would spend them on commits that are usually only
+# API or Android changes.
+#
+# Deploy with `pnpm --filter @fi/mobile deploy:web` instead. That builds the
+# bundle on the developer's machine and uploads the finished directory with
+# `netlify deploy --dir`, which runs NO build on Netlify and therefore uses no
+# minutes. Intended cadence is about twice a week; the APK is the primary
+# channel.
+#
+# The settings below are kept because they are still correct, and are what a
+# repository-connected build WOULD need if auto-deploy is ever turned back on
+# with credit to spare.
+#
 # Nothing here is secret: the only variable is the API's public URL.
 #
 # ── WHEN CONNECTING THE REPO ────────────────────────────────────────────────

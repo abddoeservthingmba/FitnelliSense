@@ -3,7 +3,7 @@
     "name": "Ascension",
     "slug": "ascension",
     "scheme": "ascension",
-    "version": "1.6.0",
+    "version": "1.7.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
@@ -13,7 +13,7 @@
     ],
     "android": {
       "package": "com.ascension.fitness",
-      "versionCode": 22,
+      "versionCode": 23,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0B2547"
@@ -118,7 +118,9 @@
       "typedRoutes": true
     },
     "extra": {
-      "apiBaseUrl": "http://localhost:3000"
+      "apiBaseUrl": "http://localhost:3000",
+      "googleWebClientId": "366852479009-qufb1f8l5p7kbpjibigp9d6sqop9901q.apps.googleusercontent.com",
+      "googleAndroidClientId": "366852479009-el1crvuuisgu61a5vrbidj66r48tkvb7.apps.googleusercontent.com"
     },
     "backgroundColor": "#050D1F"
   }

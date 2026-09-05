@@ -25,6 +25,7 @@ import { Button } from '../../src/components/Button';
 import { Stack } from '../../src/components/Card';
 import { ActionBar, Screen } from '../../src/components/Screen';
 import { Rule, Stat, StatRow } from '../../src/components/Section';
+import { Text } from '../../src/components/Text';
 import { EmptyState, LoadingState, OfflineBanner } from '../../src/components/StateViews';
 import { ExercisePicker } from '../../src/features/routine/ExercisePicker';
 import { RestTimerBar } from '../../src/features/workout/RestTimerBar';
@@ -35,6 +36,7 @@ import { LevelUpWindow } from '../../src/features/hunter/LevelUpWindow';
 import { usePrefill } from '../../src/features/workout/use-prefill';
 import { useRestTimer } from '../../src/features/workout/use-rest-timer';
 import { useElapsed } from '../../src/features/workout/use-elapsed';
+import { useVideoUploadInFlight } from '../../src/api/hooks/use-analysis';
 import { uuidv7 } from '../../src/lib/uuid';
 import { formatDuration } from '../../src/lib/format';
 import { useUnits } from '../../src/lib/use-units';
@@ -50,6 +52,8 @@ export default function ActiveWorkoutScreen() {
   const workoutId = workout?.id;
 
   const addExercise = useAddWorkoutExercise(workoutId);
+  // True while any set video is still going to storage, from any screen.
+  const uploadInFlight = useVideoUploadInFlight();
   const addSet = useAddSet(workoutId);
   const updateSet = useUpdateSet();
   const deleteSet = useDeleteSet();
@@ -233,11 +237,22 @@ export default function ActiveWorkoutScreen() {
       {!finished ? (
         <ActionBar>
           <RestTimerBar timer={timer} />
+          {/* Blocked while a clip is still going up. Finishing tears this
+              screen down and cancels the request, stranding the analysis in
+              `awaiting_upload` — the user having done the set, filmed it, and
+              lost the footage. The reason is stated rather than left as a
+              button that mysteriously will not press. */}
+          {uploadInFlight ? (
+            <Text variant="caption" tone="accent" style={{ textAlign: 'center' }}>
+              A set video is still uploading. Finishing now would lose it.
+            </Text>
+          ) : null}
+
           <Button
-            label="Finish workout"
+            label={uploadInFlight ? 'Waiting for the video…' : 'Finish workout'}
             onPress={finish}
             loading={completeWorkout.isPending}
-            disabled={completedSets === 0}
+            disabled={completedSets === 0 || uploadInFlight}
             size="large"
             fullWidth
             haptic

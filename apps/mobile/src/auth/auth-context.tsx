@@ -29,6 +29,12 @@ interface AuthValue {
   userId: string | null;
   signIn(input: { email: string; password: string }): Promise<void>;
   signUp(input: { email: string; password: string; displayName: string }): Promise<void>;
+  /**
+   * Exchanges a Google ID token for our own session. Only the token is sent —
+   * the identity is read out of it server-side, where the signature can be
+   * checked.
+   */
+  signInWithGoogle(idToken: string): Promise<void>;
   signOut(): Promise<void>;
 }
 
@@ -128,6 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }): ReactNode {
       userId,
       signIn: (input) => authenticate(routes.auth.login, input),
       signUp: (input) => authenticate(routes.auth.register, input),
+      signInWithGoogle: (idToken) => authenticate(routes.auth.google, { idToken }),
       signOut: async () => {
         const refreshToken = sessionRef.current?.refreshToken;
         if (refreshToken) {
