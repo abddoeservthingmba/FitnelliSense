@@ -53,6 +53,7 @@ def envelope(
     calibration_method: str | None = None,
     px_per_metre: float | None = None,
     frames_processed: int = 0,
+    reps: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """A result conforming to the output schema.
 
@@ -72,12 +73,12 @@ def envelope(
         },
         "exercise": exercise,
         "set": {
-            "rep_count": 0,
+            "rep_count": len(reps or []),
             "scores": _empty_scores(),
             "findings": [],
             "coaching": [],
         },
-        "reps": [],
+        "reps": list(reps or []),
         "artifacts": {
             "annotated_video": None,
             "bar_path_svg": None,

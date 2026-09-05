@@ -97,6 +97,41 @@ view:
     date: 2026-09-05
 
 segmentation:
+  # Savitzky-Golay over the raw bar trace, BEFORE any velocity is taken.
+  # Differentiating an unsmoothed signal amplifies its noise, so a jittery
+  # centroid becomes a wildly oscillating velocity and the zero-crossings that
+  # define a rep multiply. Window is in frames and must be odd.
+  smoothing_window_frames:
+    value: 9
+    unit: frames
+    status: hypothesis
+    source: "0.3 s at 30 fps — long enough to kill centroid jitter, short enough to leave a 0.9 s concentric intact."
+    date: 2026-09-05
+  smoothing_polyorder:
+    value: 2
+    unit: order
+    status: hypothesis
+    source: "Quadratic preserves the curvature at a turnaround, which is exactly where a rep boundary sits."
+    date: 2026-09-05
+
+  # What a candidate excursion is measured AGAINST.
+  #
+  # `min_rom_ratio` is a fraction of a typical rep's range, which is circular —
+  # the typical rep is what segmentation is trying to find. Resolved by taking
+  # the reference from candidates in the main cluster: those reaching at least
+  # this fraction of the largest excursion. A set of real reps clusters near the
+  # top; re-grips and shuffles sit far below and cannot drag the reference down.
+  #
+  # Using the plain median of ALL candidates fails on S02: three real reps and
+  # three decoys give a median halfway between them, and the 35% partial then
+  # sits within a whisker of the cut.
+  rom_reference_fraction_of_max:
+    value: 0.5
+    unit: ratio_of_max_excursion
+    status: hypothesis
+    source: "Separates the rep cluster from decoys. S02's decoys are at 0.10, 0.14 and 0.35 of full range."
+    date: 2026-09-05
+
   # The single most important number in the pipeline: it decides what counts as
   # a rep. Too low and re-grips become reps; too high and a shallow last rep
   # vanishes. S02 exists specifically to pin it down.

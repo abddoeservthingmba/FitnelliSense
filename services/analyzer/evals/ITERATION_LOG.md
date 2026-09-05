@@ -190,3 +190,63 @@ Notes:
   set will come off a phone.
 - Next gate is now `rep_count_exact` (high, blocks 4 stages), which is where
   the spec predicted most of Loop A would land.
+
+---
+
+## Iteration 2 — rep_count_exact
+
+Gate targeted : `rep_count_exact` (high, blocks 4 stages)
+Hypothesis    : nothing produces a vertical bar signal, so rep_count is always
+                0. Per the spec, segmentation runs on BAR velocity rather than
+                pose, so tracking the plate centroid per frame and filtering
+                excursions by minimum ROM should give 5 on S01 and 3 on S02.
+Failing test  : `tests/test_segmentation.py` (7 tests), committed alone in
+                f1a0f8b, failing with `assert 0 == 5`.
+Change        : Build order steps 6 and 7. `tracking.py` (Hough circles on a
+                downscaled frame, plate pair by closest y, gaps interpolated
+                only up to the threshold), `segmentation.py` (Savitzky-Golay,
+                then excursions between turnarounds, filtered by ROM).
+
+| Gate | Before | After |
+|---|---|---|
+| G1 `rep_count_exact` | red (0/2) | **green (2/2)** |
+| G2 `depth_verdict_agreement` | red (0/8) | red (5/8, 62.5%) |
+| G3 `phase_boundary_error` | blocked | **red (median 4.0 frames)** |
+| G4 `unsafe_rule_recall` | blocked | blocked |
+| G5 `minor_rule_precision` | blocked | blocked |
+| G6 `no_verdict_on_low_quality` | green | green |
+| G7 `determinism` | green | green |
+| G8 `runtime_p95` | green (186 ms) | green (12,335 ms) |
+| G9 `no_unhandled_exceptions` | green | green |
+| G10 `no_magic_numbers` | green | green |
+
+Summary: 5 green / 2 red / 3 blocked → **6 green / 2 red / 2 blocked**.
+No previously-green gate regressed.
+
+Verdict : improved
+
+Notes:
+
+- **S02 is the result worth having.** Three real reps and three decoys — a
+  re-grip at 10% of range, a shuffle at 14%, a partial at 35% — and it counts
+  3. Counting clean reps is easy; rejecting things that look like reps is the
+  whole job of this stage.
+- **The ROM reference needed rethinking mid-implementation.** The threshold is
+  a fraction "of median rep ROM", which is circular: the median rep is what
+  segmentation is trying to find. Taking the plain median of all candidates
+  puts S02's cut at 0.371 against a decoy at 0.35 — technically passing, and
+  a hair's breadth from failing on any real footage. The reference is now the
+  median of candidates within half the largest excursion, which separates the
+  rep cluster from the decoys with room to spare. The 0.5 went into
+  thresholds.yaml rather than the code.
+- **G2 moved 0/8 → 5/8 and that number is exactly right.** No depth rule
+  exists, so nothing trips and every rep is predicted "depth ok". S01's five
+  good reps agree; S02's three shallow ones do not. 5/8 is what a pipeline
+  with no depth rule should score, which is a small check that the gate is
+  measuring what it claims to.
+- **G8 went from 186 ms to 12.3 s — a 66x slowdown, still green.** Hough runs
+  on every frame. At 480 frames that is 12 s; a 900-frame 30 s clip
+  extrapolates to roughly 23 s against a 45 s target. Recorded, not optimised:
+  the spec says note it and move on, and correctness is not settled yet.
+- G3 became measurable and is red at 4 frames against a 3-frame target. Close,
+  and it is the next-but-one problem rather than this one.

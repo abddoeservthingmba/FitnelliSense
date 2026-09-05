@@ -13,6 +13,7 @@ is the job.
 
 from __future__ import annotations
 
+from itertools import pairwise
 from pathlib import Path
 
 import pytest
@@ -57,14 +58,14 @@ def test_every_rep_carries_contiguous_phases():
     for index, rep in enumerate(reps, start=1):
         assert rep["index"] == index
         spans = [rep["phases"][name] for name in ("eccentric", "bottom", "concentric", "lockout")]
-        for (_, end), (start, _) in zip(spans, spans[1:], strict=False):
+        for (_, end), (start, _) in pairwise(spans):
             assert end == start, f"rep {index} phases are not contiguous"
         assert rep["frames"] == [spans[0][0], spans[-1][1]]
 
 
 def test_reps_are_in_order_and_do_not_overlap():
     reps = _analyse("S01_squat_side_clean.mp4")["reps"]
-    for earlier, later in zip(reps, reps[1:], strict=False):
+    for earlier, later in pairwise(reps):
         assert earlier["frames"][1] <= later["frames"][0]
 
 

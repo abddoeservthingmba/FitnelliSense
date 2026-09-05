@@ -2,15 +2,16 @@
 
     analyze --video in.mp4 --exercise back_squat --view side --out result.json
 
-STATUS: STUB. The pipeline does not exist yet, and this file deliberately does
-nothing except refuse. The build order puts the eval harness before any
-computer-vision code so that every stage is added against a measurement that
-already works — the alternative is writing a pipeline and then inventing an
-evaluation that flatters it.
+STATUS: stages 1, 6 and 7 of 11 — ingest, bar tracking, rep segmentation.
 
-`analyze_video` raises `NotImplementedError`, which the harness records as a
-blocked gate rather than a crash. That is the honest starting state: nothing has
-been measured, so no gate may claim a value.
+The build order puts the eval harness before any computer-vision code, so every
+stage is added against a measurement that already works. The alternative is
+writing a pipeline and then inventing an evaluation that flatters it.
+
+What that means for a caller today: a set comes back counted, with rep spans
+and phase boundaries, and with every angle, distance and velocity null. Those
+are null rather than estimated, because the stages that would measure them do
+not exist and a plausible-looking number is worse than an absent one.
 
 The interface is stateless and idempotent on `(video_sha256, exercise, view)` —
 the same three inputs must always produce the same output, which is what lets
@@ -25,21 +26,21 @@ import time
 from pathlib import Path
 from typing import Any
 
-from . import __version__, ingest, result
+from . import __version__, ingest, result, segmentation, tracking
 
 
 def analyze_video(*, video: Path, exercise: str, view: str) -> dict[str, Any]:
     """Analyse one set and return a result conforming to the output schema.
 
-    STAGE 1 OF 11 IS BUILT. Ingest probes the clip and refuses one it cannot
-    measure. Everything after it — pose, calibration, bar tracking, rep
-    segmentation, kinematics, rules, scoring — does not exist yet, so a clip
-    that PASSES ingest comes back `no_reps_detected`.
+    INGEST, BAR TRACKING AND SEGMENTATION ARE BUILT. Pose, calibration,
+    kinematics, rules and scoring are not, so a counted set comes back with
+    rep spans and phases and nothing else: every angle, every distance and
+    every velocity is null.
 
-    That status is honest rather than convenient: ingest genuinely succeeded
-    and nothing downstream found any reps, because nothing downstream is there
-    to look. It is a real state in the schema and the client already renders
-    it. Returning `ok` with an empty set would claim an analysis happened.
+    They are null rather than absent, and rather than filled in from pixels.
+    A pixel ROM is a real measurement of nothing anyone can act on — it changes
+    with how far away the phone was — so publishing it as a number would invite
+    exactly the comparison it cannot support.
     """
     started = time.perf_counter()
 
@@ -56,15 +57,62 @@ def analyze_video(*, video: Path, exercise: str, view: str) -> dict[str, Any]:
         )
 
     assert found is not None
+
+    series = tracking.track(video, fps=found.fps)
+    reps = segmentation.close_lockouts(
+        segmentation.segment(series.y, exercise),
+        last_frame=len(series),
+    )
+
+    # STAGE 5 IS NOT BUILT, so there is no scale. Reported as "none" rather
+    # than left null: null would mean nobody looked, "none" means we looked and
+    # found nothing to measure against. The spec forbids a silent fallback, and
+    # this is the difference between the two.
+    if not reps:
+        return result.envelope(
+            status="no_reps_detected",
+            exercise=exercise,
+            runtime_ms=elapsed(),
+            calibration_method="none",
+            frames_processed=found.frame_count,
+        )
+
     return result.envelope(
-        status="no_reps_detected",
+        status="ok",
         exercise=exercise,
         runtime_ms=elapsed(),
-        # Not "none": calibration has not been ATTEMPTED, which is different
-        # from having been tried and failed. Left null until the stage exists.
-        calibration_method=None,
+        calibration_method="none",
         frames_processed=found.frame_count,
+        reps=[_rep_to_wire(rep, series.fps) for rep in reps],
     )
+
+
+def _rep_to_wire(rep: segmentation.Rep, fps: float) -> dict[str, Any]:
+    """One rep in schema shape.
+
+    Durations ARE published: a phase length in seconds needs only the frame
+    rate, which the container states. Distances and velocities are not, because
+    they need a scale that does not exist yet.
+    """
+    return {
+        "index": rep.index,
+        "status": "ok",
+        "frames": [rep.frames[0], rep.frames[1]],
+        "phases": {
+            "eccentric": list(rep.eccentric),
+            "bottom": list(rep.bottom),
+            "concentric": list(rep.concentric),
+            "lockout": list(rep.lockout),
+        },
+        "rom_m": None,
+        "ecc_s": round((rep.eccentric[1] - rep.eccentric[0]) / fps, 3) if fps > 0 else None,
+        "con_s": round((rep.concentric[1] - rep.concentric[0]) / fps, 3) if fps > 0 else None,
+        "mean_con_velocity_ms": None,
+        "peak_velocity_ms": None,
+        "angles": {"knee_min_deg": None, "hip_min_deg": None, "torso_incl_max_deg": None},
+        "bar_path": {"horizontal_drift_m": None, "drift_pct_bar_length": None},
+        "findings": [],
+    }
 
 
 def main() -> int:
