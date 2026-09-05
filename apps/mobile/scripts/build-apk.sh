@@ -78,6 +78,16 @@ echo "==> $DEST"
 # `sha256sum` and `stat`, not Node, for the same path-handling reason.
 stat -c 'size    %s bytes' "$DEST"
 sha256sum "$DEST" | awk '{print "sha256  " $1}'
+
+# Publish to R2. Deliberately NOT fatal: the APK on disk is the deliverable and
+# the upload is a convenience, so a dropped connection must not send anyone back
+# through eleven minutes of Gradle. `--use-system-ca` is required behind
+# TLS-intercepting security software; see the script's header.
+echo
+if ! node --use-system-ca "$ROOT/scripts/upload-apk.mjs" "$DEST"; then
+  echo "(upload skipped — the APK above is still the deliverable)" >&2
+fi
+
 echo
 echo "Verify the signing certificate before sharing it. It MUST match the"
 echo "digest in build-output/README.md, or existing installs cannot update:"

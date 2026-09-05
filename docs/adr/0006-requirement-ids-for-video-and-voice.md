@@ -38,7 +38,7 @@ inside a BRD namespace.
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **FR-VID-01** | Video capture is opt-in. No upload target is issued without a recorded consent timestamp, and consent cannot be self-awarded through the profile endpoint.  |
 | **FR-VID-02** | A user may attach video to a set they own. Ownership failure is indistinguishable from absence (404, per NFR-S-03).                                         |
-| **FR-VID-03** | Clips recorded in-app are captured at 720p, muted, and no longer than 60s. The API refuses anything that is not `video/mp4` or over 80 MB.                    |
+| **FR-VID-03** | Clips recorded in-app are captured at 1080p, muted, and no longer than 60s. The API refuses anything that is not `video/mp4` or over 80 MB.                    |
 | **FR-VID-04** | Upload is presigned and goes client-to-store directly. The API never proxies video bytes.                                                                   |
 | **FR-VID-05** | Clips expire from object storage after 90 days by lifecycle policy. Derived measurements are kept indefinitely — they contain no image of the user.         |
 | **FR-VID-06** | Every metric shown is computed in `packages/domain/bar-path.ts` from the tracked path alone. No metric is derived in a route, a service or a component.      |

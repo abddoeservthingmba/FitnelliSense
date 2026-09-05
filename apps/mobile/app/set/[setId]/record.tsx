@@ -18,10 +18,21 @@
  * someone tried: the request would 403. What it does is explain what is being
  * agreed to before asking, which the API cannot do.
  *
- * Filming is MUTED and 720p, both deliberate. Muted because the app never uses
- * the microphone, and a gym recording would otherwise pick up other people's
- * conversations. 720p because that is what the analysis needs and it removes
- * any transcoding step — the frames are never captured larger.
+ * Filming is MUTED and 1080p at an explicit bitrate. Muted because the app
+ * never uses the microphone, and a gym recording would otherwise pick up other
+ * people's conversations.
+ *
+ * THE PREVIEW IS ASPECT-CORRECT, NOT FULL-BLEED, and that is the fix for a
+ * camera that looked "zoomed in". A `flex: 1` preview is stretched to fill a
+ * modern phone screen — around 9:19.5 — while the sensor delivers 9:16, so the
+ * sides of every frame were being cropped away on screen. Nothing was actually
+ * magnified; the viewfinder was lying about the framing, which is worse,
+ * because someone frames a squat against a preview that is not what gets
+ * recorded. Constraining the preview to the recorded aspect ratio shows the
+ * whole frame, letterboxed.
+ *
+ * Zoom is a real control on top of that, since a phone propped at the end of a
+ * rack is often too far away.
  *
  * A video picked from the library gets neither of those guarantees, because
  * the app has no transcoder and cannot re-encode what it is handed. It is
@@ -67,6 +78,27 @@ const MAX_SECONDS = 60;
 
 const MB = 1024 * 1024;
 
+/**
+ * The aspect ratio the camera actually records, as width / height in portrait.
+ *
+ * 1080p is 1920x1080, so portrait is 1080x1920 — 9:16. The preview is
+ * constrained to this so what you frame is what gets recorded.
+ */
+const FRAME_ASPECT = 9 / 16;
+
+/**
+ * Bits per second, stated rather than left to the device.
+ *
+ * The default is chosen for file size and is visibly soft on a moving barbell,
+ * which is the one thing this feature has to resolve clearly. 6 Mbps for 60
+ * seconds is about 45 MB — comfortably inside the 80 MB cap with room for a
+ * device that overshoots.
+ */
+const VIDEO_BITRATE = 6_000_000;
+
+/** How far one tap of the zoom control moves, on expo-camera's 0–1 scale. */
+const ZOOM_STEP = 0.05;
+
 export default function RecordSetScreen() {
   const theme = useTheme();
   const { setId } = useLocalSearchParams<{ setId: string }>();
@@ -92,6 +124,8 @@ export default function RecordSetScreen() {
   const [chosenWindow, setChosenWindow] = useState<ClipWindow | null>(null);
   /** Why a pick was refused, when it was. */
   const [pickError, setPickError] = useState<string | null>(null);
+  /** 0 is the widest the lens goes; 1 is the device's maximum. */
+  const [zoom, setZoom] = useState(0);
 
   /**
    * Choose an existing video instead of filming one.
@@ -461,18 +495,25 @@ export default function RecordSetScreen() {
     <>
       {header('Record the set')}
       <View style={{ flex: 1, backgroundColor: '#000' }}>
-        <CameraView
-          ref={camera}
-          style={{ flex: 1 }}
-          mode="video"
-          // 720p is what the analysis needs; capturing larger would mean
-          // transcoding, which needs a native module we do not have.
-          videoQuality="720p"
-          // The app never uses the microphone. This is that sentence — and it
-          // also stops a gym recording picking up other people's conversations.
-          mute
-          facing="back"
-        />
+        {/* Centred and letterboxed rather than stretched to fill. See the note
+            at the top of the file: full-bleed was cropping the sides off the
+            viewfinder while recording the full frame. */}
+        <View style={{ flex: 1, justifyContent: 'center' }}>
+          <CameraView
+            ref={camera}
+            style={{ width: '100%', aspectRatio: FRAME_ASPECT }}
+            mode="video"
+            videoQuality="1080p"
+            // Stated, not left to the device — the default is soft on a moving
+            // barbell, which is the one thing this has to resolve clearly.
+            videoBitrate={VIDEO_BITRATE}
+            zoom={zoom}
+            // The app never uses the microphone. This is that sentence — and it
+            // also stops a gym recording picking up other people's conversations.
+            mute
+            facing="back"
+          />
+        </View>
 
         {/* Framing guide. The analysis scales pixels to metres from a plate in
             shot, so a clip with no plate visible cannot produce a velocity. */}
@@ -555,6 +596,33 @@ export default function RecordSetScreen() {
             gap: theme.space.md,
           }}
         >
+          {/* Zoom stays available WHILE recording — a lifter who set the phone
+              down and started a set cannot walk over and reframe it. */}
+          <Row gap="sm" style={{ alignItems: 'center' }}>
+            <ZoomButton
+              label="−"
+              accessibilityLabel="Zoom out"
+              disabled={zoom <= 0}
+              onPress={() => setZoom((current) => Math.max(0, current - ZOOM_STEP))}
+            />
+            <Text
+              variant="micro"
+              weight="semibold"
+              style={{ color: '#FFFFFF', minWidth: 56, textAlign: 'center' }}
+            >
+              {/* A percentage of the device's maximum, because expo-camera's
+                  scale is a fraction of a maximum that differs per phone —
+                  printing "2x" would be a number we cannot stand behind. */}
+              {zoom === 0 ? 'no zoom' : `${Math.round(zoom * 100)}%`}
+            </Text>
+            <ZoomButton
+              label="+"
+              accessibilityLabel="Zoom in"
+              disabled={zoom >= 1}
+              onPress={() => setZoom((current) => Math.min(1, current + ZOOM_STEP))}
+            />
+          </Row>
+
           <Pressable
             onPress={() => void start()}
             accessibilityRole="button"
@@ -587,6 +655,49 @@ export default function RecordSetScreen() {
         </View>
       </View>
     </>
+  );
+}
+
+/**
+ * One zoom control. Big enough to hit without looking away from the bar, and
+ * drawn in plain white because it sits on a camera preview rather than on the
+ * app's own surfaces — a theme colour would vanish against the wrong gym wall.
+ */
+function ZoomButton({
+  label,
+  accessibilityLabel,
+  disabled,
+  onPress,
+}: {
+  label: string;
+  accessibilityLabel: string;
+  disabled: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ disabled }}
+      hitSlop={8}
+      style={({ pressed }) => ({
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.55)',
+        backgroundColor: 'rgba(0,0,0,0.35)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        opacity: disabled ? 0.35 : pressed ? 0.6 : 1,
+      })}
+    >
+      <Text variant="callout" weight="heavy" style={{ color: '#FFFFFF' }}>
+        {label}
+      </Text>
+    </Pressable>
   );
 }
 

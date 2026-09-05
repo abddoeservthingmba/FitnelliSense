@@ -1,0 +1,164 @@
+/**
+ * Puts a built APK into R2 so a release is downloadable without GitHub.
+ *
+ *   node --use-system-ca scripts/upload-apk.mjs [path/to.apk]
+ *
+ * Called automatically at the end of scripts/build-apk.sh. Run it by hand to
+ * re-upload an existing build.
+ *
+ * `--use-system-ca` is needed behind TLS-intercepting security software
+ * (Kaspersky here): Node ships its own CA bundle and does not know the
+ * interceptor's root, so the connection fails with "self-signed certificate in
+ * certificate chain". The flag reads the OS trust store instead. Do NOT reach
+ * for NODE_TLS_REJECT_UNAUTHORIZED=0 — that would send the R2 credentials over
+ * a connection whose certificate is never checked at all.
+ *
+ * LAYOUT, and why it is not just the file at the top level:
+ *
+ *   android/<version>+<versionCode>/Ascension-<version>.apk
+ *   android/<version>+<versionCode>/metadata.json
+ *
+ * Every build gets its own prefix, so nothing is ever overwritten and the
+ * bucket is the version history rather than a folder of files with the same
+ * name. `metadata.json` carries the hashes and the signing certificate, which
+ * is what makes a download verifiable by whoever fetches it — an APK on its own
+ * proves nothing about where it came from.
+ *
+ * The bucket is SEPARATE from the app's `ascension` bucket on purpose. That one
+ * has a 90-day lifecycle rule on the `cv/` prefix; releases must not sit next
+ * to anything that expires, and a build that vanished after 90 days would be a
+ * release nobody could reinstall.
+ */
+import { readFileSync, statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { basename, dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+
+/** The release bucket. Deliberately not the app's media bucket. */
+const BUCKET = 'apkstorageversioning';
+
+function env(name) {
+  const file = readFileSync(join(ROOT, 'apps/api/.env'), 'utf8');
+  const match = file.match(new RegExp(`^${name}=(.*)$`, 'm'));
+  return match ? match[1].trim() : null;
+}
+
+/*
+ * Its own credentials, falling back to the app's.
+ *
+ * Separate on purpose: the key the API runs with can write user video, and a
+ * key that can publish a release is a different level of trust. Widening the
+ * runtime token to cover releases would mean the server could overwrite an
+ * APK, which is a strange power for it to have.
+ */
+const accountId = env('R2_ACCOUNT_ID');
+const accessKeyId = env('R2_APK_ACCESS_KEY_ID') ?? env('R2_ACCESS_KEY_ID');
+const secretAccessKey = env('R2_APK_SECRET_ACCESS_KEY') ?? env('R2_SECRET_ACCESS_KEY');
+
+if (!accountId || !accessKeyId || !secretAccessKey) {
+  console.error('R2 credentials are not set in apps/api/.env — nothing uploaded.');
+  process.exit(1);
+}
+
+const app = JSON.parse(readFileSync(join(ROOT, 'apps/mobile/app.json'), 'utf8')).expo;
+const version = app.version;
+const versionCode = app.android.versionCode;
+
+const apkPath = process.argv[2] ?? join(ROOT, 'build-output', `Ascension-${version}.apk`);
+const bytes = readFileSync(apkPath);
+const sha256 = createHash('sha256').update(bytes).digest('hex');
+
+/** Best effort — a build from a dirty tree still uploads, it just says so. */
+function git(...args) {
+  try {
+    return execFileSync('git', args, { cwd: ROOT, encoding: 'utf8' }).trim();
+  } catch {
+    return null;
+  }
+}
+
+const metadata = {
+  version,
+  versionCode,
+  package: app.android.package,
+  file: basename(apkPath),
+  sizeBytes: statSync(apkPath).size,
+  sha256,
+  /*
+   * The certificate every install is checked against. Recorded per build so a
+   * change is visible here as well as in build-output/README.md — a signing
+   * identity that changes without anyone noticing means every existing user
+   * must uninstall before they can update.
+   */
+  signingCertSha256: 'c35574e619810ce487e6e92d2e3cbabced3e85356f32e4d793183335a0fee5de',
+  apiUrl: process.env.EXPO_PUBLIC_API_URL ?? 'https://fitnellisense.onrender.com',
+  gitCommit: git('rev-parse', 'HEAD'),
+  gitDirty: git('status', '--porcelain') !== '',
+  builtAt: new Date().toISOString(),
+};
+
+const prefix = `android/${version}+${versionCode}`;
+
+const client = new S3Client({
+  region: 'auto',
+  endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+  credentials: { accessKeyId, secretAccessKey },
+});
+
+async function put(key, body, contentType) {
+  await client.send(
+    new PutObjectCommand({ Bucket: BUCKET, Key: key, Body: body, ContentType: contentType }),
+  );
+  console.log(`  ${key}`);
+}
+
+console.log(`==> uploading to r2://${BUCKET}/${prefix}/`);
+
+try {
+  await put(`${prefix}/${basename(apkPath)}`, bytes, 'application/vnd.android.package-archive');
+  await put(`${prefix}/metadata.json`, JSON.stringify(metadata, null, 2), 'application/json');
+} catch (error) {
+  /*
+   * Never fatal to the build. The APK on disk is the deliverable; the upload is
+   * a convenience, and a network failure here should not send someone back
+   * through eleven minutes of Gradle.
+   */
+  const denied = error.$metadata?.httpStatusCode === 403 || error.name === 'AccessDenied';
+
+  console.error(`\nUpload failed: ${error.name ?? 'Error'} — ${error.message}`);
+
+  if (denied) {
+    // The single most likely cause, said specifically, because "Access Denied"
+    // sends people to check the bucket name when the name is fine.
+    console.error(
+      [
+        '',
+        `403 means the API token does not cover "${BUCKET}". The credentials are`,
+        'valid — they reach the app bucket — so this is token SCOPE, not a bad key',
+        'and not a wrong bucket name.',
+        '',
+        'In the Cloudflare dashboard: R2 > API > Manage API tokens. Either edit the',
+        `existing token to include "${BUCKET}", or create a second token scoped to`,
+        'it alone and put the pair in apps/api/.env as:',
+        '',
+        '  R2_APK_ACCESS_KEY_ID=...',
+        '  R2_APK_SECRET_ACCESS_KEY=...',
+        '',
+        'A separate token is the better of the two: the runtime key then still',
+        'cannot publish or overwrite a release.',
+      ].join('\n'),
+    );
+  }
+
+  console.error('\nThe APK is still in build-output/. Re-run this script to retry.');
+  process.exit(1);
+}
+
+console.log(`\nsha256  ${sha256}`);
+if (metadata.gitDirty) {
+  console.log('NOTE: built from a dirty working tree — recorded as such in metadata.json.');
+}

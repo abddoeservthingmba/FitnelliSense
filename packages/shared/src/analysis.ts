@@ -4,7 +4,7 @@
  * The shape of the flow, because it is the part worth agreeing on before any
  * of it is built:
  *
- *   1. The client records a set at 720p30 and asks for somewhere to put it.
+ *   1. The client records a set at 1080p and asks for somewhere to put it.
  *   2. The server creates an analysis row — that row's id IS the reference id
  *      — and hands back a presigned PUT valid for minutes.
  *   3. The client uploads straight to R2. The video never passes through the
@@ -36,12 +36,12 @@ import { isoDateTimeSchema, uuidSchema } from './primitives';
  * already crossed someone's mobile data.
  */
 export const requestVideoUploadSchema = z.object({
-  /** Bytes. Capped server-side; a 30-second 720p clip is around 6 MB. */
+  /** Bytes. Capped server-side; a 30-second 1080p clip is around 22 MB. */
   contentLength: z
     .number()
     .int()
     .min(1_024, 'That file is too small to be a video')
-    .max(80 * 1024 * 1024, 'Videos must be under 80 MB — record at 720p and keep it short'),
+    .max(80 * 1024 * 1024, 'Videos must be under 80 MB — keep the clip short'),
   /**
    * Only MP4. One container means one thing for the worker to decode, and
    * every phone can produce it.
