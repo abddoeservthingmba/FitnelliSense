@@ -597,6 +597,18 @@ export const cvAnalyses = pgTable(
      * analysis-service, which always states the status explicitly.
      */
     status: analysisStatus('status').notNull().default('queued'),
+    /**
+     * The span of the uploaded file to analyse, in seconds from its start.
+     *
+     * Two columns rather than a clip of the video itself, because the app has
+     * no transcoder and cannot cut an MP4. The window is what the worker will
+     * decode; the rest of the file is uploaded and ignored.
+     *
+     * Defaulted to a whole short clip so every existing row keeps meaning what
+     * it meant: analyse all of it.
+     */
+    clipStartSecs: integer('clip_start_secs').notNull().default(0),
+    clipEndSecs: integer('clip_end_secs').notNull().default(0),
     repCount: smallint('rep_count'),
     result: jsonb('result'),
     error: text('error'),

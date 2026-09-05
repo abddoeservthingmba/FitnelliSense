@@ -47,8 +47,26 @@ export const requestVideoUploadSchema = z.object({
    * every phone can produce it.
    */
   contentType: z.literal('video/mp4'),
-  /** Seconds. Used to reject a clip too long to be one set. */
-  durationSecs: z.number().int().min(1).max(300),
+  /**
+   * Seconds — the length of the FILE, which may be longer than the span that
+   * gets analysed. An hour is a nonsense ceiling rather than a real policy;
+   * the byte cap above is what actually bounds this, since no phone produces
+   * an hour of video under 80 MB.
+   */
+  durationSecs: z.number().int().min(1).max(3600),
+  /**
+   * Where the analysed window starts, for a video longer than the ceiling in
+   * `@fi/domain`'s `MAX_CLIP_SECONDS`.
+   *
+   * Only the START is sent. The window is always exactly as long as the
+   * ceiling allows, so an end would be a second number the client could
+   * disagree with the server about — the server derives it with `clipWindow`,
+   * which is also the only place the ceiling is written down.
+   *
+   * Omitted means from the beginning, which is what every clip short enough to
+   * need no choice sends.
+   */
+  clipStartSecs: z.number().int().min(0).optional(),
 });
 
 export const videoUploadTargetSchema = z.object({
@@ -95,6 +113,13 @@ export const analysisSchema = z.object({
   createdAt: isoDateTimeSchema,
   completedAt: isoDateTimeSchema.nullable(),
   repCount: z.number().int().nullable(),
+  /**
+   * The span of the video that was analysed. Equal to the whole file for a
+   * clip short enough not to need a choice, and worth showing when it is not —
+   * otherwise "4 reps" from a ten-minute video is unexplainable.
+   */
+  clipStartSecs: z.number().int(),
+  clipEndSecs: z.number().int(),
   result: analysisResultSchema.nullable(),
   /**
    * Why it failed, in words a user can act on. Never a stack trace — a worker

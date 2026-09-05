@@ -13,6 +13,7 @@
  */
 import { and, desc, eq } from 'drizzle-orm';
 import type { Analysis, RequestVideoUpload, VideoUploadTarget } from '@fi/shared';
+import { clipWindow } from '@fi/domain';
 import { cvAnalyses, userProfiles, workoutExercises, workoutSets, workouts } from '../db/schema';
 import { keys, type Storage } from '../lib/r2';
 import { conflict, forbidden, notFound, serviceUnavailable } from '../lib/errors';
@@ -88,12 +89,23 @@ export async function requestVideoUpload(
   // or a throttled key — so this one is genuinely worth retrying.
   if (!target) throw serviceUnavailable();
 
+  /*
+   * The span the worker will decode, derived here rather than taken from the
+   * client. `clipWindow` clamps: a start past the end of the video becomes the
+   * last window, and the length is always the domain's ceiling or the whole
+   * video, whichever is shorter. So there is no request that can ask for more
+   * than MAX_CLIP_SECONDS of analysis, however the client is written.
+   */
+  const window = clipWindow(input.durationSecs, input.clipStartSecs ?? 0);
+
   await db.insert(cvAnalyses).values({
     id: analysisId,
     userId,
     workoutSetId: setId,
     videoR2Key: key,
     status: 'awaiting_upload',
+    clipStartSecs: window.startSecs,
+    clipEndSecs: window.endSecs,
   });
 
   return {
@@ -219,6 +231,8 @@ async function toWire(
     createdAt: row.createdAt.toISOString(),
     completedAt: row.completedAt?.toISOString() ?? null,
     repCount: row.repCount,
+    clipStartSecs: row.clipStartSecs,
+    clipEndSecs: row.clipEndSecs,
     // Written by the worker; trusted to match the schema it was given.
     result: (row.result as Analysis['result']) ?? null,
     error: row.error,

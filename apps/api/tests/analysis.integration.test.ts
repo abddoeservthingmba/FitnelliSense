@@ -118,10 +118,47 @@ describeIntegration('form analysis', () => {
     expect(response.statusCode).toBe(400);
   });
 
-  it('refuses a clip too long to be one set', async () => {
+  /*
+   * The duration rule changed with the clip window (0015). A long video is no
+   * longer refused — only 180 seconds of it get analysed, and the user picks
+   * which. So the ceiling here is a nonsense bound, not a policy: the byte cap
+   * above is what actually stops someone uploading an hour of footage.
+   */
+  it('accepts a video longer than one set, because only a window of it is analysed', async () => {
+    // Consent first, or this asserts the consent gate and proves nothing about
+    // the duration.
+    await api.post('/api/v1/me/video-consent');
+
     const response = await api.post(`/api/v1/sets/${setId}/video`, {
       ...VALID_REQUEST,
       durationSecs: 600,
+      clipStartSecs: 300,
+    });
+
+    /*
+     * 409 is how far a request gets in this harness: past the schema, past
+     * ownership, past consent, and into the storage check. Asserting the exact
+     * code matters — `not.toBe(400)` would also pass on a 401 or a 500, which
+     * is how a test ends up green for the wrong reason.
+     */
+    expect(response.statusCode).toBe(409);
+    expect(response.json<{ error: { code: string } }>().error.code).toBe('CONFLICT');
+  });
+
+  it('refuses a duration that is not a real video', async () => {
+    for (const durationSecs of [0, -1, 3601]) {
+      const response = await api.post(`/api/v1/sets/${setId}/video`, {
+        ...VALID_REQUEST,
+        durationSecs,
+      });
+      expect(response.statusCode).toBe(400);
+    }
+  });
+
+  it('refuses a negative clip start', async () => {
+    const response = await api.post(`/api/v1/sets/${setId}/video`, {
+      ...VALID_REQUEST,
+      clipStartSecs: -1,
     });
     expect(response.statusCode).toBe(400);
   });
