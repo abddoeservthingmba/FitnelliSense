@@ -49,10 +49,9 @@ const BUCKET = 'apkstorageversioning';
  * section entirely rather than printing a heading with nothing under it.
  */
 const RELEASE_NOTES = [
-  "You now choose whether a set is analysed. It is on by default for squats, deadlifts, bench and overhead press, and unavailable for lifts the analyser has no rules for — those clips are still saved to watch back.",
-  "A clip nobody will measure now says so, instead of sitting on a queue forever.",
-  "Fixed: the workout list could fail to load.",
-  "Still true: form measurements are not switched on yet. Uploads are stored and watchable.",
+  "Fixed: picking a short video from your gallery ignored the \"Analyse this set\" toggle, stored the clip unanalysed, and then told you that you had not asked for analysis. You had.",
+  "The result screen now states clearly whether analysis is on for a clip or was off.",
+  "Still true: measurements are not switched on yet. A clip with analysis on is queued and will be measured once they are.",
 ];
 
 function env(name) {

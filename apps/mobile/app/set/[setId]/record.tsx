@@ -202,15 +202,27 @@ export default function RecordSetScreen() {
     setPicked({ ...video, uri: asset.uri });
     setChosenWindow(plan.window);
 
-    // Short enough that there is no choice to make — upload it as it is.
+    // Short enough that there is no window to choose — upload it as it is.
     if (plan.kind === 'ok') {
-      upload.mutate(
-        { setId, uri: asset.uri, durationSecs: Math.floor(video.durationSecs) },
-        { onSuccess: (analysis) => router.replace(`/analysis/${analysis.id}`) },
-      );
+      startUpload(asset.uri, Math.floor(video.durationSecs));
     }
   };
 
+  /**
+   * THE ONLY WAY AN UPLOAD STARTS. Every path — filmed, picked short, picked
+   * long and trimmed — comes through here.
+   *
+   * That is not tidiness. This function is where `analyse` gets attached, and
+   * when the library path called `upload.mutate` directly it silently omitted
+   * it: the flag defaults to false on the wire, so a gallery clip uploaded with
+   * the toggle ON was stored without analysis and the result screen then told
+   * the user they had not asked for it. Two call sites, one of which forgot a
+   * parameter, and nothing in the types could catch it because the parameter is
+   * optional.
+   *
+   * One entry point makes that class of bug unrepresentable rather than merely
+   * fixed.
+   */
   const startUpload = (uri: string, durationSecs: number, clipStartSecs?: number) =>
     upload.mutate(
       // `analyse && measurable`, not just `analyse`: belt and braces against a

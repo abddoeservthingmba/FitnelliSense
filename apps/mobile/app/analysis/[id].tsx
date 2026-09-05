@@ -114,30 +114,41 @@ function Status({ analysis }: { analysis: Analysis }) {
 
       {/*
         `stored_only` is a CHOICE, not a shortfall, so it does not apologise.
-        Either the lift has no rules or the user asked for the video alone —
-        both are fine, and phrasing them as a limitation would make a
-        deliberate decision read as a failure.
+        Either the lift has no rules or the user asked for the video alone.
+
+        In a CARD rather than as muted body text, because this was reported as
+        "it is not showing that analysis was not selected". It WAS showing —
+        quietly, beneath a heading reading "Saved", which for a reader is the
+        same as not showing at all.
       */}
       {analysis.status === 'stored_only' ? (
-        <Text tone="muted">
-          {analysis.analysisRequested
-            ? 'This clip is stored and you can watch it back. It was not measured.'
-            : 'Stored for you to watch back. You did not ask for this one to be measured — you can film another set with analysis on.'}
-        </Text>
+        <Card>
+          <Column gap="xs">
+            <Overline>not measured</Overline>
+            <Text variant="caption" tone="muted">
+              {analysis.analysisRequested
+                ? 'This clip is stored and you can watch it back, but it was not measured.'
+                : 'Analysis was off for this clip, so it is stored to watch back and nothing was measured. Turn on "Analyse this set" before recording or picking the next one.'}
+            </Text>
+          </Column>
+        </Card>
       ) : null}
 
       {/*
-        This used to say "Working on it — tracking the bar through the clip",
-        which was not true: there is no analysis worker running yet, so nothing
-        was tracking anything and the screen would have said it forever. A
-        status that describes work nobody is doing is worse than no status.
+        Queued means analysis WAS asked for, and saying so matters: without it
+        this screen looks identical to the not-measured one, and the reader
+        cannot tell whether their choice registered.
       */}
       {waiting ? (
-        <Text tone="muted">
-          Your clip is stored and you can watch it back any time. Bar-path measurements are not
-          switched on yet — when they are, this set will be measured automatically and the numbers
-          will appear here.
-        </Text>
+        <Card>
+          <Column gap="xs">
+            <Overline>analysis is on for this clip</Overline>
+            <Text variant="caption" tone="muted">
+              It is queued. Bar-path measurements are not switched on yet, so nothing has
+              processed it — when they are, this set is measured and the numbers appear here.
+            </Text>
+          </Column>
+        </Card>
       ) : null}
 
       {/* The worker's message, which is written for a reader rather than a log. */}

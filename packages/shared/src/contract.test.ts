@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createMediaAssetRequestSchema, seedCatalogueSchema } from './index';
 import { decimalStringSchema, paginationSchema, rpeSchema } from './primitives';
 import { registerRequestSchema } from './auth';
+import { requestVideoUploadSchema } from './analysis';
 import { listExercisesQuerySchema, createExerciseRequestSchema } from './exercise';
 import { saveRoutineRequestSchema } from './routine';
 import { httpStatusFor, isRetryable } from './errors';
@@ -179,5 +180,52 @@ describe('error envelope', () => {
     expect(httpStatusFor('SERVICE_UNAVAILABLE')).toBe(503);
     expect(isRetryable('SERVICE_UNAVAILABLE')).toBe(true);
     expect(isRetryable('VALIDATION_ERROR')).toBe(false);
+  });
+});
+
+describe('video upload request', () => {
+  /*
+   * These pin a genuinely sharp edge. `analyse` is optional and defaults to
+   * FALSE, so a caller that omits it silently uploads a clip nobody will ever
+   * measure — and that is exactly what happened: the record screen had two
+   * upload call sites and one of them forgot the field, so a gallery clip
+   * picked with the toggle ON was stored unanalysed, and the result screen
+   * then told the user they had not asked for it.
+   *
+   * The default stays false, because the opposite would queue work nobody
+   * requested. What changes is that the danger is written down.
+   */
+  it('defaults `analyse` to false when the caller omits it', () => {
+    const parsed = requestVideoUploadSchema.parse({
+      contentLength: 5_000_000,
+      contentType: 'video/mp4',
+      durationSecs: 40,
+    });
+    expect(parsed.analyse).toBe(false);
+  });
+
+  it('carries `analyse` through when it is given', () => {
+    const parsed = requestVideoUploadSchema.parse({
+      contentLength: 5_000_000,
+      contentType: 'video/mp4',
+      durationSecs: 40,
+      analyse: true,
+    });
+    expect(parsed.analyse).toBe(true);
+  });
+
+  it('treats the clip window as optional and independent of `analyse`', () => {
+    // A long clip may be trimmed and still not analysed, and a short one may
+    // be analysed with no window at all. Coupling them would make one imply
+    // the other.
+    const parsed = requestVideoUploadSchema.parse({
+      contentLength: 5_000_000,
+      contentType: 'video/mp4',
+      durationSecs: 600,
+      clipStartSecs: 120,
+      analyse: false,
+    });
+    expect(parsed.clipStartSecs).toBe(120);
+    expect(parsed.analyse).toBe(false);
   });
 });
