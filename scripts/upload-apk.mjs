@@ -49,11 +49,9 @@ const BUCKET = 'apkstorageversioning';
  * section entirely rather than printing a heading with nothing under it.
  */
 const RELEASE_NOTES = [
-  "Sign in with Google now uses the native account chooser — the previous build was blocked by Google with \"Custom URI scheme is not enabled\".",
-  "The Google mark now appears on the button.",
-  "Upload progress no longer runs past 100%.",
-  "The analysis screen no longer claims to be tracking the bar. It says the clip is saved, because that is what is true until the measurement worker exists.",
-  "A workout cannot be finished while a set video is still uploading.",
+  "Your Ascension version now appears at the bottom of Profile, so a screenshot shows which build you are on.",
+  "Google sign-in works — the server was refusing tokens until now; no app change was needed for that part.",
+  "Confirming from 1.8.0: the analysis screen no longer claims to be tracking the bar, and upload progress stops at 100%.",
 ];
 
 function env(name) {

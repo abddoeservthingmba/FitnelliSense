@@ -9,6 +9,7 @@
 import { useEffect, useState } from 'react';
 import { Alert, Platform, Pressable, Switch, View } from 'react-native';
 import { router } from 'expo-router';
+import Constants from 'expo-constants';
 import { REST_SECONDS_OPTIONS, SESSION_MINUTES_OPTIONS, TRAINING_DAYS_OPTIONS } from '@fi/shared';
 import { Button } from '../../src/components/Button';
 import { Row, Stack } from '../../src/components/Card';
@@ -437,6 +438,17 @@ export default function ProfileScreen() {
               sold.
             </Text>
             <Rule />
+            {/*
+              The installed version, shown because its absence cost real time:
+              a bug reported against the app turned out to be fixed two builds
+              earlier, and nobody could tell which build the phone was running.
+              A tester's screenshot should be enough to answer that.
+            */}
+            <Text variant="micro" tone="faint" style={{ textAlign: 'center' }} selectable>
+              {`Ascension ${Constants.expoConfig?.version ?? '—'} (build ${
+                Constants.expoConfig?.android?.versionCode ?? '—'
+              })`}
+            </Text>
             <Button label="Sign out" variant="ghost" onPress={() => void signOut()} fullWidth />
             <Button
               label="Delete my account"
