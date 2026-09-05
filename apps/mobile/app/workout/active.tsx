@@ -269,6 +269,9 @@ export default function ActiveWorkoutScreen() {
           addExercise.mutate({
             exerciseId: exercise.id,
             exerciseName: exercise.name,
+            // Carried optimistically so the row knows straight away whether
+            // form analysis exists for this lift, rather than after a round trip.
+            exerciseSlug: exercise.slug,
             restSecs: defaultRestSecs,
           })
         }

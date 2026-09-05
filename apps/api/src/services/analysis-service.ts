@@ -13,8 +13,15 @@
  */
 import { and, desc, eq } from 'drizzle-orm';
 import type { Analysis, RequestVideoUpload, VideoUploadTarget } from '@fi/shared';
-import { clipWindow } from '@fi/domain';
-import { cvAnalyses, userProfiles, workoutExercises, workoutSets, workouts } from '../db/schema';
+import { canRequestAnalysis, clipWindow } from '@fi/domain';
+import {
+  cvAnalyses,
+  exercises,
+  userProfiles,
+  workoutExercises,
+  workoutSets,
+  workouts,
+} from '../db/schema';
 import { keys, type Storage } from '../lib/r2';
 import { conflict, forbidden, notFound, serviceUnavailable } from '../lib/errors';
 import { newId } from '../lib/ids';
@@ -32,17 +39,29 @@ const PLAYBACK_TTL_SECS = 300;
 /** How long the client has to complete the upload it just asked for. */
 const UPLOAD_TTL_SECS = 600;
 
-/** The set must belong to the caller. Proven by joining upward to the workout. */
-async function ownedSet(db: Database, userId: string, setId: string): Promise<void> {
+/**
+ * The set must belong to the caller. Proven by joining upward to the workout.
+ *
+ * Returns the exercise's catalogue slug as well, because the analysis decision
+ * needs it and the join is already here. Fetching it separately would be a
+ * second round trip for a value this query has in hand.
+ */
+async function ownedSet(
+  db: Database,
+  userId: string,
+  setId: string,
+): Promise<{ exerciseSlug: string | null }> {
   const [row] = await db
-    .select({ id: workoutSets.id })
+    .select({ id: workoutSets.id, exerciseSlug: exercises.slug })
     .from(workoutSets)
     .innerJoin(workoutExercises, eq(workoutExercises.id, workoutSets.workoutExerciseId))
     .innerJoin(workouts, eq(workouts.id, workoutExercises.workoutId))
+    .innerJoin(exercises, eq(exercises.id, workoutExercises.exerciseId))
     .where(and(eq(workoutSets.id, setId), eq(workouts.userId, userId)))
     .limit(1);
 
   if (!row) throw notFound('That set could not be found');
+  return { exerciseSlug: row.exerciseSlug };
 }
 
 /**
@@ -60,7 +79,7 @@ export async function requestVideoUpload(
   setId: string,
   input: RequestVideoUpload,
 ): Promise<VideoUploadTarget> {
-  await ownedSet(db, userId, setId);
+  const { exerciseSlug } = await ownedSet(db, userId, setId);
   await requireVideoConsent(db, userId);
 
   /*
@@ -98,12 +117,30 @@ export async function requestVideoUpload(
    */
   const window = clipWindow(input.durationSecs, input.clipStartSecs ?? 0);
 
+  /*
+   * Whether this clip will be measured, decided HERE and not by the client.
+   *
+   * Two independent conditions, and both must hold. The user has to have asked
+   * — filming and being scored are different wants, and plenty of people only
+   * want the footage. And the analyser has to have rules for the lift, which is
+   * a fact about our software that the client cannot be the authority on: a
+   * stale build, a new catalogue entry, or simply a crafted request would
+   * otherwise queue work for a dumbbell curl the pipeline has nothing to say
+   * about.
+   *
+   * Recorded on the row rather than recomputed later, because the answer can
+   * change: adding rules for an exercise must not retroactively re-interpret
+   * clips filmed when the user declined analysis.
+   */
+  const willAnalyse = input.analyse && canRequestAnalysis(exerciseSlug);
+
   await db.insert(cvAnalyses).values({
     id: analysisId,
     userId,
     workoutSetId: setId,
     videoR2Key: key,
     status: 'awaiting_upload',
+    analysisRequested: willAnalyse,
     clipStartSecs: window.startSecs,
     clipEndSecs: window.endSecs,
   });
@@ -134,7 +171,17 @@ export async function confirmVideoUpload(
   const existing = await ownedAnalysis(db, userId, analysisId);
 
   if (existing.status === 'awaiting_upload') {
-    await db.update(cvAnalyses).set({ status: 'queued' }).where(eq(cvAnalyses.id, analysisId));
+    /*
+     * `queued` only when something is actually going to pick it up. A clip
+     * nobody will measure goes straight to `stored_only`, which is terminal —
+     * parking it in `queued` would leave the screen waiting on a worker that is
+     * never coming for this row, which is precisely the "Working on it forever"
+     * state that had to be removed from the client.
+     */
+    await db
+      .update(cvAnalyses)
+      .set({ status: existing.analysisRequested ? 'queued' : 'stored_only' })
+      .where(eq(cvAnalyses.id, analysisId));
   } else if (existing.status === 'failed') {
     // Re-queueing a failure needs a fresh upload, not a nudge.
     throw conflict('That analysis failed. Record the set again.');
@@ -267,6 +314,7 @@ async function toWire(
     repCount: row.repCount,
     clipStartSecs: row.clipStartSecs,
     clipEndSecs: row.clipEndSecs,
+    analysisRequested: row.analysisRequested,
     // Written by the worker; trusted to match the schema it was given.
     result: (row.result as Analysis['result']) ?? null,
     error: row.error,

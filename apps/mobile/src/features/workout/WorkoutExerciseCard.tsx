@@ -111,8 +111,19 @@ export const WorkoutExerciseCard = memo(function WorkoutExerciseCard({
              * navigation is this component's own — the screen above has no
              * business knowing about a camera route.
              */
+            /*
+             * The slug rides along so the record screen knows whether this lift
+             * can be MEASURED without asking the server. Filming is offered for
+             * every strength lift regardless — a video of a curl is still worth
+             * keeping — but what the screen promises differs.
+             */
             onRecord={
-              kind === 'strength' ? () => router.push(`/set/${set.id}/record`) : undefined
+              kind === 'strength'
+                ? () =>
+                    router.push(
+                      `/set/${set.id}/record?slug=${encodeURIComponent(exercise.exerciseSlug ?? '')}`,
+                    )
+                : undefined
             }
           />
         ))}

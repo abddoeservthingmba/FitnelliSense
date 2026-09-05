@@ -9,6 +9,7 @@ import {
   distanceMetresSchema,
   durationSecsSchema,
   paginationSchema,
+  slugSchema,
   positionSchema,
   positiveDecimalStringSchema,
   repsSchema,
@@ -36,6 +37,8 @@ export const workoutExerciseSchema = z.object({
   id: uuidSchema,
   exerciseId: uuidSchema,
   exerciseName: shortTextSchema,
+  /** Catalogue slug, so the client can tell whether form analysis exists for this lift. Null for a custom exercise. */
+  exerciseSlug: slugSchema.nullable(),
   /** FR-CAR-03: the client cannot know which fields to show without this. */
   kind: exerciseKindSchema,
   position: positionSchema,

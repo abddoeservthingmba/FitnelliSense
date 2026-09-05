@@ -46,6 +46,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import {
   MAX_UPLOAD_BYTES,
+  canRequestAnalysis,
   planUpload,
   type ClipWindow,
   type PickedVideo,
@@ -99,7 +100,7 @@ const ZOOM_STEP = 0.05;
 
 export default function RecordSetScreen() {
   const theme = useTheme();
-  const { setId } = useLocalSearchParams<{ setId: string }>();
+  const { setId, slug } = useLocalSearchParams<{ setId: string; slug?: string }>();
   const me = useMe();
   const grantConsent = useGrantVideoConsent();
   const upload = useUploadSetVideo();
@@ -124,6 +125,21 @@ export default function RecordSetScreen() {
   const [pickError, setPickError] = useState<string | null>(null);
   /** 0 is the widest the lens goes; 1 is the device's maximum. */
   const [zoom, setZoom] = useState(0);
+
+  /*
+   * Whether the analyser has rules for this lift. The server decides for real —
+   * a client can send anything — but the screen needs to know so it does not
+   * offer a choice that cannot be honoured, or promise a measurement that will
+   * never arrive.
+   */
+  const measurable = canRequestAnalysis(slug ?? null);
+
+  /*
+   * Defaults to measuring when the lift supports it, and cannot be turned on
+   * when it does not. Someone who set a phone up to film a squat almost
+   * certainly wants the numbers; someone filming a curl cannot have them.
+   */
+  const [analyse, setAnalyse] = useState(measurable);
 
   /**
    * Choose an existing video instead of filming one.
@@ -197,7 +213,10 @@ export default function RecordSetScreen() {
 
   const startUpload = (uri: string, durationSecs: number, clipStartSecs?: number) =>
     upload.mutate(
-      { setId, uri, durationSecs, clipStartSecs },
+      // `analyse && measurable`, not just `analyse`: belt and braces against a
+      // stale toggle if the slug were ever to change under the screen. The
+      // server checks this too and is the authority.
+      { setId, uri, durationSecs, clipStartSecs, analyse: analyse && measurable },
       { onSuccess: (analysis) => router.replace(`/analysis/${analysis.id}`) },
     );
 
@@ -523,10 +542,61 @@ export default function RecordSetScreen() {
             <Text variant="caption" tone="muted">
               {recording
                 ? 'Recording — tap to stop. Keep the bar and a plate in frame.'
-                : 'Stand the phone side-on, whole lift in frame, with a weight plate visible. Under a minute.'}
+                : measurable
+                  ? 'Stand the phone side-on, whole lift in frame, with a weight plate visible. Under a minute.'
+                  : 'Film whatever is useful to watch back. Set the phone somewhere stable.'}
             </Text>
           </Card>
         </View>
+
+        {/* The choice, stated before filming rather than after — the framing
+            advice above only matters if the clip is going to be measured. */}
+        {recording ? null : (
+          <View
+            style={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              top: 96,
+              paddingHorizontal: theme.space.lg,
+            }}
+          >
+            <Pressable
+              onPress={() => measurable && setAnalyse((on) => !on)}
+              disabled={!measurable}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: analyse, disabled: !measurable }}
+              accessibilityLabel="Analyse this set"
+            >
+              <Card>
+                <Row justify="space-between" style={{ alignItems: 'center' }}>
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text variant="caption" weight="semibold">
+                      {measurable ? 'Analyse this set' : 'Analysis not available for this lift'}
+                    </Text>
+                    <Text variant="micro" tone="faint">
+                      {!measurable
+                        ? 'The clip is saved and you can watch it back. Squats, deadlifts, bench and overhead press can be measured.'
+                        : analyse
+                          ? 'Bar path and rep measurements when the analyser is switched on.'
+                          : 'Just keep the video — nothing will be measured.'}
+                    </Text>
+                  </View>
+                  <Text
+                    variant="callout"
+                    weight="heavy"
+                    style={{
+                      color: analyse && measurable ? theme.colors.accent : theme.colors.textFaint,
+                      marginLeft: theme.space.md,
+                    }}
+                  >
+                    {analyse && measurable ? 'ON' : 'OFF'}
+                  </Text>
+                </Row>
+              </Card>
+            </Pressable>
+          </View>
+        )}
 
         {/* Earlier takes, hidden while filming so nothing competes with the
             frame. `pointerEvents` is set per-layer, not on the parent, because

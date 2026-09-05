@@ -105,10 +105,26 @@ function Status({ analysis }: { analysis: Analysis }) {
           ? `${analysis.repCount ?? 0} reps measured`
           : analysis.status === 'failed'
             ? 'Could not read this one'
-            : waiting
+            : analysis.status === 'stored_only'
               ? 'Saved'
-              : 'Upload did not finish'}
+              : waiting
+                ? 'Saved'
+                : 'Upload did not finish'}
       </Text>
+
+      {/*
+        `stored_only` is a CHOICE, not a shortfall, so it does not apologise.
+        Either the lift has no rules or the user asked for the video alone —
+        both are fine, and phrasing them as a limitation would make a
+        deliberate decision read as a failure.
+      */}
+      {analysis.status === 'stored_only' ? (
+        <Text tone="muted">
+          {analysis.analysisRequested
+            ? 'This clip is stored and you can watch it back. It was not measured.'
+            : 'Stored for you to watch back. You did not ask for this one to be measured — you can film another set with analysis on.'}
+        </Text>
+      ) : null}
 
       {/*
         This used to say "Working on it — tracking the bar through the clip",

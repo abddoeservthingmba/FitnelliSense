@@ -31,6 +31,11 @@ export const analysisStatusSchema = z.enum([
   'processing',
   'complete',
   'failed',
+  // The video is kept but nothing will measure it — either the lift has no
+  // rules, or the user chose to film without analysis. A terminal state, not a
+  // queue: 'queued' would leave the screen waiting for a worker that is never
+  // coming for this row.
+  'stored_only',
 ]);
 export const mediaKindSchema = z.enum(['image', 'gif', 'video']);
 export const mediaDeliverySchema = z.enum(['r2_copy', 'external_embed']);

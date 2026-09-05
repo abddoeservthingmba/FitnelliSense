@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ascension-analyzer"
+version = "0.1.0"
+description = "Video analysis for one weightlifting set: reps, kinematics, form findings, deterministic score."
+requires-python = ">=3.11,<3.13"
+
+# Pinned exactly, not loosely. This pipeline's output is required to be
+# byte-identical across runs, and a minor version bump in a CV library changes
+# keypoint values in the last decimal place — which is enough to move a
+# threshold comparison and flip a finding. A determinism guarantee that does not
+# extend to the dependency set is not a guarantee.
+dependencies = [
+  "numpy==2.1.3",
+  "opencv-python-headless==4.10.0.84",
+  "mediapipe==0.10.18",
+  "scipy==1.14.1",
+  "pydantic==2.9.2",
+  "PyYAML==6.0.2",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==8.3.3",
+  "pytest-timeout==2.3.1",
+  "ruff==0.7.4",
+  "jsonschema==4.23.0",
+]
+
+[project.scripts]
+analyze = "analyzer.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# A hung fixture must fail rather than stall the eval loop.
+timeout = 300
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "RUF"]

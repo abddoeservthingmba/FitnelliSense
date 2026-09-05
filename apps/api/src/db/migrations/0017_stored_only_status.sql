@@ -1,0 +1,16 @@
+-- Adds the `stored_only` analysis status: the clip is kept and nothing will
+-- measure it, because the lift has no rules or the user declined analysis.
+--
+-- THIS MIGRATION ADDS THE VALUE AND MUST NEVER USE IT. Postgres raises 55P04
+-- ("unsafe use of new value of enum type") when a new enum value is used in
+-- the same transaction that added it, and Drizzle runs every pending migration
+-- inside ONE transaction — so a later migration in the same batch counts as the
+-- same transaction and fails too.
+--
+-- Application code using the value is fine: this transaction has committed by
+-- the time the server starts. Render runs the migration in the build command
+-- and only then boots the API.
+--
+-- If a default or backfill referencing `stored_only` is ever wanted, it needs
+-- its own migration in a LATER deploy, not a later file in this one.
+ALTER TYPE "public"."analysis_status" ADD VALUE 'stored_only';

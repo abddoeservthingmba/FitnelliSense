@@ -69,6 +69,8 @@ export const analysisStatus = pgEnum('analysis_status', [
   'processing',
   'complete',
   'failed',
+  // 0017. Terminal: the clip is stored and nothing will measure it.
+  'stored_only',
 ]);
 export const mediaKind = pgEnum('media_kind', ['image', 'gif', 'video']);
 export const mediaDelivery = pgEnum('media_delivery', ['r2_copy', 'external_embed']);
@@ -622,6 +624,18 @@ export const cvAnalyses = pgTable(
      * Defaulted to a whole short clip so every existing row keeps meaning what
      * it meant: analyse all of it.
      */
+    /**
+     * Whether the user asked for this clip to be measured (0018).
+     *
+     * Stored rather than derived, because the answer can change underneath it:
+     * adding rules for an exercise later must not retroactively re-interpret a
+     * clip filmed when the user explicitly declined analysis.
+     *
+     * Defaults FALSE so an insert that forgets it stores the video and measures
+     * nothing — the safe direction. The opposite default would queue work
+     * nobody asked for.
+     */
+    analysisRequested: boolean('analysis_requested').notNull().default(false),
     clipStartSecs: integer('clip_start_secs').notNull().default(0),
     clipEndSecs: integer('clip_end_secs').notNull().default(0),
     repCount: smallint('rep_count'),

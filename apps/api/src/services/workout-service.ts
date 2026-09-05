@@ -160,6 +160,7 @@ export async function getWorkoutDetail(
       id: workoutExercises.id,
       exerciseId: workoutExercises.exerciseId,
       exerciseName: exercises.name,
+      exerciseSlug: exercises.slug,
       kind: exercises.kind,
       position: workoutExercises.position,
       restSecs: workoutExercises.restSecs,
@@ -284,6 +285,7 @@ async function countsFor(
     .select({
       workoutId: workoutExercises.workoutId,
       exerciseName: exercises.name,
+      exerciseSlug: exercises.slug,
       position: workoutExercises.position,
       setCount: sql<number>`count(${workoutSets.id})`,
     })

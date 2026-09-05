@@ -67,6 +67,19 @@ export const requestVideoUploadSchema = z.object({
    * need no choice sends.
    */
   clipStartSecs: z.number().int().min(0).optional(),
+  /**
+   * Whether to measure this clip or merely keep it.
+   *
+   * Explicit, and defaulting to FALSE. Filming and analysing are different
+   * asks: plenty of people want the footage to watch back and have no interest
+   * in a score, and a lift the analyser has no rules for cannot be measured at
+   * all. Defaulting to true would mean a client that omits the field silently
+   * queues work nobody asked for.
+   *
+   * The server does not take this on trust — it checks the exercise really is
+   * one the analyser supports, because a client can send anything.
+   */
+  analyse: z.boolean().default(false),
 });
 
 export const videoUploadTargetSchema = z.object({
@@ -120,6 +133,14 @@ export const analysisSchema = z.object({
    */
   clipStartSecs: z.number().int(),
   clipEndSecs: z.number().int(),
+  /**
+   * Whether measurement was asked for.
+   *
+   * Distinguishes "we are not measuring this" from "we could not" — the client
+   * shows a different screen for each, and conflating them makes a deliberate
+   * choice read as a failure.
+   */
+  analysisRequested: z.boolean(),
   result: analysisResultSchema.nullable(),
   /**
    * Why it failed, in words a user can act on. Never a stack trace — a worker

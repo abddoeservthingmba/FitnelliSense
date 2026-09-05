@@ -1,0 +1,265 @@
+# Every threshold the rules compare against. No number lives anywhere else —
+# G10 scans the rule modules and fails on any float literal.
+#
+# Each entry carries `value`, `unit`, `source` and `date`. `source` is the one
+# that matters and the one most likely to rot: a threshold whose provenance is
+# "seemed about right" is a threshold nobody can defend when an athlete disputes
+# a verdict, and it is indistinguishable from a tuned one once it is in the file.
+#
+# STATUS VOCABULARY
+#   hypothesis  — a starting guess. NOT yet swept. Rules using one may run in
+#                 the eval loop but must not ship enabled to users.
+#   tuned       — Loop C swept it against the golden set; `curve` points at the
+#                 precision/recall evidence and `date` is when it was chosen.
+#   disabled    — swept and no operating point met the bar. The rule ships OFF.
+#                 A rule that is wrong a third of the time is worse than absent,
+#                 because it teaches people to ignore the ones that are right.
+#
+# Every value below is `hypothesis`. Loop C has not run — it cannot run until
+# rep segmentation and kinematics are green — so nothing here has evidence yet
+# and the file says so rather than implying otherwise.
+#
+# ENABLED IS SEPARATE FROM TUNED. A rule with no fixture in the golden set has
+# no labelled positives, so no precision/recall curve exists and no operating
+# point can be chosen. Those rules carry `enabled: false` and DO NOT FIRE for
+# users. They still run in the eval loop, where a false positive costs nothing
+# and is informative. Shipping a rule that is wrong a third of the time teaches
+# people to ignore the ones that are right, which is the expensive failure.
+
+version: "2026-09-05"
+
+ingest:
+  min_fps:
+    value: 24
+    unit: fps
+    status: hypothesis
+    source: >
+      Below ~24 fps a 0.9 s concentric is sampled ~20 times, and the peak
+      velocity estimate starts depending on where the samples land rather than
+      on the lift. Chosen as the floor of usable cinema frame rates.
+    date: 2026-09-05
+  max_duration_s:
+    value: 180
+    unit: s
+    status: hypothesis
+    source: "Product scope: one set. 3 min is a generous ceiling for 15 reps."
+    date: 2026-09-05
+  min_short_side_px:
+    value: 480
+    unit: px
+    status: hypothesis
+    source: >
+      Below this a 450 mm plate spans too few pixels for a reliable Hough
+      circle at typical filming distance, which breaks scale calibration.
+    date: 2026-09-05
+
+pose:
+  min_mean_keypoint_confidence:
+    value: 0.60
+    unit: ratio
+    status: hypothesis
+    source: "MediaPipe presence score. Placeholder — R11 is the clip that will set this."
+    date: 2026-09-05
+  max_interpolated_gap_frames:
+    value: 3
+    unit: frames
+    status: hypothesis
+    source: >
+      At 30 fps, 3 frames is 100 ms. Interpolating further invents motion
+      across a span in which a bar can move several centimetres.
+    date: 2026-09-05
+
+calibration:
+  competition_plate_diameter_m:
+    value: 0.450
+    unit: m
+    status: fixed
+    source: "IWF Technical and Competition Rules — plate outside diameter 450 mm."
+    date: 2026-09-05
+  barbell_length_m:
+    value: 2.20
+    unit: m
+    status: fixed
+    source: "IWF men's bar length 2.20 m. Women's bar is 2.01 m — see note."
+    date: 2026-09-05
+    note: >
+      Using the men's length for a women's bar overstates scale by ~9%, which
+      propagates directly into every velocity. Bar length is therefore the
+      SECOND calibration choice, never the first, and plate diameter wins
+      because 450 mm is the same on both.
+
+view:
+  min_confidence:
+    value: 0.70
+    unit: ratio
+    status: hypothesis
+    source: "Below this the view is treated as unknown and view-specific rules are disabled."
+    date: 2026-09-05
+
+segmentation:
+  # The single most important number in the pipeline: it decides what counts as
+  # a rep. Too low and re-grips become reps; too high and a shallow last rep
+  # vanishes. S02 exists specifically to pin it down.
+  back_squat:
+    min_rom_ratio:
+      value: 0.55
+      unit: ratio_of_median_rep_rom
+      status: hypothesis
+      source: "Guess. S02's decoys sit at 0.10, 0.14 and 0.35 to bracket it."
+      date: 2026-09-05
+  front_squat:
+    min_rom_ratio: { value: 0.55, unit: ratio_of_median_rep_rom, status: hypothesis, source: "Mirrors back_squat until evidence separates them.", date: 2026-09-05 }
+  deadlift:
+    min_rom_ratio: { value: 0.60, unit: ratio_of_median_rep_rom, status: hypothesis, source: "Bar starts at rest on the floor; cycle begins with the concentric.", date: 2026-09-05 }
+  bench_press:
+    min_rom_ratio: { value: 0.50, unit: ratio_of_median_rep_rom, status: hypothesis, source: "Shorter ROM and more variance than a squat.", date: 2026-09-05 }
+  overhead_press:
+    min_rom_ratio: { value: 0.55, unit: ratio_of_median_rep_rom, status: hypothesis, source: "Guess.", date: 2026-09-05 }
+
+squat:
+  # UNIT CHANGED before any tuning, deliberately. This was `depth_margin_px`,
+  # and a pixel margin does not survive a change of camera distance: the same
+  # squat filmed from 2 m and 4 m yields different pixel gaps, so a value tuned
+  # on one clip is wrong on the next. Hip width is a body-relative scale that is
+  # available WITHOUT calibration, which matters because depth must still work
+  # on R07 where no plate is in frame.
+  #
+  # Changed now rather than after Loop C, because a threshold tuned in a unit we
+  # intend to abandon is work that has to be thrown away — and worse, it would
+  # carry a `tuned` status and a curve into a file where that means "trusted".
+  depth_margin_hip_width_ratio:
+    value: 0.0
+    unit: ratio_of_hip_width
+    enabled: true
+    status: hypothesis
+    source: >
+      Hip centre level with knee centre. In image coordinates (+y down) the
+      measure `(hip_y - knee_y) / hip_width` trips when it is LESS than 0 — the
+      hip is above the knee. 0.0 is "exactly level"; a positive value would
+      demand depth past level, a negative one would forgive stopping short.
+    date: 2026-09-05
+  lumbar_flexion_bottom_deg:
+    value: 15.0
+    unit: deg
+    enabled: false          # no fixture — see manifest coverage_gaps
+    status: hypothesis
+    source: "Clinical rule-of-thumb for visible bottom-position flexion. No labelled clip exists."
+    date: 2026-09-05
+  hip_shoot_deg:
+    value: 12.0
+    unit: deg
+    enabled: false          # no fixture — see manifest coverage_gaps
+    status: hypothesis
+    source: "Torso inclination increase during ascent. No dedicated clip in the golden set."
+    date: 2026-09-05
+  knee_valgus_hip_width_ratio:
+    value: 0.05
+    unit: ratio_of_hip_width
+    enabled: true
+    status: hypothesis
+    source: "Front view only. R03 is the fixture."
+    date: 2026-09-05
+
+bar:
+  horizontal_drift_bar_length_ratio:
+    value: 0.04
+    unit: ratio_of_bar_length
+    enabled: false          # no fixture — see manifest coverage_gaps
+    status: hypothesis
+    source: "4% of a 2.2 m bar is ~9 cm. Expressed as a ratio so it survives a bar-length change."
+    date: 2026-09-05
+
+asymmetry:
+  line_tilt_deg:
+    value: 6.0
+    unit: deg
+    enabled: false          # no fixture — see manifest coverage_gaps
+    status: hypothesis
+    source: "Sustained hip/shoulder line tilt. Front or rear view only."
+    date: 2026-09-05
+  rom_delta_ratio:
+    value: 0.10
+    unit: ratio
+    enabled: false          # no fixture — see manifest coverage_gaps
+    status: hypothesis
+    source: "Left/right ROM difference."
+    date: 2026-09-05
+
+deadlift:
+  bar_away_at_breakaway_m:
+    value: 0.03
+    unit: m
+    enabled: false          # no fixture — see manifest coverage_gaps
+    status: hypothesis
+    source: "Bar to mid-foot horizontal distance at break from the floor. Requires calibration."
+    date: 2026-09-05
+  spine_flexion_change_deg:
+    value: 15.0
+    unit: deg
+    enabled: true
+    status: hypothesis
+    source: >
+      Thoracolumbar proxy, start vs mid-pull. This is the only `unsafe` rule in
+      v0.1, so G4 requires recall >= 0.90 on it and the threshold will be set
+      from the recall side of the curve, accepting false positives.
+    date: 2026-09-05
+
+bench:
+  partial_rom_elbow_deg:
+    value: 100.0
+    unit: deg
+    enabled: true
+    status: hypothesis
+    source: "Minimum elbow angle. Above this the bar did not reach the chest."
+    date: 2026-09-05
+  elbow_flare_deg:
+    value: 85.0
+    unit: deg
+    enabled: false          # no fixture — see manifest coverage_gaps
+    status: hypothesis
+    source: "Elbow-to-torso angle at the bottom."
+    date: 2026-09-05
+
+press:
+  lumbar_extension_deg:
+    value: 10.0
+    unit: deg
+    enabled: false          # no fixture — see manifest coverage_gaps
+    status: hypothesis
+    source: "Hip-shoulder-ankle deviation from vertical. R08 is the fixture."
+    date: 2026-09-05
+
+tempo:
+  dropped_eccentric_s:
+    value: 0.40
+    unit: s
+    enabled: false          # no fixture — see manifest coverage_gaps
+    status: hypothesis
+    source: "Below this the weight was dropped rather than lowered."
+    date: 2026-09-05
+
+set_rules:
+  velocity_loss_pct:
+    value: 20.0
+    unit: percent
+    enabled: true
+    status: hypothesis
+    source: >
+      Last-rep mean concentric velocity vs the set's best. ~20% is the common
+      velocity-based-training stopping heuristic. Requires calibration; the rule
+      must not fire at all when `calibration_method` is `none`.
+    date: 2026-09-05
+  rom_inconsistency_pct:
+    value: 8.0
+    unit: percent
+    enabled: true
+    status: hypothesis
+    source: "Per-rep ROM standard deviation as a percentage of the mean."
+    date: 2026-09-05
+
+scoring:
+  penalties:
+    info: { value: 0, unit: points, status: hypothesis, source: "Rubric, task spec.", date: 2026-09-05 }
+    minor: { value: 3, unit: points, status: hypothesis, source: "Rubric, task spec.", date: 2026-09-05 }
+    major: { value: 10, unit: points, status: hypothesis, source: "Rubric, task spec.", date: 2026-09-05 }
+    unsafe: { value: 25, unit: points, status: hypothesis, source: "Rubric, task spec.", date: 2026-09-05 }

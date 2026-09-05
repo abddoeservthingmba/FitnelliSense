@@ -124,6 +124,8 @@ export function useAddWorkoutExercise(workoutId: string | undefined) {
       id?: string;
       exerciseId: string;
       exerciseName: string;
+      /** Needed optimistically so the row knows whether analysis exists for it. */
+      exerciseSlug?: string | null;
       kind?: ExerciseKind;
       restSecs?: number;
     }>(queryClient, {
@@ -135,6 +137,7 @@ export function useAddWorkoutExercise(workoutId: string | undefined) {
             id: input.id ?? `pending-${input.exerciseId}`,
             exerciseId: input.exerciseId,
             exerciseName: input.exerciseName,
+            exerciseSlug: input.exerciseSlug ?? null,
             // Optimistically strength, which is the overwhelmingly common case;
             // the server's response corrects it within a round trip.
             kind: input.kind ?? 'strength',

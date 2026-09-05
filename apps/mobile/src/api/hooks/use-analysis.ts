@@ -113,6 +113,8 @@ export interface UploadInput {
    * Omitted means from the beginning; the server derives the end.
    */
   clipStartSecs?: number;
+  /** Whether to measure the clip, or merely keep it. The server re-checks. */
+  analyse?: boolean;
 }
 
 /** Which of the three steps failed, so the UI can say something useful. */
@@ -222,6 +224,7 @@ export function useUploadSetVideo() {
       uri,
       durationSecs,
       clipStartSecs,
+      analyse,
     }: UploadInput): Promise<Analysis> => {
       setProgress(0);
       /*
@@ -239,6 +242,7 @@ export function useUploadSetVideo() {
           contentType: 'video/mp4',
           durationSecs,
           clipStartSecs,
+          analyse: analyse ?? false,
         })
         .catch((error: unknown) => {
           throw new UploadFailure('ask', error instanceof Error ? error.message : 'Could not start');

@@ -120,6 +120,20 @@
       "when": 1788587716513,
       "tag": "0016_google_identity",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1788618989148,
+      "tag": "0017_stored_only_status",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1788619110506,
+      "tag": "0018_analysis_requested",
+      "breakpoints": true
     }
   ]
 }
