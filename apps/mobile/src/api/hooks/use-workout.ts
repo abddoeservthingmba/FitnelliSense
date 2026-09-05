@@ -115,6 +115,13 @@ export function useAddWorkoutExercise(workoutId: string | undefined) {
   const queryClient = useQueryClient();
   return useMutation(
     optimisticWorkoutMutation<{
+      /**
+       * Optional, and only worth passing when the caller needs to add sets to
+       * this exercise in the same breath — the voice log does. Given an id up
+       * front, the optimistic row carries the real one, so those sets can be
+       * addressed immediately instead of waiting for the server to name it.
+       */
+      id?: string;
       exerciseId: string;
       exerciseName: string;
       kind?: ExerciseKind;
@@ -125,7 +132,7 @@ export function useAddWorkoutExercise(workoutId: string | undefined) {
         exercises: [
           ...workout.exercises,
           {
-            id: `pending-${input.exerciseId}`,
+            id: input.id ?? `pending-${input.exerciseId}`,
             exerciseId: input.exerciseId,
             exerciseName: input.exerciseName,
             // Optimistically strength, which is the overwhelmingly common case;
@@ -139,7 +146,7 @@ export function useAddWorkoutExercise(workoutId: string | undefined) {
         ],
       }),
       send: (input) => {
-        const id = uuidv7();
+        const id = input.id ?? uuidv7();
         return api.post<WorkoutDetail>(
           routes.workouts.exercises(workoutId ?? ''),
           { id, exerciseId: input.exerciseId, restSecs: input.restSecs ?? null },

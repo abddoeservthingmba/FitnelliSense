@@ -35,6 +35,13 @@ export interface SetRowProps {
   }) => void;
   onToggleComplete: (isCompleted: boolean) => void;
   onLongPress: () => void;
+  /**
+   * Film this set for bar-path analysis. Optional, and omitted for cardio —
+   * there is no bar to track on a treadmill, so the button would be a promise
+   * the analysis cannot keep. When it is absent the row keeps exactly the three
+   * tap targets it was designed around.
+   */
+  onRecord?: () => void;
 }
 
 const SET_TYPE_LABEL: Record<SetType, string> = {
@@ -52,6 +59,7 @@ export const SetRow = memo(function SetRow({
   onChange,
   onToggleComplete,
   onLongPress,
+  onRecord,
 }: SetRowProps) {
   const theme = useTheme();
   const units = useUnits();
@@ -222,6 +230,27 @@ export const SetRow = memo(function SetRow({
           />
         </>
       )}
+
+      {onRecord ? (
+        <Pressable
+          onPress={onRecord}
+          accessibilityRole="button"
+          accessibilityLabel={`Film set ${index + 1} for form analysis`}
+          style={({ pressed }) => ({
+            width: 36,
+            height: 52,
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: pressed ? 0.6 : 1,
+          })}
+        >
+          {/* Deliberately quiet. Filming is the rare path; the tick is the one
+              that has to be findable without looking. */}
+          <Text variant="callout" style={{ color: theme.colors.textFaint }}>
+            ◉
+          </Text>
+        </Pressable>
+      ) : null}
 
       <Pressable
         onPress={complete}

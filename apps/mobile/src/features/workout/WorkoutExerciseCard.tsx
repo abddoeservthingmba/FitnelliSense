@@ -105,6 +105,15 @@ export const WorkoutExerciseCard = memo(function WorkoutExerciseCard({
             onChange={(patch) => onUpdateSet(set.id, patch)}
             onToggleComplete={(isCompleted) => onCompleteSet(set.id, isCompleted)}
             onLongPress={() => onDeleteSet(set.id)}
+            /*
+             * Strength only: the analysis tracks a barbell, so offering it on a
+             * treadmill row would be a button that can only disappoint. The
+             * navigation is this component's own — the screen above has no
+             * business knowing about a camera route.
+             */
+            onRecord={
+              kind === 'strength' ? () => router.push(`/set/${set.id}/record`) : undefined
+            }
           />
         ))}
 

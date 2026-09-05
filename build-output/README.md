@@ -14,7 +14,8 @@ whose update refuses to install.
 
 | Version   | Code | Package                     | Date       | What changed                                                                                                       |
 | --------- | ---- | --------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------ |
-| **1.1.0** | 17   | com.ascension.fitness       | 2026-09-03 | 30 per-tier character icons; fixes Hunter/ranking showing raw E–S ranks; Ascension moved to top of Profile         |
+| **1.4.0** | 20   | com.ascension.fitness       | 2026-09-05 | Form-analysis capture and voice logging. Film a set or pick a video, choose which 3 minutes are analysed. Native change — built `--clean` |
+| 1.1.0     | 17   | com.ascension.fitness       | 2026-09-03 | 30 per-tier character icons; fixes Hunter/ranking showing raw E–S ranks; Ascension moved to top of Profile         |
 | 1.0.0     | 16   | com.ascension.fitness       | 2026-09-03 | Character select at launch, animated sigils, motivational lines per Ascension                                      |
 | 0.9.0     | 15   | com.ascension.fitness       | 2026-09-03 | **Renamed Ascension.** Ascension themes, faster launch, premium transitions. New package: install is NOT an update |
 | 0.7.0     | 13   | com.arise.fitness           | 2026-09-03 | Athlete profiles from the ranking; post-workout comparison; History back in the bar. **Leaderboard opt-ins reset** |
@@ -27,6 +28,12 @@ whose update refuses to install.
 | 0.3.1     | 5    | com.fitnessintellisense.app | 2026-09-01 | Security: allowBackup off, password rules, drizzle CVE, CI fixed                                                   |
 | 0.3.0     | 4    | com.fitnessintellisense.app | 2026-09-01 | Movement demos, tier strip, email verification, password reset, nutrition + barcode                                |
 | 0.2.0     | 3    | com.fitnessintellisense.app | 2026-09-01 | The Hunter System — levels, ranks, quests, badges, leaderboard                                                     |
+
+> **Codes 18 and 19 have no rows.** The previous "Current build" block recorded
+> 1.3.0 / 19 as shipped, so those builds happened and were not logged here. The
+> rows are not reconstructed from memory: an invented changelog is worse than a
+> visible gap, because it reads exactly like a real one. What 1.2.0 and 1.3.0
+> contained is recoverable from git history if it is ever needed.
 
 **The package has changed twice, and each time cost every user a reinstall.**
 Android identifies an app by its package, so a new one is a new app: it cannot
@@ -50,16 +57,35 @@ which id.
 
 |                           |                                                                    |
 | ------------------------- | ------------------------------------------------------------------ |
-| File                      | `Ascension-1.3.0.apk`                                              |
+| File                      | `Ascension-1.4.0.apk`                                              |
 | Package                   | `com.ascension.fitness`                                            |
-| versionName / versionCode | 1.3.0 / 19                                                         |
-| Size                      | 75,090,876 bytes (71.6 MB)                                         |
-| SHA-256                   | `e8f37dc55b986c9ed722d2806968e8b4d57854c73fcdfaa7102e044598d2a813` |
+| versionName / versionCode | 1.4.0 / 20                                                         |
+| Size                      | 75,517,159 bytes (72.0 MB)                                         |
+| SHA-256                   | `abef454b95e6aa64cc94f32313c7e8b5eb2592cbac5fbc888cfe97bc50516a7b` |
 | **Signing cert SHA-256**  | `c35574e619810ce487e6e92d2e3cbabced3e85356f32e4d793183335a0fee5de` |
 | API                       | `https://fitnellisense.onrender.com`                               |
 | ABIs                      | arm64-v8a, armeabi-v7a                                             |
-| Manifest permissions      | 11 (was 28)                                                        |
+| Manifest permissions      | 12 (was 11)                                                        |
 | allowBackup               | `false`                                                            |
+
+The certificate is unchanged from 1.3.0, so this installs over an existing copy
+as an update. Verified with `apksigner`, not assumed.
+
+**The twelfth permission is `MODIFY_AUDIO_SETTINGS`, not a microphone.** Adding
+`expo-image-picker` pulls it in; it changes the ringer/volume mode and grants no
+recording capability. `RECORD_AUDIO` and every media-library permission are
+still explicitly blocked, and that was checked against this binary rather than
+against the config that produced it:
+
+```bash
+aapt dump badging build-output/Ascension-1.4.0.apk | grep -iE 'RECORD_AUDIO|READ_MEDIA|EXTERNAL_STORAGE'
+# no output
+```
+
+That check matters here more than usual: `expo-image-picker`'s config plugin
+adds `RECORD_AUDIO` **by default**, and only `microphonePermission: false` in
+`app.json` stops it. Without that line this build would have shipped a
+microphone permission on an app whose privacy policy says it never asks for one.
 
 ## The check that matters before every release
 
@@ -67,7 +93,7 @@ which id.
 # apksigner is not on PATH and needs a JDK. It ships with the SDK build-tools:
 JAVA_HOME="I:/android-toolchain/jdk-17.0.20.1+1" \
   /i/android-toolchain/sdk/build-tools/36.0.0/apksigner.bat \
-  verify --print-certs build-output/Ascension-1.3.0.apk
+  verify --print-certs build-output/Ascension-1.4.0.apk
 ```
 
 Only apksigner can read it. These APKs are signed with **v2/v3 only**, so there

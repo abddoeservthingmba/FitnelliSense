@@ -3,7 +3,7 @@
     "name": "Ascension",
     "slug": "ascension",
     "scheme": "ascension",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
@@ -13,7 +13,7 @@
     ],
     "android": {
       "package": "com.ascension.fitness",
-      "versionCode": 19,
+      "versionCode": 20,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0B2547"
@@ -92,8 +92,15 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Ascension uses the camera only to read a food barcode. Nothing is photographed or stored.",
+          "cameraPermission": "Ascension uses the camera to read a food barcode, and to film a set if you turn on form analysis. Barcode images are never stored.",
           "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Ascension opens your phone's own picker so you can choose one video of a set. It cannot see anything else in your library.",
+          "microphonePermission": false
         }
       ]
     ],

@@ -88,6 +88,11 @@ function ThemedShell() {
           <Stack.Screen name="leaderboard" options={{ title: 'Ranking' }} />
           <Stack.Screen name="ascension" options={{ title: 'Your Ascension' }} />
           <Stack.Screen name="tour" options={{ headerShown: false }} />
+          <Stack.Screen name="voice-log" options={{ title: 'Say the set' }} />
+          {/* Both set their own header as they move through their states — the
+              record screen is a camera once permission is granted. */}
+          <Stack.Screen name="set/[setId]/record" options={{ title: 'Record' }} />
+          <Stack.Screen name="analysis/[id]" options={{ title: 'Form analysis' }} />
           {/* Title comes from the screen itself — it is the athlete's name. */}
           <Stack.Screen name="athlete/[id]" options={{ title: 'Athlete' }} />
           <Stack.Screen name="food/add" options={{ title: 'Add food' }} />

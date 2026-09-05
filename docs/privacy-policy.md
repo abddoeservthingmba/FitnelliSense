@@ -1,6 +1,6 @@
 # Ascension — Privacy Policy
 
-**Last updated: 4 September 2026**
+**Last updated: 5 September 2026**
 
 Ascension is a training log. This policy describes exactly what it stores, where,
 who else sees it, and how to get rid of it.
@@ -78,8 +78,20 @@ If you turn it on and record a set:
 That is a great deal more than a number in a table, which is why it is
 separately consented, separately deletable, and deleted automatically.
 
-- **You choose to record each clip.** Nothing is captured in the background,
-  and the camera is never opened without you opening it.
+- **You choose each clip, one at a time.** Either you record it in the app, or
+  you pick an existing video from your phone. Nothing is captured in the
+  background, and the camera is never opened without you opening it.
+- **A clip you record in the app has no sound** — the microphone is not used,
+  so there is no audio track at all.
+- **A video you pick from your phone is uploaded exactly as it is**, including
+  any sound it already contains. Ascension cannot edit or re-encode a video, so
+  it cannot strip that audio out. If the recording has a conversation on it,
+  that conversation is uploaded with it. Record in the app instead if that
+  matters to you.
+- **Only the part you choose is analysed.** For a video longer than three
+  minutes you pick which three minutes are measured — but be aware that the
+  **whole file is still uploaded and stored**, not just the part you picked,
+  for the same reason: we cannot cut it.
 - **It is never shown to anyone else.** Not on the ranking, not on your
   athlete profile, not to people you train with. There is no sharing feature.
 - **Clips are deleted after 90 days**, automatically, by a rule on the bucket
@@ -130,7 +142,12 @@ never sent anywhere, and are removed when you sign out or uninstall:
 - No advertising, and no data is ever sold or rented.
 - No analytics or product telemetry of any kind.
 - No location tracking. Ascension never requests location permission.
-- No contacts, no photo library, no microphone.
+- No contacts, and no microphone — Ascension never requests microphone
+  permission and records no audio.
+- **No browsing of your photo library.** If you pick a video for form analysis,
+  your phone's own picker runs and hands back only the single file you chose.
+  Ascension cannot see, list or read anything else in your library, and it does
+  not ask for permission to.
 - No profiling, and no automated decision-making with legal effects.
 - No cookies, and no cross-site tracking.
 - **The camera is used for two things only:** reading a food barcode, and

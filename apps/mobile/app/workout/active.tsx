@@ -217,6 +217,16 @@ export default function ActiveWorkoutScreen() {
             onPress={() => setPickerOpen(true)}
             fullWidth
           />
+
+          {/* FR-VOX-01. Ghost, not secondary: speaking a set is the shortcut,
+              not the main road, and it should not compete with the button
+              everyone actually needs. */}
+          <Button
+            label="Say a set instead"
+            variant="ghost"
+            onPress={() => router.push('/voice-log')}
+            fullWidth
+          />
         </Stack>
       </Screen>
 
