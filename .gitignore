@@ -43,6 +43,8 @@ build-output/*
 apps/mobile/web-build/
 
 # Analyzer
+# The virtualenv now lives outside the repo (~/.virtualenvs/ascension-analyzer).
+# Kept as a guard in case anyone runs `python -m venv .venv` out of habit.
 services/analyzer/.venv/
 services/analyzer/evals/report.json
 services/analyzer/evals/clips/synthetic/
