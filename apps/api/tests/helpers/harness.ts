@@ -7,6 +7,7 @@
  * which does provide one — runs them for real.
  */
 import { randomUUID } from 'node:crypto';
+import { disabledGoogleVerifier } from '../../src/lib/google';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
@@ -159,6 +160,7 @@ export async function createTestContext(): Promise<TestContext> {
     storage: createStorage(config),
     mailer,
     foodLookup: lookup,
+    google: disabledGoogleVerifier,
     tokens: {
       accessSecret: config.JWT_ACCESS_SECRET,
       refreshPepper: config.JWT_REFRESH_PEPPER,

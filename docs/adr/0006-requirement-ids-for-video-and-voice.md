@@ -59,7 +59,7 @@ inside a BRD namespace.
 | **FR-VOX-03** | A spoken unit always wins over the user's unit preference. Silence falls back to the preference.                                                          |
 | **FR-VOX-04** | Parsing is pure and lives in `packages/domain/voice-log.ts`. It does not know the catalogue; it returns the exercise as spoken for the caller to resolve.  |
 | **FR-VOX-05** | Nothing is written until the reader has confirmed the interpretation. Dictation fails quietly, and "45" for "4.5" is only ever caught by a person.        |
-| **FR-VOX-06** | Speech recognition is the platform keyboard's. The app records no audio, requests no microphone permission, and sends no audio anywhere.                  |
+| **FR-VOX-06** | Speech recognition runs in the app through the platform recogniser, listening only while the user holds the control. No audio is written to a file and none leaves the device — only the recognised text. Superseded the keyboard-dictation approach in 1.5.0; see Consequences. |
 
 ## Consequences
 

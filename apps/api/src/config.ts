@@ -90,6 +90,28 @@ export const envSchema = z
     R2_BACKUP_PREFIX: z.string().default('backups/'),
     MEDIA_URL_TTL_SECONDS: z.coerce.number().int().min(60).max(900).default(900),
 
+    /**
+     * Google OAuth client ids that may appear as the `aud` of an ID token,
+     * comma-separated. Android and web are separate OAuth clients with
+     * separate ids and both are legitimate, so this is a list.
+     *
+     * NOT a secret, and there is deliberately no client secret anywhere: the
+     * app is a public client that could not keep one, and verification only
+     * needs Google's public keys.
+     *
+     * Empty disables Google sign-in — `/auth/google` answers "not configured"
+     * and every other way in keeps working.
+     */
+    GOOGLE_CLIENT_IDS: z
+      .string()
+      .default('')
+      .transform((value) =>
+        value
+          .split(',')
+          .map((id) => id.trim())
+          .filter((id) => id !== ''),
+      ),
+
     AUTH_RATE_LIMIT_PER_MIN: z.coerce.number().int().min(1).default(10),
     ADMIN_RATE_LIMIT_PER_MIN: z.coerce.number().int().min(1).default(30),
     GLOBAL_RATE_LIMIT_PER_MIN: z.coerce.number().int().min(1).default(300),

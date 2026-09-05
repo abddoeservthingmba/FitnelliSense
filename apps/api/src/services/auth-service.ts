@@ -20,11 +20,18 @@ import {
   type TokenConfig,
 } from '../lib/tokens';
 import type { Database } from '../db/client';
+import type { GoogleVerifier } from '../lib/google';
 
 export interface AuthDeps {
   readonly db: Database;
   readonly tokens: TokenConfig;
   readonly otpTtlSecs: number;
+  /**
+   * Injected rather than imported so a test can supply an identity without a
+   * network call — and, more to the point, so a test CANNOT pass by reaching
+   * Google for real.
+   */
+  readonly google: GoogleVerifier;
 }
 
 export interface AuthResult {
@@ -108,6 +115,138 @@ export async function register(
   });
 
   return { userId: created.id, tokens: await issuePair(deps, created) };
+}
+
+/**
+ * Signing in with Google (FR-AUTH-11).
+ *
+ * The token has already been verified by `deps.google` — signature, issuer,
+ * audience, expiry, and `email_verified`. This function decides only what an
+ * identity means for the accounts we hold, and there are four cases. The third
+ * is the one worth reading carefully.
+ *
+ * 1. KNOWN GOOGLE SUB. Sign in. `sub` is matched before email because it is
+ *    the stable identity: a user can change their Gmail address, and following
+ *    the email instead would strand them from their own account.
+ *
+ * 2. NO ACCOUNT. Create one, already verified, with no password.
+ *
+ * 3. AN ACCOUNT EXISTS AND ITS EMAIL WAS NEVER VERIFIED. This is an attack, or
+ *    indistinguishable from one. Anyone can register any address here and set
+ *    a password; without verification nothing connects that registration to
+ *    the person who owns the mailbox. If we simply linked and signed in, an
+ *    attacker who had pre-registered someone's address would keep a working
+ *    password on an account the real owner now uses.
+ *
+ *    So Google's proof wins over the unproven claim: the account is linked and
+ *    marked verified, and the password is CLEARED along with every refresh
+ *    token. Whoever set that password loses access and cannot get it back
+ *    without receiving mail at the address — which now demonstrably belongs to
+ *    the person who just signed in.
+ *
+ * 4. AN ACCOUNT EXISTS AND ITS EMAIL IS VERIFIED. Link it. Both parties have
+ *    independently proved the same address, so this is the same person, and
+ *    the existing password stays valid.
+ */
+export async function signInWithGoogle(deps: AuthDeps, idToken: string): Promise<AuthResult> {
+  const identity = await deps.google.verify(idToken);
+
+  /*
+   * The transaction resolves WHICH account this is and nothing else. Tokens are
+   * issued afterwards, on purpose and not as a style preference: `issuePair`
+   * writes through `deps.db`, which is a different connection from `tx`. Called
+   * from inside, it cannot see a user the open transaction has not committed —
+   * the refresh-token insert fails its foreign key — and on the update paths it
+   * blocks on locks the transaction is still holding, which is a deadlock that
+   * only shows up as a test timeout.
+   */
+  const account = await deps.db.transaction(async (tx) => {
+    // 1 — by `sub`, the stable key.
+    const [bySub] = await tx
+      .select({ id: users.id, isAdmin: users.isAdmin, deletedAt: users.deletedAt })
+      .from(users)
+      .where(eq(users.googleSub, identity.sub))
+      .limit(1);
+
+    if (bySub) {
+      if (bySub.deletedAt !== null) throw unauthenticated(SIGN_IN_FAILED);
+      return bySub;
+    }
+
+    const [byEmail] = await tx
+      .select({
+        id: users.id,
+        isAdmin: users.isAdmin,
+        emailVerified: users.emailVerified,
+        googleSub: users.googleSub,
+        deletedAt: users.deletedAt,
+      })
+      .from(users)
+      .where(eq(users.email, identity.email))
+      .limit(1);
+
+    // 2 — nobody here yet.
+    if (!byEmail) {
+      const userId = newId();
+      const [user] = await tx
+        .insert(users)
+        .values({
+          id: userId,
+          email: identity.email,
+          // No password. The column is nullable precisely so this is honest
+          // rather than an unusable hash pretending to be one.
+          passwordHash: null,
+          emailVerified: true,
+          googleSub: identity.sub,
+        })
+        .returning({ id: users.id, isAdmin: users.isAdmin });
+      if (!user) throw conflict('That account could not be created');
+
+      await tx.insert(userProfiles).values({
+        userId: user.id,
+        displayName: identity.name ?? identity.email.split('@')[0] ?? 'Athlete',
+      });
+      return user;
+    }
+
+    if (byEmail.deletedAt !== null) throw unauthenticated(SIGN_IN_FAILED);
+
+    /*
+     * A different Google account already holds this row. Not reachable through
+     * Google — two accounts cannot own one verified address — so this is a
+     * state that should not exist, and taking it over would be worse than
+     * refusing.
+     */
+    if (byEmail.googleSub !== null && byEmail.googleSub !== identity.sub) {
+      throw conflict('That email is already linked to a different Google account');
+    }
+
+    // 3 — the unverified claim loses to the proof. See the note above.
+    const takingOverUnverified = !byEmail.emailVerified;
+
+    await tx
+      .update(users)
+      .set({
+        googleSub: identity.sub,
+        emailVerified: true,
+        ...(takingOverUnverified ? { passwordHash: null } : {}),
+      })
+      .where(eq(users.id, byEmail.id));
+
+    if (takingOverUnverified) {
+      // Any session opened with that password dies with it.
+      await tx
+        .update(refreshTokens)
+        .set({ revokedAt: new Date() })
+        .where(and(eq(refreshTokens.userId, byEmail.id), isNull(refreshTokens.revokedAt)));
+    }
+
+    // 4 — and 3, both continue here.
+    return byEmail;
+  });
+
+  // Outside the transaction, so the account is committed and visible.
+  return { userId: account.id, tokens: await issuePair(deps, account) };
 }
 
 export async function login(

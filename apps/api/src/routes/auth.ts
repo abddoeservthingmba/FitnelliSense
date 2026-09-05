@@ -8,6 +8,7 @@ import { z } from 'zod';
 import {
   authResponseSchema,
   codeRequestResponseSchema,
+  googleSignInSchema,
   loginRequestSchema,
   logoutRequestSchema,
   passwordResetConfirmSchema,
@@ -20,6 +21,8 @@ import {
   verifyEmailConfirmSchema,
 } from '@fi/shared';
 import { passwordResetEmail, verificationEmail } from '../lib/mailer';
+import { GoogleAuthError } from '../lib/google';
+import { conflict, unauthenticated } from '../lib/errors';
 import { currentUser } from '../plugins/auth';
 import * as authService from '../services/auth-service';
 import type { FastifyInstance } from 'fastify';
@@ -35,6 +38,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     db: database.db,
     tokens,
     otpTtlSecs: config.OTP_TTL,
+    google: app.ctx.google,
   };
 
   const codeMinutes = Math.max(1, Math.round(config.OTP_TTL / 60));
@@ -92,6 +96,41 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       schema: { body: loginRequestSchema, response: { 200: authResponseSchema } },
     },
     async (request) => authService.login(deps, request.body),
+  );
+
+  /**
+   * FR-AUTH-11. Same tight rate limit as the password routes: a valid Google
+   * token is as good as a password here, so this is equally worth guessing at.
+   */
+  typed.post(
+    routes.auth.google,
+    {
+      config: authLimit,
+      schema: { body: googleSignInSchema, response: { 200: authResponseSchema } },
+    },
+    async (request) => {
+      try {
+        return await authService.signInWithGoogle(deps, request.body.idToken);
+      } catch (error) {
+        if (error instanceof GoogleAuthError) {
+          /*
+           * The REASON is logged and never returned. "email_unverified" tells
+           * an attacker their token parsed and only the last check stopped
+           * them, which is a free oracle; the client gets one opaque failure
+           * for every way a token can be bad.
+           */
+          request.log.warn({ event: 'google_sign_in_rejected', reason: error.reason }, 'rejected');
+
+          if (error.reason === 'not_configured') {
+            // Distinguishable on purpose: nothing the caller did is wrong, and
+            // the app needs to know to stop offering the button.
+            throw conflict('Google sign-in is not available on this deployment');
+          }
+          throw unauthenticated('That Google sign-in could not be completed');
+        }
+        throw error;
+      }
+    },
   );
 
   typed.post(

@@ -87,8 +87,23 @@ export const licenceStatus = pgEnum('licence_status', [
 export const users = pgTable('users', {
   id: uuid('id').primaryKey(),
   email: citext('email').notNull().unique(),
-  passwordHash: text('password_hash').notNull(),
+  /**
+   * Nullable since 0016: an account created through Google has no password,
+   * and inventing an unusable hash to keep the column NOT NULL would be a lie
+   * the login path has to keep pretending to believe.
+   *
+   * Null also means "this credential is withdrawn". See `signInWithGoogle`:
+   * when Google proves an address that an unverified local account claimed,
+   * the unproven password is cleared rather than left working.
+   */
+  passwordHash: text('password_hash'),
   emailVerified: boolean('email_verified').notNull().default(false),
+  /**
+   * Google's `sub` — stable for the life of the account and, unlike the email,
+   * never reassigned or changed by the user. It is the real identity link;
+   * email is only how an existing account is FOUND the first time.
+   */
+  googleSub: text('google_sub').unique(),
   /** FR-ADM-01: the only gate on the /admin namespace. Set by hand (Q14). */
   isAdmin: boolean('is_admin').notNull().default(false),
   ...timestamps,

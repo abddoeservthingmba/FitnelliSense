@@ -1,6 +1,6 @@
 # Ascension — Privacy Policy
 
-**Last updated: 5 September 2026**
+**Last updated: 5 September 2026** (v1.5.0 — microphone, for spoken set logging)
 
 Ascension is a training log. This policy describes exactly what it stores, where,
 who else sees it, and how to get rid of it.
@@ -81,8 +81,9 @@ separately consented, separately deletable, and deleted automatically.
 - **You choose each clip, one at a time.** Either you record it in the app, or
   you pick an existing video from your phone. Nothing is captured in the
   background, and the camera is never opened without you opening it.
-- **A clip you record in the app has no sound** — the microphone is not used,
-  so there is no audio track at all.
+- **A clip you record in the app has no sound.** The camera is opened without
+  audio, so the file has no audio track at all. The microphone permission the
+  app now holds is for spoken set logging (see section 3) and is not used here.
 - **A video you pick from your phone is uploaded exactly as it is**, including
   any sound it already contains. Ascension cannot edit or re-encode a video, so
   it cannot strip that audio out. If the recording has a conversation on it,
@@ -142,8 +143,17 @@ never sent anywhere, and are removed when you sign out or uninstall:
 - No advertising, and no data is ever sold or rented.
 - No analytics or product telemetry of any kind.
 - No location tracking. Ascension never requests location permission.
-- No contacts, and no microphone — Ascension never requests microphone
-  permission and records no audio.
+- No contacts.
+- **The microphone is used for one thing only: logging a set by speaking it.**
+  It is asked for the first time you tap the microphone button, it listens only
+  while that button is active, and it is never opened in the background. Nothing
+  is recorded to a file and no audio ever leaves your phone — the speech is
+  turned into text by Android's own recogniser, and only that text reaches
+  Ascension, where it becomes a weight and a rep count and is then discarded.
+  If you refuse the permission the screen still works; you type the set instead.
+
+  This changed in version 1.5.0. Earlier versions used your keyboard's dictation
+  and did not request the microphone at all.
 - **No browsing of your photo library.** If you pick a video for form analysis,
   your phone's own picker runs and hands back only the single file you chose.
   Ascension cannot see, list or read anything else in your library, and it does

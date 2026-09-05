@@ -61,6 +61,18 @@ npx expo prebuild --platform android --no-install $CLEAN
 
 printf 'sdk.dir=%s\n' "$ANDROID_HOME" > android/local.properties
 
+# Raise the Gradle heap, written after prebuild because prebuild regenerates
+# android/ and would discard it.
+#
+# The generated default is 2 GB, and since vision-camera (plus its Nitro
+# modules) joined the build that is not enough: `mergeReleaseJavaResource` dies
+# with "Java heap space". Worth knowing what that failure looks like — it lands
+# at a late PACKAGING step, long after every line of Kotlin has compiled, so it
+# reads like a compatibility problem with whatever was added most recently when
+# it is only memory.
+sed -i 's/^org\.gradle\.jvmargs=.*/org.gradle.jvmargs=-Xmx6144m -XX:MaxMetaspaceSize=1024m/' \
+  android/gradle.properties
+
 echo "==> gradle assembleRelease"
 cd android
 # Two ABIs only. x86 exists for emulators and nearly doubles the file; every
@@ -83,7 +95,19 @@ sha256sum "$DEST" | awk '{print "sha256  " $1}'
 # the upload is a convenience, so a dropped connection must not send anyone back
 # through eleven minutes of Gradle. `--use-system-ca` is required behind
 # TLS-intercepting security software; see the script's header.
+#
+# The commit is captured HERE, where it is the one that was actually built.
+# The upload script refuses to guess it, because a metadata.json naming a
+# commit the binary does not contain reads exactly like a true one.
 echo
+APK_GIT_COMMIT="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo '')"
+if [[ -n "$(git -C "$ROOT" status --porcelain 2>/dev/null)" ]]; then
+  APK_GIT_DIRTY=1
+else
+  APK_GIT_DIRTY=0
+fi
+export APK_GIT_COMMIT APK_GIT_DIRTY
+
 if ! node --use-system-ca "$ROOT/scripts/upload-apk.mjs" "$DEST"; then
   echo "(upload skipped — the APK above is still the deliverable)" >&2
 fi

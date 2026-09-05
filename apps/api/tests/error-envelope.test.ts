@@ -8,6 +8,7 @@
  * No database: validation and auth both fail before any handler runs.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { disabledGoogleVerifier } from '../src/lib/google';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app';
 import { nullMailer } from '../src/lib/mailer';
@@ -47,6 +48,7 @@ describe('error envelope', () => {
       },
       mailer: nullMailer,
       foodLookup: nullFoodLookup,
+      google: disabledGoogleVerifier,
       startedAt: new Date(),
     });
     await app.ready();

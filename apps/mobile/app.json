@@ -3,7 +3,7 @@
     "name": "Ascension",
     "slug": "ascension",
     "scheme": "ascension",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
@@ -13,7 +13,7 @@
     ],
     "android": {
       "package": "com.ascension.fitness",
-      "versionCode": 20,
+      "versionCode": 21,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0B2547"
@@ -21,13 +21,13 @@
       "permissions": [
         "POST_NOTIFICATIONS",
         "VIBRATE",
-        "CAMERA"
+        "CAMERA",
+        "RECORD_AUDIO"
       ],
-      "_blockedPermissionsNote": "expo-notifications pulls in ShortcutBadger, which declares a launcher badge permission for every OEM. We never set a badge count, so all of them are removed. The install-referrer permission is attribution we do not do (BRD 3.3.1). NOT blocked: WAKE_LOCK, RECEIVE_BOOT_COMPLETED and c2dm.RECEIVE, which belong to the notification machinery the rest timer actually uses.",
+      "_blockedPermissionsNote": "expo-notifications pulls in ShortcutBadger, which declares a launcher badge permission for every OEM. We never set a badge count, so all of them are removed. The install-referrer permission is attribution we do not do (BRD 3.3.1). RECORD_AUDIO was blocked until 1.5.0, when in-app voice logging began genuinely needing it; the camera still records muted. NOT blocked: WAKE_LOCK, RECEIVE_BOOT_COMPLETED and c2dm.RECEIVE, which belong to the notification machinery the rest timer actually uses.",
       "blockedPermissions": [
         "android.permission.READ_APP_BADGE",
         "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.RECORD_AUDIO",
         "android.permission.SYSTEM_ALERT_WINDOW",
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "com.anddoes.launcher.permission.UPDATE_COUNT",
@@ -100,7 +100,17 @@
         "expo-image-picker",
         {
           "photosPermission": "Ascension opens your phone's own picker so you can choose one video of a set. It cannot see anything else in your library.",
-          "microphonePermission": false
+          "microphonePermission": "Ascension does not use the microphone when you pick a video."
+        }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Ascension listens only while you hold the microphone button, to turn a spoken set into numbers. No audio is recorded or uploaded.",
+          "speechRecognitionPermission": "Ascension uses speech recognition to turn a spoken set into numbers.",
+          "androidSpeechServicePackages": [
+            "com.google.android.googlequicksearchbox"
+          ]
         }
       ]
     ],

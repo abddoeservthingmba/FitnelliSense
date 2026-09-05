@@ -1,19 +1,18 @@
 /**
  * Logging a set by speaking it (FR-VOX-01, ADR 0006).
  *
- * WHY THERE IS NO MICROPHONE BUTTON HERE, and this is the interesting decision:
- * it uses the KEYBOARD's dictation instead. Every Android keyboard has a mic
- * key, it is the speech engine the user has already chosen and trained, it
- * works offline on most phones, and it needs no native module, no
- * RECORD_AUDIO permission, and no change to the privacy policy — which
- * currently says the microphone is never used, and stays true because the
- * audio never reaches this app.
+ * THE MICROPHONE IS THE APP'S OWN, not the keyboard's, and that was a
+ * deliberate reversal. Keyboard dictation cost nothing — no native module, no
+ * permission, no policy change — but it is two taps behind a keyboard that has
+ * to be summoned first, and on a gym floor with a phone in one hand that is
+ * the difference between using the feature and not. A button you can hit
+ * without looking is the whole point of speaking a set instead of typing it.
  *
- * A dedicated in-app recogniser would need `@react-native-voice/voice`, a
- * clean native rebuild, a new permission, a policy amendment, and would give a
- * worse result than Gboard. If keyboard dictation proves too fiddly in
- * practice that trade can be revisited, but it should be paid for a reason
- * rather than by default.
+ * What it costs, stated plainly because it is a real cost: the app now holds
+ * RECORD_AUDIO, and the privacy policy had to be amended — it previously said
+ * the microphone was never used. Recognition runs on-device where Android
+ * supports it, nothing is recorded to a file, and no audio is uploaded
+ * anywhere; only the recognised TEXT is kept, and only until it is parsed.
  *
  * The parsing is `parseVoiceLog` in @fi/domain — 47 tests, 100% branch. This
  * screen resolves the spoken name against the catalogue and confirms before
@@ -21,8 +20,12 @@
  * is only ever caught by a reader.
  */
 import { useMemo, useState } from 'react';
-import { Platform, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
 import { Stack, router } from 'expo-router';
+import {
+  ExpoSpeechRecognitionModule,
+  useSpeechRecognitionEvent,
+} from 'expo-speech-recognition';
 import {
   dec,
   decToString,
@@ -60,6 +63,65 @@ export default function VoiceLogScreen() {
   const addSet = useAddSet(active.data?.id);
 
   const [spoken, setSpoken] = useState('');
+
+  /*
+   * Listening state, driven by the module's own events rather than by what the
+   * button did. The recogniser stops itself on a pause, on a timeout and on an
+   * error, so a flag set at the tap would strand the UI showing "listening"
+   * over a microphone that had already closed.
+   */
+  const [listening, setListening] = useState(false);
+  const [micError, setMicError] = useState<string | null>(null);
+
+  useSpeechRecognitionEvent('start', () => setListening(true));
+  useSpeechRecognitionEvent('end', () => setListening(false));
+  useSpeechRecognitionEvent('result', (event) => {
+    // Interim results included, so the words appear as they are said — without
+    // them a long sentence looks like nothing is happening.
+    const said = event.results[0]?.transcript;
+    if (said !== undefined) {
+      setSpoken(said);
+      setChosen(null);
+    }
+  });
+  useSpeechRecognitionEvent('error', (event) => {
+    setListening(false);
+    setMicError(
+      event.error === 'no-speech'
+        ? 'Nothing was heard. Tap the microphone and speak the whole set.'
+        : 'The microphone could not be used. You can type the set instead.',
+    );
+  });
+
+  const toggleListening = async () => {
+    setMicError(null);
+
+    if (listening) {
+      // `stop` finishes the utterance and delivers a final result; `abort`
+      // would throw the sentence away mid-word.
+      ExpoSpeechRecognitionModule.stop();
+      return;
+    }
+
+    const permission = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+    if (!permission.granted) {
+      setMicError('Without the microphone this screen still works — type the set instead.');
+      return;
+    }
+
+    setSpoken('');
+    setChosen(null);
+    ExpoSpeechRecognitionModule.start({
+      lang: 'en-US',
+      interimResults: true,
+      // On-device where the platform offers it: faster, works without signal,
+      // and the audio never leaves the phone.
+      requiresOnDeviceRecognition: false,
+      // The words are exercise names and numbers, not prose.
+      addsPunctuation: false,
+      continuous: false,
+    });
+  };
   const parsed: VoiceLog | null = spoken.trim() === '' ? null : parseVoiceLog(spoken);
 
   /*
@@ -152,23 +214,68 @@ export default function VoiceLogScreen() {
                   would be an instruction that cannot be followed. Typing the
                   sentence works identically — the parsing is the same. */}
               {Platform.OS === 'web'
-                ? 'Describe the whole set in one sentence, the way you would to a training partner. Dictation lives on your phone keyboard; here, type it.'
-                : 'Tap the field, then the microphone on your keyboard, and describe the set the way you would to a training partner.'}
+                ? 'Describe the whole set in one sentence, the way you would to a training partner. Speech input needs the app; here, type it.'
+                : 'Tap the microphone and describe the set the way you would to a training partner. You can fix any word by typing.'}
             </Text>
           </Column>
 
-          <TextField
-            label="The set"
-            value={spoken}
-            onChangeText={(text) => {
-              setSpoken(text);
-              // A new sentence invalidates a manual pick from the old one.
-              setChosen(null);
-            }}
-            placeholder="one set of bench press with 80 kilos for 8 reps"
-            multiline
-            autoFocus
-          />
+          {/* Field and microphone on one row: the mic is the primary way in,
+              and the field is there so a misheard word can be corrected
+              without starting the whole sentence again. */}
+          <Row gap="sm" style={{ alignItems: 'flex-end' }}>
+            <View style={{ flex: 1 }}>
+              <TextField
+                label="The set"
+                value={spoken}
+                onChangeText={(text) => {
+                  setSpoken(text);
+                  // A new sentence invalidates a manual pick from the old one.
+                  setChosen(null);
+                }}
+                placeholder="one set of bench press with 80 kilos for 8 reps"
+                multiline
+              />
+            </View>
+
+            {Platform.OS === 'web' ? null : (
+              <Pressable
+                onPress={() => void toggleListening()}
+                accessibilityRole="button"
+                accessibilityLabel={listening ? 'Stop listening' : 'Speak the set'}
+                accessibilityState={{ busy: listening }}
+                style={({ pressed }) => ({
+                  width: 56,
+                  height: 56,
+                  borderRadius: 28,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: listening ? theme.colors.accent : theme.colors.surfaceRaised,
+                  borderWidth: 1,
+                  borderColor: listening ? theme.colors.accent : theme.colors.border,
+                  opacity: pressed ? 0.7 : 1,
+                })}
+              >
+                <Text
+                  variant="title"
+                  style={{ color: listening ? theme.colors.accentText : theme.colors.text }}
+                >
+                  ●
+                </Text>
+              </Pressable>
+            )}
+          </Row>
+
+          {listening ? (
+            <Text variant="caption" tone="accent">
+              Listening — say the whole set, then tap again to stop.
+            </Text>
+          ) : null}
+
+          {micError ? (
+            <Text variant="caption" tone="warning">
+              {micError}
+            </Text>
+          ) : null}
 
           {parsed === null ? (
             <Column gap="sm">

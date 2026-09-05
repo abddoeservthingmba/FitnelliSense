@@ -33,13 +33,28 @@ import { readFileSync, statSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { execFileSync } from 'node:child_process';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { releaseEmail, sendMail } from './lib/release-mail.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 /** The release bucket. Deliberately not the app's media bucket. */
 const BUCKET = 'apkstorageversioning';
+
+/**
+ * What this build contains, in the announcement.
+ *
+ * Kept here rather than read from a changelog because there is no machine
+ * -readable one; edit it when the build changes. An empty array omits the
+ * section entirely rather than printing a heading with nothing under it.
+ */
+const RELEASE_NOTES = [
+  'Film a set, or pick an existing video, for barbell form analysis.',
+  'A video longer than three minutes lets you choose which three minutes are measured.',
+  'Log a set by speaking it — uses the keyboard\'s own dictation, so the app never touches the microphone.',
+  'Camera viewfinder no longer crops the frame, and records at 1080p with zoom controls.',
+  'The analysis itself does not run yet: an uploaded clip stays on "Working on it".',
+];
 
 function env(name) {
   const file = readFileSync(join(ROOT, 'apps/api/.env'), 'utf8');
@@ -72,15 +87,6 @@ const apkPath = process.argv[2] ?? join(ROOT, 'build-output', `Ascension-${versi
 const bytes = readFileSync(apkPath);
 const sha256 = createHash('sha256').update(bytes).digest('hex');
 
-/** Best effort — a build from a dirty tree still uploads, it just says so. */
-function git(...args) {
-  try {
-    return execFileSync('git', args, { cwd: ROOT, encoding: 'utf8' }).trim();
-  } catch {
-    return null;
-  }
-}
-
 const metadata = {
   version,
   versionCode,
@@ -96,8 +102,17 @@ const metadata = {
    */
   signingCertSha256: 'c35574e619810ce487e6e92d2e3cbabced3e85356f32e4d793183335a0fee5de',
   apiUrl: process.env.EXPO_PUBLIC_API_URL ?? 'https://fitnellisense.onrender.com',
-  gitCommit: git('rev-parse', 'HEAD'),
-  gitDirty: git('status', '--porcelain') !== '',
+  /*
+   * The commit the BINARY was built from, which is not necessarily HEAD.
+   *
+   * build-apk.sh exports APK_GIT_COMMIT at the moment it builds. Run this
+   * script by hand against an older APK and HEAD may have moved on, so a
+   * plain `rev-parse HEAD` would attach a commit the binary does not contain
+   * — a claim that reads exactly like a true one and cannot be checked from
+   * the file. Unknown is stated instead.
+   */
+  gitCommit: process.env.APK_GIT_COMMIT ?? null,
+  gitDirty: process.env.APK_GIT_COMMIT ? process.env.APK_GIT_DIRTY === '1' : null,
   builtAt: new Date().toISOString(),
 };
 
@@ -162,3 +177,28 @@ console.log(`\nsha256  ${sha256}`);
 if (metadata.gitDirty) {
   console.log('NOTE: built from a dirty working tree — recorded as such in metadata.json.');
 }
+
+/*
+ * Tell someone, through the same provider as the one-time-code emails.
+ *
+ * Only AFTER both objects are in the bucket, so the mail can never announce a
+ * release that is not actually downloadable. Failure to send is reported and
+ * ignored — the upload has already succeeded and a mail provider outage must
+ * not make this script exit non-zero and mark a good build as failed.
+ */
+const recipient = process.env.RELEASE_NOTIFY ?? 'abdullahkhanabd8@gmail.com';
+
+const mail = await sendMail(
+  recipient,
+  releaseEmail({
+    metadata,
+    storedAt: `r2://${BUCKET}/${prefix}/`,
+    notes: RELEASE_NOTES,
+  }),
+);
+
+console.log(
+  mail.sent
+    ? `notified ${recipient} via ${mail.provider}`
+    : `notification not sent (${mail.failure})`,
+);

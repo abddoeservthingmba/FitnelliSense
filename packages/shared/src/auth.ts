@@ -25,6 +25,17 @@ export const loginRequestSchema = z.object({
   password: z.string().min(1).max(200),
 });
 
+/**
+ * Signing in with Google.
+ *
+ * Only the ID token crosses the wire. No email, no name, no id — the client
+ * could claim any of them, and the server reads all three out of the token it
+ * has cryptographically verified instead.
+ */
+export const googleSignInSchema = z.object({
+  idToken: z.string().min(20).max(4000),
+});
+
 export const refreshRequestSchema = z.object({
   refreshToken: z.string().min(20).max(500),
 });
@@ -101,6 +112,7 @@ export const accessTokenClaimsSchema = z.object({
 
 export type RegisterRequest = z.infer<typeof registerRequestSchema>;
 export type LoginRequest = z.infer<typeof loginRequestSchema>;
+export type GoogleSignIn = z.infer<typeof googleSignInSchema>;
 export type RefreshRequest = z.infer<typeof refreshRequestSchema>;
 export type TokenPair = z.infer<typeof tokenPairSchema>;
 export type AuthResponse = z.infer<typeof authResponseSchema>;

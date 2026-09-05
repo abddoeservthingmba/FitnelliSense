@@ -9,6 +9,7 @@ import { ConfigError, loadConfig } from './config';
 import { createDatabase } from './db/client';
 import { createMailer, providerFor } from './lib/mailer';
 import { createFoodLookup } from './lib/open-food-facts';
+import { createGoogleVerifier } from './lib/google';
 import { createStorage } from './lib/r2';
 
 async function main(): Promise<void> {
@@ -23,6 +24,7 @@ async function main(): Promise<void> {
   });
 
   const foodLookup = createFoodLookup({ timeoutMs: config.FOOD_LOOKUP_TIMEOUT_MS });
+  const google = createGoogleVerifier(config.GOOGLE_CLIENT_IDS);
 
   const app = await buildApp({
     config,
@@ -30,6 +32,7 @@ async function main(): Promise<void> {
     storage,
     mailer,
     foodLookup,
+    google,
     tokens: {
       accessSecret: config.JWT_ACCESS_SECRET,
       refreshPepper: config.JWT_REFRESH_PEPPER,

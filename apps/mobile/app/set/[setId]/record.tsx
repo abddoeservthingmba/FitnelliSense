@@ -483,7 +483,15 @@ export default function RecordSetScreen() {
 
     // recordAsync resolves when recording STOPS, so this await spans the whole
     // take rather than returning immediately.
-    const result = await camera.current?.recordAsync({ maxDuration: MAX_SECONDS }).catch(() => null);
+    const result = await camera.current
+      ?.recordAsync({
+        maxDuration: MAX_SECONDS,
+        // A hard stop at the server's cap. Without it a device that overshoots
+        // the requested bitrate produces a file that records fine and is then
+        // refused at presign — after the user has already done the set.
+        maxFileSize: MAX_UPLOAD_BYTES,
+      })
+      .catch(() => null);
 
     setRecording(false);
     if (!result?.uri) return;

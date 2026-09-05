@@ -135,6 +135,7 @@ export async function meRoutes(app: FastifyInstance): Promise<void> {
         db: database.db,
         tokens,
         otpTtlSecs: config.OTP_TTL,
+        google: app.ctx.google,
       };
       await authService.revokeAllForUser(deps, user.id);
       await profileService.markAccountDeleted(profileDeps, user.id);

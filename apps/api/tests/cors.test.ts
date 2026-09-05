@@ -6,6 +6,7 @@
  * prevent, and it deliberately needs no database — it must never be skipped.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { disabledGoogleVerifier } from '../src/lib/google';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app';
 import { nullMailer } from '../src/lib/mailer';
@@ -52,6 +53,7 @@ describe('CORS', () => {
       },
       mailer: nullMailer,
       foodLookup: nullFoodLookup,
+      google: disabledGoogleVerifier,
       startedAt: new Date(),
     });
     await app.ready();
