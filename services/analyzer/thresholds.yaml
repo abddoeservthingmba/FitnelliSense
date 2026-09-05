@@ -114,6 +114,21 @@ segmentation:
     source: "Quadratic preserves the curvature at a turnaround, which is exactly where a rep boundary sits."
     date: 2026-09-05
 
+  # A rep BEGINS when the bar starts moving, not when the previous one stopped
+  # rising. Bounding an excursion by the previous peak puts the eccentric start
+  # at the top of the last rep and swallows the lockout whole — a consistent
+  # 13-frame error on S01, which is exactly the lockout's length and is what
+  # gave it away as structural rather than noise.
+  #
+  # A fraction of the excursion's own peak speed, so it means the same thing
+  # for a fast single and a grinding last rep.
+  motion_onset_velocity_fraction:
+    value: 0.08
+    unit: ratio_of_peak_speed
+    status: hypothesis
+    source: "Above the noise floor of a smoothed centroid, below the speed of a deliberate descent."
+    date: 2026-09-05
+
   # What a candidate excursion is measured AGAINST.
   #
   # `min_rom_ratio` is a fraction of a typical rep's range, which is circular —

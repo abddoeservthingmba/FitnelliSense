@@ -250,3 +250,80 @@ Notes:
   the spec says note it and move on, and correctness is not settled yet.
 - G3 became measurable and is red at 4 frames against a 3-frame target. Close,
   and it is the next-but-one problem rather than this one.
+
+---
+
+## Iteration 3 — phase_boundary_error
+
+Gate targeted : `phase_boundary_error` (medium).
+                **Deviation from the protocol, stated rather than hidden.**
+                `depth_verdict_agreement` is higher severity and is what the
+                harness selected, but it is blocked on a DECISION, not on work:
+                MediaPipe detects zero poses in 24 sampled frames of the
+                synthetic clips, because they are stick figures and it is
+                trained on people. Attempting it would burn an iteration to
+                rediscover that. G3 is the highest-severity gate that can
+                actually be moved. See BLOCKERS.md.
+Hypothesis    : excursions are bounded by PEAK positions, so the eccentric
+                starts at the previous rep's top and swallows the lockout. The
+                error is a consistent -13 frames on S01 — exactly the lockout's
+                length, which is what marks it structural rather than noisy.
+                Boundaries should come from where the bar starts and stops
+                MOVING.
+Failing test  : `tests/test_phases.py` (4 tests), committed alone in 450e7de.
+                3 failed, 1 passed — the passing one is `bottom`, which was
+                never the problem and is there so the fix cannot break it.
+Change        : `_phases` walks in from each peak to the first frame moving
+                faster than a fraction of the excursion's own peak speed. The
+                fraction is in thresholds.yaml.
+
+| Gate | Before | After |
+|---|---|---|
+| G1 `rep_count_exact` | green | green |
+| G2 `depth_verdict_agreement` | red (5/8) | red (5/8) |
+| G3 `phase_boundary_error` | **red (4.0 frames)** | **green (3.0 frames)** |
+| G4 `unsafe_rule_recall` | blocked | blocked |
+| G5 `minor_rule_precision` | blocked | blocked |
+| G6 `no_verdict_on_low_quality` | green | green |
+| G7 `determinism` | green | green |
+| G8 `runtime_p95` | green (12,335 ms) | green (12,446 ms) |
+| G9 `no_unhandled_exceptions` | green | green |
+| G10 `no_magic_numbers` | green | green |
+
+Summary: 6 green / 2 red / 2 blocked → **7 green / 1 red / 2 blocked**.
+No previously-green gate regressed.
+
+Verdict : improved
+
+Notes:
+
+- **The diagnosis came from the shape of the error, not from its size.** Every
+  eccentric was wrong by the same 13 frames, and 13 was the lockout's length.
+  A consistent error is a structural mistake; a scattered one is noise. Reading
+  the per-boundary table before touching code is what made this a ten-minute
+  fix rather than a threshold hunt.
+- **G3 is green at exactly 3.0 against a target of ≤ 3.0.** That is a pass with
+  no margin, and it should be treated as fragile: the remaining error is the
+  `bottom` boundary at -5 frames, which the motion-onset change did not touch.
+  If real footage moves this at all, it moves it red. Worth a follow-up
+  iteration rather than being called done.
+- Runtime moved 12,335 → 12,446 ms, which is noise, not a regression.
+
+---
+
+# STOPPING
+
+Three gates remain and **none of them can be moved without a human decision or
+footage that does not exist**:
+
+- G2 needs pose, which needs either real clips or a change to what the
+  synthetic clips are for.
+- G4's recall is computed over labelled `unsafe` faults. There is exactly one
+  in the golden set, R05, and it has not been recorded.
+- G5's precision is computed over emitted `minor` findings. The only clip that
+  can produce them is R09, also not recorded.
+
+Continuing would mean either grinding on a blocked gate or inventing footage,
+so the loop stops here per its own rules. `BLOCKERS.md` sets out the options.
+
+Iterations used: 3 of 8.

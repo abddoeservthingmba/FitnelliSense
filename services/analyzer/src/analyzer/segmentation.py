@@ -141,29 +141,52 @@ def segment(y_raw: np.ndarray, exercise: str) -> list[Rep]:
 def _phases(index: int, start: int, bottom: int, end: int, rom: float, *, y: np.ndarray) -> Rep:
     """Split one excursion into the four phases, tiling it exactly.
 
-    The bottom is a SPAN, not an instant: the bar pauses, and calling one frame
-    "the bottom" would put the eccentric and concentric boundaries on top of
-    each other. Its width is where the bar sits within a few percent of its
-    lowest point.
+    THE REP BEGINS WHERE THE BAR STARTS MOVING, not at the previous top. Those
+    are different frames whenever the lifter stands still between reps, which
+    is always: `start` and `end` here are peaks, and the standing time either
+    side of them belongs to the neighbouring lockouts, not to this rep. Taking
+    the peak put a consistent 13-frame error on S01 — exactly the length of the
+    lockout it was swallowing.
+
+    The bottom is a SPAN, not an instant: the bar pauses there, and calling one
+    frame "the bottom" would stack the eccentric and concentric boundaries on
+    top of each other.
     """
+    limits = thresholds()
+    onset = float(limits.value("segmentation.motion_onset_velocity_fraction"))
+
+    # Speed within this excursion only. A set-wide peak would let one explosive
+    # rep raise the bar for every other rep's onset.
+    speed = np.abs(np.gradient(y[start : end + 1]))
+    floor = float(speed.max()) * onset if speed.size and speed.max() > 0 else 0.0
+
+    # Walk in from each peak to the first frame that is actually moving.
+    moving_start = start
+    while moving_start < bottom and abs(y[moving_start + 1] - y[moving_start]) <= floor:
+        moving_start += 1
+
+    moving_end = end
+    while moving_end > bottom and abs(y[moving_end] - y[moving_end - 1]) <= floor:
+        moving_end -= 1
+
     depth = y[bottom]
-    near = depth - (depth - y[start]) * 0.05
+    near = depth - (depth - y[moving_start]) * 0.05
 
     left = bottom
-    while left > start and y[left - 1] >= near:
+    while left > moving_start and y[left - 1] >= near:
         left -= 1
     right = bottom
-    while right < end - 1 and y[right + 1] >= near:
+    while right < moving_end - 1 and y[right + 1] >= near:
         right += 1
 
     return Rep(
         index=index,
-        eccentric=(start, left),
+        eccentric=(moving_start, left),
         bottom=(left, right),
-        concentric=(right, end),
-        # Lockout is zero-width here: it runs to the next rep's start, which
-        # this function cannot see. The caller closes it.
-        lockout=(end, end),
+        concentric=(right, moving_end),
+        # Zero-width here: the lockout runs to the next rep's start, which this
+        # function cannot see. `close_lockouts` finishes it.
+        lockout=(moving_end, moving_end),
         _rom=rom,
     )
 
