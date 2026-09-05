@@ -14,7 +14,8 @@ whose update refuses to install.
 
 | Version   | Code | Package                     | Date       | What changed                                                                                                       |
 | --------- | ---- | --------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------ |
-| **1.4.0** | 20   | com.ascension.fitness       | 2026-09-05 | Form-analysis capture and voice logging. Film a set or pick a video, choose which 3 minutes are analysed. Native change — built `--clean` |
+| **1.5.0** | 21   | com.ascension.fitness       | 2026-09-05 | Google sign-in; in-app microphone for voice logging (adds RECORD_AUDIO); camera viewfinder no longer crops, records 1080p with zoom |
+| 1.4.0     | 20   | com.ascension.fitness       | 2026-09-05 | Form-analysis capture and voice logging. Film a set or pick a video, choose which 3 minutes are analysed. Native change — built `--clean` |
 | 1.1.0     | 17   | com.ascension.fitness       | 2026-09-03 | 30 per-tier character icons; fixes Hunter/ranking showing raw E–S ranks; Ascension moved to top of Profile         |
 | 1.0.0     | 16   | com.ascension.fitness       | 2026-09-03 | Character select at launch, animated sigils, motivational lines per Ascension                                      |
 | 0.9.0     | 15   | com.ascension.fitness       | 2026-09-03 | **Renamed Ascension.** Ascension themes, faster launch, premium transitions. New package: install is NOT an update |
@@ -57,35 +58,33 @@ which id.
 
 |                           |                                                                    |
 | ------------------------- | ------------------------------------------------------------------ |
-| File                      | `Ascension-1.4.0.apk`                                              |
+| File                      | `Ascension-1.5.0.apk`                                              |
 | Package                   | `com.ascension.fitness`                                            |
-| versionName / versionCode | 1.4.0 / 20                                                         |
-| Size                      | 75,517,159 bytes (72.0 MB)                                         |
-| SHA-256                   | `abef454b95e6aa64cc94f32313c7e8b5eb2592cbac5fbc888cfe97bc50516a7b` |
+| versionName / versionCode | 1.5.0 / 21                                                         |
+| Size                      | 75,566,995 bytes (72.1 MB)                                         |
+| SHA-256                   | `2f3071f3bea00be776a12817d0a059ccc94a156e530cbd1a22724428f212aa2d` |
 | **Signing cert SHA-256**  | `c35574e619810ce487e6e92d2e3cbabced3e85356f32e4d793183335a0fee5de` |
 | API                       | `https://fitnellisense.onrender.com`                               |
 | ABIs                      | arm64-v8a, armeabi-v7a                                             |
-| Manifest permissions      | 12 (was 11)                                                        |
+| Manifest permissions      | 13 (was 12 — RECORD_AUDIO added for voice logging)                                                        |
 | allowBackup               | `false`                                                            |
 
 The certificate is unchanged from 1.3.0, so this installs over an existing copy
 as an update. Verified with `apksigner`, not assumed.
 
-**The twelfth permission is `MODIFY_AUDIO_SETTINGS`, not a microphone.** Adding
-`expo-image-picker` pulls it in; it changes the ringer/volume mode and grants no
-recording capability. `RECORD_AUDIO` and every media-library permission are
-still explicitly blocked, and that was checked against this binary rather than
-against the config that produced it:
+**RECORD_AUDIO is present from 1.5.0, and that is a real change.** In-app voice
+logging needs it; it was blocked in three separate places before (the
+`blockedPermissions` list, expo-image-picker`s `microphonePermission: false`,
+and expo-camera`s `recordAudioAndroid`), so the button would have shipped dead.
+The privacy policy was amended in the same commit — it previously said the
+microphone was never used. Set video still records muted.
+
+Still absent, and checked against this binary rather than the config:
 
 ```bash
-aapt dump badging build-output/Ascension-1.4.0.apk | grep -iE 'RECORD_AUDIO|READ_MEDIA|EXTERNAL_STORAGE'
+aapt dump badging build-output/Ascension-1.5.0.apk | grep -iE 'READ_MEDIA|EXTERNAL_STORAGE'
 # no output
 ```
-
-That check matters here more than usual: `expo-image-picker`'s config plugin
-adds `RECORD_AUDIO` **by default**, and only `microphonePermission: false` in
-`app.json` stops it. Without that line this build would have shipped a
-microphone permission on an app whose privacy policy says it never asks for one.
 
 ## The check that matters before every release
 
@@ -93,7 +92,7 @@ microphone permission on an app whose privacy policy says it never asks for one.
 # apksigner is not on PATH and needs a JDK. It ships with the SDK build-tools:
 JAVA_HOME="I:/android-toolchain/jdk-17.0.20.1+1" \
   /i/android-toolchain/sdk/build-tools/36.0.0/apksigner.bat \
-  verify --print-certs build-output/Ascension-1.4.0.apk
+  verify --print-certs build-output/Ascension-1.5.0.apk
 ```
 
 Only apksigner can read it. These APKs are signed with **v2/v3 only**, so there
