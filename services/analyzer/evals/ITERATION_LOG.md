@@ -327,3 +327,57 @@ Continuing would mean either grinding on a blocked gate or inventing footage,
 so the loop stops here per its own rules. `BLOCKERS.md` sets out the options.
 
 Iterations used: 3 of 8.
+
+---
+
+## Post-stop hardening — the two items logged as owed
+
+Not Loop A iterations: neither moves a red gate. Both were debts named in
+BLOCKERS.md, and both are the kind that get more expensive the longer they sit
+behind footage that has not arrived yet.
+
+### ffprobe and rotation — CLOSED (102e760)
+
+ffmpeg installed. `rotation.py` reads the Display Matrix side packet and the
+`rotate` tag, normalises them (ffmpeg reports the matrix as a negative angle,
+so −90 and 270 are the same orientation, and normalising is what lets the two
+be compared at all), and refuses a clip whose sources disagree or whose angle
+is not a right angle. Ingest returns `ambiguous_rotation`.
+
+Guessing between conflicting sources would be a coin flip that silently
+rotates the entire analysis, and it has no symptom: a portrait squat measured
+sideways produces angles wrong by ninety degrees that look completely
+plausible. Every golden-set clip will come off a phone.
+
+Where ffprobe is absent the pipeline still runs and rotation goes UNKNOWN
+rather than being assumed zero.
+
+Moves no gate — no clip in the golden set carries rotation metadata, which is
+exactly why this had to be closed on principle rather than in response to a
+red number.
+
+### G3's missing margin — CLOSED
+
+| | Before | After |
+|---|---|---|
+| Median boundary error | 3.0 frames (target ≤ 3.0) | **1.0 frames** |
+| eccentric / bottom / concentric / lockout | +1 / −5 / +3 / 0 | +1 / −1 / +1 / 0 |
+
+One mistake, not two. The bottom was defined as "within 5% of the deepest
+point" — a POSITION band — and with a cosine turnaround the bar sits inside
+that band far longer than it is genuinely stationary. The span came out 14
+frames against a true 6, starting early and ending late, and dragged the
+concentric start three frames late with it.
+
+The bottom is now where the bar is not MOVING, which is the criterion the
+eccentric start already used. Both ends of a rep are defined the same way
+instead of one by movement and one by position.
+
+Worth noting what this cost: nothing. The velocity floor was already computed
+for the motion-onset fix, so the change was to stop using a second, worse
+criterion beside it. The 0.05 position band had also been a float literal sat
+in the code — G10 does not scan `segmentation.py` today, but it would have
+been a magic number the moment those rules moved into `rules/`.
+
+Gates after both: **7 green / 1 red / 2 blocked**, unchanged in count. G3's
+margin went from zero to two frames, which is the point.

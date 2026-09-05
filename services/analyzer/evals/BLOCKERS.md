@@ -103,16 +103,28 @@ the app nagging people about non-problems.
 
 ## Not blocking, but owed
 
-~~**ffprobe is specified and not used.**~~ **CLOSED.** ffmpeg installed;
- reads the Display Matrix and the  tag, refuses a clip
-whose sources disagree or whose angle is not a right angle, and ingest returns
- for it. Where ffprobe is absent the pipeline still runs and
-rotation goes unknown rather than being assumed zero.
+~~**ffprobe is specified and not used.**~~ **CLOSED (102e760).** ffmpeg is
+installed. `rotation.py` reads both the Display Matrix side packet and the
+`rotate` tag, normalises them — ffmpeg reports the matrix as a negative angle,
+so −90 and 270 are the same orientation — and refuses a clip whose sources
+disagree or whose angle is not a right angle. Ingest returns
+`ambiguous_rotation` for those. Where ffprobe is absent the pipeline still
+runs and rotation goes UNKNOWN rather than being assumed zero, which was the
+failure being prevented.
 
-**G3 passes with no margin.** Median boundary error is exactly 3.0 frames
-against a target of ≤ 3.0. The residual is the `bottom` boundary at −5 frames,
-which the motion-onset fix did not address. Any movement from real footage
-takes it red.
+~~**G3 passes with no margin.**~~ **CLOSED.** Median boundary error is now
+**1.0 frames** against a target of ≤ 3.0, down from exactly 3.0.
+
+The cause turned out to be one mistake rather than two. The bottom was defined
+as "within 5% of the deepest point" — a POSITION band — and with a cosine
+turnaround the bar sits inside that band far longer than it is genuinely
+stationary. The span came out 14 frames against a true 6, starting early and
+ending late, which dragged the concentric start three frames late with it.
+
+The bottom is now where the bar is not MOVING, which is the criterion the
+eccentric start already used. Both ends of a rep are defined consistently
+instead of one by movement and the other by position, and every phase now
+lands within a single frame.
 
 **Runtime is 12.4 s for a 480-frame clip.** Extrapolating to a 900-frame 30 s
 clip gives roughly 23 s against a 45 s target — green, with less headroom than

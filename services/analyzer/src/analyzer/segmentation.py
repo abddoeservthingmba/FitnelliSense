@@ -169,14 +169,21 @@ def _phases(index: int, start: int, bottom: int, end: int, rom: float, *, y: np.
     while moving_end > bottom and abs(y[moving_end] - y[moving_end - 1]) <= floor:
         moving_end -= 1
 
-    depth = y[bottom]
-    near = depth - (depth - y[moving_start]) * 0.05
-
+    # THE BOTTOM IS WHERE THE BAR IS NOT MOVING, not where it is low.
+    #
+    # Defining it as "within 5% of the deepest point" measured the wrong thing:
+    # with a cosine turnaround the bar sits within 5% of depth for far longer
+    # than it is actually stationary, so the span came out 14 frames against a
+    # true 6 and dragged the concentric start three frames late with it.
+    #
+    # Velocity is the same criterion the eccentric start already uses, so the
+    # two boundaries of a rep are now defined consistently rather than one by
+    # movement and the other by position.
     left = bottom
-    while left > moving_start and y[left - 1] >= near:
+    while left > moving_start and abs(y[left] - y[left - 1]) <= floor:
         left -= 1
     right = bottom
-    while right < moving_end - 1 and y[right + 1] >= near:
+    while right < moving_end - 1 and abs(y[right + 1] - y[right]) <= floor:
         right += 1
 
     return Rep(
