@@ -125,6 +125,68 @@ that turns any gate green.
 
 Verdict : improved (scaffold now executes)
 Notes   : `make` itself is still absent on this machine; the targets are
-          invoked directly as `.venv/Scripts/python.exe -m evals.harness.*`.
-          The Makefile is unverified for that reason and is the one part of
-          the scaffold still taken on trust.
+          invoked directly as `python -m evals.harness.*`. The Makefile is
+          unverified for that reason and is the one part of the scaffold still
+          taken on trust.
+
+---
+
+## Iteration 1 — no_verdict_on_low_quality
+
+Gate targeted : `no_verdict_on_low_quality` (critical). Selected by the
+                harness, not by eye — it was the only critical red, and
+                `report.json` recorded the choice before any code was touched.
+Hypothesis    : S03 is 12 fps against a 24 fps floor, but the analyzer is a
+                stub that raises rather than returning a status, so the gate
+                counts it as misbehaving. Implementing ingest — probe the clip,
+                refuse a frame rate below the threshold — should turn G6 green
+                without touching anything downstream.
+Failing test  : `tests/test_ingest.py` (7 tests), committed alone in f13b5c2,
+                all failing with `NotImplementedError`.
+Change        : Build order step 3 only. `thresholds.py` (read the YAML,
+                cached), `result.py` (one envelope builder), `ingest.py`
+                (OpenCV probe + fps/duration/resolution checks), and `cli.py`
+                wired to them. No pose, no calibration, no segmentation.
+
+| Gate | Before | After |
+|---|---|---|
+| G1 `rep_count_exact` | red (0/2) | red (0/2) |
+| G2 `depth_verdict_agreement` | blocked | **red (0/8)** |
+| G3 `phase_boundary_error` | blocked | blocked |
+| G4 `unsafe_rule_recall` | blocked | blocked |
+| G5 `minor_rule_precision` | blocked | blocked |
+| G6 `no_verdict_on_low_quality` | **red (1 clip)** | **green** |
+| G7 `determinism` | blocked | **green** |
+| G8 `runtime_p95` | blocked | **green (186 ms)** |
+| G9 `no_unhandled_exceptions` | blocked | **green** |
+| G10 `no_magic_numbers` | green | green |
+
+Summary: 1 green / 2 red / 7 blocked → **5 green / 2 red / 3 blocked**.
+No previously-green gate regressed.
+
+Verdict : improved
+
+Notes:
+
+- **Three gates went green that were not the target**, and none of them was a
+  freebie. G7, G8 and G9 were blocked purely because nothing had ever run;
+  the moment a result came back they became measurable and passed on merit.
+  Determinism in particular is now genuinely under test — two runs of each
+  clip, compared byte for byte with `runtime_ms` excluded.
+- **G2 went blocked → red, which is progress rather than regression.** It can
+  now be evaluated and the answer is 0/8, which is correct: there is no rep
+  segmentation, so no rep can agree with a depth label. Better a true red than
+  an unmeasured blank.
+- A clip that PASSES ingest returns `no_reps_detected`, not `ok`. Ingest really
+  did succeed and nothing downstream found reps because nothing downstream
+  exists. Returning `ok` with an empty set would claim an analysis happened.
+- **ffprobe was specified and is not used.** ffmpeg is not installed on this
+  machine, so the probe uses OpenCV's container properties. The cost is
+  specific and not hidden: **rotation metadata is not checked**, so a portrait
+  clip carrying a rotation flag will currently be analysed sideways, and the
+  spec's `ambiguous_rotation` refusal cannot fire. This is a gap against the
+  spec, not a substitution for it. It needs ffmpeg installed, or a small MP4
+  atom reader, before real phone footage arrives — every clip in the golden
+  set will come off a phone.
+- Next gate is now `rep_count_exact` (high, blocks 4 stages), which is where
+  the spec predicted most of Loop A would land.

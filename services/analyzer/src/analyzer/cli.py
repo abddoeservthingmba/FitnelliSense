@@ -21,22 +21,49 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
+import time
 from pathlib import Path
 from typing import Any
 
-from . import __version__
+from . import __version__, ingest, result
 
 
 def analyze_video(*, video: Path, exercise: str, view: str) -> dict[str, Any]:
     """Analyse one set and return a result conforming to the output schema.
 
-    Raises:
-        NotImplementedError: always, until the pipeline is built.
+    STAGE 1 OF 11 IS BUILT. Ingest probes the clip and refuses one it cannot
+    measure. Everything after it — pose, calibration, bar tracking, rep
+    segmentation, kinematics, rules, scoring — does not exist yet, so a clip
+    that PASSES ingest comes back `no_reps_detected`.
+
+    That status is honest rather than convenient: ingest genuinely succeeded
+    and nothing downstream found any reps, because nothing downstream is there
+    to look. It is a real state in the schema and the client already renders
+    it. Returning `ok` with an empty set would claim an analysis happened.
     """
-    raise NotImplementedError(
-        "the analyzer pipeline is not built yet — "
-        "harness and golden set first, by design (build order steps 1-2)"
+    started = time.perf_counter()
+
+    def elapsed() -> int:
+        return int((time.perf_counter() - started) * 1000)
+
+    found, reason = ingest.check(video)
+    if reason is not None:
+        return result.abstain(
+            reason=reason,
+            exercise=exercise,
+            runtime_ms=elapsed(),
+            frames_processed=0,
+        )
+
+    assert found is not None
+    return result.envelope(
+        status="no_reps_detected",
+        exercise=exercise,
+        runtime_ms=elapsed(),
+        # Not "none": calibration has not been ATTEMPTED, which is different
+        # from having been tried and failed. Left null until the stage exists.
+        calibration_method=None,
+        frames_processed=found.frame_count,
     )
 
 
@@ -49,13 +76,10 @@ def main() -> int:
     parser.add_argument("--version", action="version", version=__version__)
     args = parser.parse_args()
 
-    try:
-        result = analyze_video(video=args.video, exercise=args.exercise, view=args.view)
-    except NotImplementedError as exc:
-        print(f"analyze: {exc}", file=sys.stderr)
-        return 3
+    analysis = analyze_video(video=args.video, exercise=args.exercise, view=args.view)
 
-    payload = json.dumps(result, indent=2, sort_keys=True)
+    # sort_keys so two runs of the same clip serialise identically (G7).
+    payload = json.dumps(analysis, indent=2, sort_keys=True)
     if args.out:
         args.out.write_text(payload + "\n", encoding="utf-8")
     else:
