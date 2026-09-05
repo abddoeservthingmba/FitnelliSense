@@ -106,13 +106,11 @@ function Status({ analysis }: { analysis: Analysis }) {
       <Overline>
         {analysis.status === 'awaiting_upload'
           ? 'not uploaded'
-          : analysis.status === 'queued'
-            ? 'waiting'
-            : analysis.status === 'processing'
-              ? 'working'
-              : analysis.status === 'complete'
-                ? 'done'
-                : 'failed'}
+          : analysis.status === 'complete'
+            ? 'done'
+            : analysis.status === 'failed'
+              ? 'failed'
+              : 'saved'}
       </Overline>
 
       <Text variant="heading">
@@ -121,13 +119,21 @@ function Status({ analysis }: { analysis: Analysis }) {
           : analysis.status === 'failed'
             ? 'Could not read this one'
             : waiting
-              ? 'Working on it'
+              ? 'Saved'
               : 'Upload did not finish'}
       </Text>
 
+      {/*
+        This used to say "Working on it — tracking the bar through the clip",
+        which was not true: there is no analysis worker running yet, so nothing
+        was tracking anything and the screen would have said it forever. A
+        status that describes work nobody is doing is worse than no status.
+      */}
       {waiting ? (
         <Text tone="muted">
-          Tracking the bar through the clip. This screen updates itself — nothing to refresh.
+          Your clip is stored and you can watch it back any time. Bar-path measurements are not
+          switched on yet — when they are, this set will be measured automatically and the numbers
+          will appear here.
         </Text>
       ) : null}
 

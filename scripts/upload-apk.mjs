@@ -49,12 +49,11 @@ const BUCKET = 'apkstorageversioning';
  * section entirely rather than printing a heading with nothing under it.
  */
 const RELEASE_NOTES = [
-  "Sign in with Google.",
-  "Video uploads now show a real percentage instead of an endless spinner.",
-  "A workout cannot be finished while a set video is still uploading — finishing used to cancel it and lose the footage.",
-  "Pick which part of a long video gets analysed, with the video playing.",
-  "Watch a clip back, and open it from a set in your history.",
-  "The analysis itself still does not run: an uploaded clip stays queued.",
+  "Sign in with Google now uses the native account chooser — the previous build was blocked by Google with \"Custom URI scheme is not enabled\".",
+  "The Google mark now appears on the button.",
+  "Upload progress no longer runs past 100%.",
+  "The analysis screen no longer claims to be tracking the bar. It says the clip is saved, because that is what is true until the measurement worker exists.",
+  "A workout cannot be finished while a set video is still uploading.",
 ];
 
 function env(name) {

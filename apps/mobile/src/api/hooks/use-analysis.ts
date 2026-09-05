@@ -76,7 +76,10 @@ export function useAnalysis(analysisId: string | null) {
     enabled: analysisId !== null,
     refetchInterval: (query) => {
       const status = query.state.data?.status;
-      return status === 'queued' || status === 'processing' ? 5000 : false;
+      // 30s, not 5s. Nothing transitions a queued analysis yet — the worker
+      // does not exist — so a tighter poll is a request every five seconds
+      // that can only ever return the row it already has.
+      return status === 'queued' || status === 'processing' ? 30_000 : false;
     },
   });
 }
@@ -154,9 +157,19 @@ function putWithProgress(
       // `lengthComputable` is false on some Android stacks; reporting a
       // fraction derived from an unknown total would move the bar to a
       // meaningless place, so nothing is reported at all.
-      if (event.lengthComputable && event.total > 0) {
-        onProgress(event.loaded / event.total);
-      }
+      if (!event.lengthComputable || event.total <= 0) return;
+
+      /*
+       * CLAMPED, because this reported 200%.
+       *
+       * React Native's XHR counts `loaded` in bytes handed to the native
+       * layer, which for a Blob body can pass through more than once — so
+       * `loaded` legitimately exceeds `total` and the raw ratio walks past 1.
+       * Nothing downstream can sensibly render 200%, and a bar that fills
+       * twice is worse than one that simply finishes, so the ceiling is
+       * applied at the source rather than in every consumer.
+       */
+      onProgress(Math.min(1, event.loaded / event.total));
     };
 
     request.onload = () => {
