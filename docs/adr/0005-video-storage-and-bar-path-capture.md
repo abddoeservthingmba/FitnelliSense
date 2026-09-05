@@ -2,7 +2,7 @@
 
 **Status:** Proposed
 **Date:** 2026-09-03
-**Requirements:** FR-VID-\* (new), NFR-S-\*, BRD §6.8
+**Requirements:** FR-VID-\* (enumerated in ADR 0006), NFR-S-\*, BRD §6.8
 
 ## Context
 
@@ -110,8 +110,14 @@ m/s — only pixels per second, which is not a number anyone can train on.
 
 ## Consequences
 
-- A second R2 bucket (`arise-user-media`) separate from catalogue media, so a
-  lifecycle rule that deletes user clips can never touch the exercise library.
+- ~~A second R2 bucket separate from catalogue media, so a lifecycle rule that
+  deletes user clips can never touch the exercise library.~~
+  **Superseded in implementation:** one bucket (`ascension`), with user clips
+  under a `cv/` prefix and the 90-day lifecycle rule **scoped to that prefix**.
+  A second bucket would mean a second set of credentials for one policy. The
+  safety property is unchanged but it now rests on the rule's prefix rather
+  than on a bucket boundary, which makes the prefix load-bearing: an unscoped
+  rule would expire `avatars/` and `exercises/` too.
 - Uploads must be presigned and scoped to the authenticated user's own prefix.
   A client that can write anywhere in the bucket can overwrite someone else's
   clip.
@@ -122,5 +128,17 @@ m/s — only pixels per second, which is not a number anyone can train on.
   is not among them.
 - No transcoding on the API. If the client cannot produce 720p30, it uploads
   nothing.
-- Nothing in this ADR is wired up yet. The domain layer is built; storage,
-  capture and UI are not.
+## Status of the staging above, as of 2026-09-05
+
+Stage 1 (metrics) and the whole surrounding pipeline are built: consent,
+presigned upload, the analysis record and its states, the record and result
+screens. R2 is configured and verified end to end.
+
+Stage 2 and 3 are **not**. There is no tracker and no manual point entry, so
+nothing yet produces the path that `bar-path.ts` consumes — an uploaded clip
+reaches `queued` and stays there until a worker exists. The worker is a second
+deployable (ffmpeg and OpenCV do not fit Render's free instance), and real
+frame access still needs `react-native-vision-camera`.
+
+Uploading an existing clip from the camera roll remains unbuilt for the reason
+given above: it needs a native transcoder. Only in-app recording ships.

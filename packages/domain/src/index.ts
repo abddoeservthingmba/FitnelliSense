@@ -21,6 +21,7 @@ export * from './cardio';
 export * from './insights';
 export * from './muscle-work';
 export * from './bar-path';
+export * from './video-clip';
 export * from './session-comparison';
 export * from './ascension';
 export * from './ascension-quotes';
