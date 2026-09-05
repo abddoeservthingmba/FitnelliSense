@@ -103,12 +103,11 @@ the app nagging people about non-problems.
 
 ## Not blocking, but owed
 
-**ffprobe is specified and not used.** ffmpeg is not installed, so ingest reads
-OpenCV's container properties. Rotation metadata is therefore **not checked**:
-a portrait clip carrying a rotation flag will be analysed sideways, and the
-`ambiguous_rotation` refusal can never fire. Every golden-set clip will come
-off a phone, so this needs closing before the footage arrives —
-`winget install Gyan.FFmpeg`, or a small MP4 atom reader.
+~~**ffprobe is specified and not used.**~~ **CLOSED.** ffmpeg installed;
+ reads the Display Matrix and the  tag, refuses a clip
+whose sources disagree or whose angle is not a right angle, and ingest returns
+ for it. Where ffprobe is absent the pipeline still runs and
+rotation goes unknown rather than being assumed zero.
 
 **G3 passes with no margin.** Median boundary error is exactly 3.0 frames
 against a target of ≤ 3.0. The residual is the `bottom` boundary at −5 frames,

@@ -6,23 +6,30 @@ clip too sparse or too small to measure has to be refused HERE, before anything
 has the chance to render a confident-looking answer from data that cannot
 support it.
 
-A NOTE ON ffprobe. The spec names ffprobe, and ffprobe is the right tool —
-specifically for rotation metadata, which OpenCV reports unreliably across
-backends. ffmpeg is not installed on this machine, so this uses OpenCV's
-container properties instead and rotation is NOT yet checked. That is a real
-gap against the spec rather than a substitution, and it is recorded in the
-iteration log rather than quietly absorbed: a portrait clip carrying a rotation
-flag will currently be analysed sideways.
+ffprobe IS USED WHERE IT EXISTS, and only for the thing OpenCV cannot report:
+rotation metadata. Frame rate and dimensions come from OpenCV either way,
+because those it reads reliably and a second source would only invite the two
+to disagree.
+
+Where ffprobe is absent the pipeline still runs — dimensions, frame rate and
+duration are all checkable without it — but rotation goes UNKNOWN rather than
+being assumed zero. Assuming zero is the failure this module exists to prevent:
+a portrait clip analysed sideways produces angles wrong by ninety degrees with
+no symptom at all.
 """
 
 from __future__ import annotations
 
+import json
+import shutil
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
 import cv2
 
 from .result import QualityReason
+from .rotation import RotationError, rotation_from_probe
 from .thresholds import thresholds
 
 
@@ -71,6 +78,47 @@ def probe(path: Path) -> Probe | None:
     return result
 
 
+def _ffprobe(path: Path) -> dict[str, object] | None:
+    """Stream metadata from ffprobe, or None when it is not installed.
+
+    Not an error when missing. ffmpeg is a separate install and the rest of
+    ingest works without it; what is lost is rotation, and that loss is
+    reported rather than papered over.
+    """
+    binary = shutil.which("ffprobe")
+    if binary is None:
+        return None
+
+    try:
+        completed = subprocess.run(
+            [
+                binary,
+                "-v",
+                "error",
+                "-select_streams",
+                "v:0",
+                "-show_entries",
+                "stream=width,height:stream_tags=rotate:stream_side_data=rotation",
+                "-of",
+                "json",
+                str(path),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=20,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+    if completed.returncode != 0:
+        return None
+    try:
+        return json.loads(completed.stdout)
+    except json.JSONDecodeError:
+        return None
+
+
 def check(path: Path) -> tuple[Probe | None, QualityReason | None]:
     """Probe and validate. Returns the probe, and a reason to refuse if any.
 
@@ -82,6 +130,16 @@ def check(path: Path) -> tuple[Probe | None, QualityReason | None]:
     found = probe(path)
     if found is None:
         return None, "unreadable_video"
+
+    # Rotation before the numeric limits. A clip whose orientation is unknown
+    # cannot be measured at all, so arguing about its resolution first would be
+    # answering the wrong question.
+    payload = _ffprobe(path)
+    if payload is not None:
+        try:
+            rotation_from_probe(payload)
+        except RotationError:
+            return found, "ambiguous_rotation"
 
     limits = thresholds()
 
