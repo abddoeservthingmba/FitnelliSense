@@ -95,16 +95,32 @@ export const envSchema = z
      * comma-separated. Android and web are separate OAuth clients with
      * separate ids and both are legitimate, so this is a list.
      *
-     * NOT a secret, and there is deliberately no client secret anywhere: the
-     * app is a public client that could not keep one, and verification only
-     * needs Google's public keys.
+     * DEFAULTED TO THE REAL IDS, which deserves justification because
+     * configuration in code is normally wrong.
      *
-     * Empty disables Google sign-in — `/auth/google` answers "not configured"
-     * and every other way in keeps working.
+     * These are not secrets and cannot be made into one. An OAuth client id is
+     * a public identifier: it is already committed in apps/mobile/app.json,
+     * already compiled into every APK, and visible to anyone who unzips one.
+     * There is no client secret anywhere in this design — the app is a public
+     * client that could not keep one — so nothing here is being exposed that
+     * was not already public.
+     *
+     * What it buys is that Google sign-in works on a fresh deployment without
+     * a manual step that, if forgotten, makes the whole feature answer 409
+     * while looking correctly built. That failure is invisible until someone
+     * tries to sign in.
+     *
+     * The env var still overrides, which is what a different deployment with
+     * its own Google project would set. And the audience check keeps its
+     * teeth either way: a token minted for some other application does not
+     * carry one of these ids and is refused.
      */
     GOOGLE_CLIENT_IDS: z
       .string()
-      .default('')
+      .default(
+        '366852479009-qufb1f8l5p7kbpjibigp9d6sqop9901q.apps.googleusercontent.com,' +
+          '366852479009-el1crvuuisgu61a5vrbidj66r48tkvb7.apps.googleusercontent.com',
+      )
       .transform((value) =>
         value
           .split(',')
