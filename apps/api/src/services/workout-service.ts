@@ -285,7 +285,11 @@ async function countsFor(
     .select({
       workoutId: workoutExercises.workoutId,
       exerciseName: exercises.name,
-      exerciseSlug: exercises.slug,
+      // No slug here, deliberately. This query GROUPs BY, and a selected
+      // column that is neither grouped nor aggregated makes Postgres reject
+      // the whole statement — which took out the workout list, not just the
+      // slug. The list view has no use for it either; only the detail view
+      // needs to know whether a lift can be analysed.
       position: workoutExercises.position,
       setCount: sql<number>`count(${workoutSets.id})`,
     })
