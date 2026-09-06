@@ -15,9 +15,11 @@
  * account chooser the user already knows, and hands back an ID token. No
  * browser, no scheme, and a better flow than the one that was blocked.
  *
- * On WEB there is no Play Services, so the browser keeps the redirect flow —
- * which is legitimate there, because a web origin is an https URL and not a
- * custom scheme.
+ * WEB IS A SEPARATE FILE. `GoogleSignInButton.web.tsx` uses Google Identity
+ * Services, because a browser has no Play Services. Metro resolves it by
+ * extension, so nothing here needs a platform branch — and an earlier attempt
+ * at one simply returned null on web, leaving the browser with no Google
+ * sign-in at all while this docstring claimed otherwise.
  *
  * WHICH CLIENT ID: the native SDK is configured with the WEB client id, not the
  * Android one. That is not a mistake. The Android client is identified by the
@@ -31,7 +33,6 @@
  * identity out of a token whose signature it has checked.
  */
 import { useCallback, useEffect, useState } from 'react';
-import { Platform } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import Constants from 'expo-constants';
 import { Button } from '../../components/Button';
@@ -90,7 +91,7 @@ export function GoogleSignInButton({ onToken, loading, error }: GoogleSignInButt
    * the SDK returns, which is the claim our server checks.
    */
   useEffect(() => {
-    if (Platform.OS === 'web' || !webClientId) return;
+    if (!webClientId) return;
     void (async () => {
       const { GoogleSignin } = await import('@react-native-google-signin/google-signin');
       GoogleSignin.configure({ webClientId, offlineAccess: false });
@@ -138,10 +139,6 @@ export function GoogleSignInButton({ onToken, loading, error }: GoogleSignInButt
   // No client id in this build: nothing to offer, and a button that always
   // fails would be worse than its absence.
   if (!webClientId) return null;
-
-  // Web has no Play Services. Rather than ship a button that cannot work
-  // there, the browser is told to use the password form.
-  if (Platform.OS === 'web') return null;
 
   return (
     <Column gap="sm">

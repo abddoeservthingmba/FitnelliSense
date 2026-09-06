@@ -49,6 +49,10 @@ services/analyzer/.venv/
 services/analyzer/evals/report.json
 services/analyzer/evals/clips/synthetic/
 services/analyzer/evals/clips/real/*.mp4
+# Annotated debug renders. Regenerated from the clip on demand, tens of MB
+# each, and they contain the lifter's face and their gym — real footage stays
+# in R2 where the access rules already apply, not in a public repo.
+services/analyzer/evals/artifacts/
 services/analyzer/**/__pycache__/
 services/analyzer/*.egg-info/
 services/analyzer/src/*.egg-info/

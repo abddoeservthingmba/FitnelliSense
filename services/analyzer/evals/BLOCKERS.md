@@ -134,3 +134,61 @@ the number suggests, because Hough runs on every frame at full rate.
 does not exist. Nine of fourteen rules also ship `enabled: false` for want of a
 fixture, and a threshold swept against zero labelled positives is a number with
 a date on it and nothing behind it.
+
+---
+
+## 4. Bar tracking does not hold the bar on real footage — blocks everything
+
+**Added after iteration 4.** This is now the top blocker, ahead of the three
+above, because every measurement in the pipeline is derived from the bar path.
+
+**What happened.** The first real clip — 61 s of deadlifts, the user's own
+upload — was reported as **71 reps**. After adding continuity it became 7, and
+I called that progress. It was not: the tracker had locked onto the ceiling
+lights. Median tracked position was 21% down the frame with a 223 px radius.
+The bar was being identified as "the two circles at the most similar height",
+which is exactly what a row of ceiling lights looks like.
+
+Adding motion gating (MOG2, camera is static by scope) removed the ceiling
+lock. It now sits at 59% down the frame with a 173 px radius, coherence 64%,
+and reports **1 rep** — which is also probably wrong. Tracked travel is 88% of
+frame height and a deadlift bar does not travel the whole frame.
+
+**The spec's own escalation applies:**
+
+> "Hough circles + optical flow first; only escalate to a fine-tuned YOLOv8n
+> if the gate fails."
+
+Both halves are built. The gate still fails.
+
+**Options.**
+
+**(a) Fine-tuned YOLOv8n plate detector.** What the spec named. Robust to
+clutter in a way a Hough transform cannot be, because it learns what a plate
+looks like rather than what a circle looks like. Cost: needs labelled plates —
+a few hundred boxes across varied gyms — plus ~900 ms/clip and a new
+dependency. It is the answer that actually works, and it is a week, not a day.
+
+**(b) Ask the user to tap the plate once, in the first frame.** Removes
+acquisition entirely, which is the half that keeps failing; template-matching
+from a known patch is far easier than finding it cold. Cost: one interaction
+per clip, and it changes the product — analysis stops being automatic. The
+spec's own staging suggested exactly this as step 2 ("points by hand... proves
+the metrics are worth having before anyone writes a tracker").
+
+**(c) Constrain the capture instead.** Require the plate to be the largest
+moving object and the camera side-on at a stated distance, and abstain
+otherwise. Cheapest by far, and it narrows who can use the feature to people
+who film it exactly right — which, given a static-camera scope already, may be
+less of a narrowing than it sounds.
+
+**Recommendation: (b) now, (a) later.** (b) makes the rest of the pipeline —
+calibration, kinematics, rules, scoring — buildable and testable this week
+against real footage, instead of blocked behind a detector that is itself a
+week of work. (a) then replaces acquisition without touching anything
+downstream, because the interface is just "where is the bar in frame 0".
+
+**What is NOT an option: leaving it as it is.** It currently answers `ok` with
+1 rep on a clip it is not tracking. That is the failure the abstain rule
+exists to prevent, and the coherence floor is too permissive to catch it —
+64% passed a 60% gate while being wrong.

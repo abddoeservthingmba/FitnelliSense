@@ -381,3 +381,78 @@ been a magic number the moment those rules moved into `rules/`.
 
 Gates after both: **7 green / 1 red / 2 blocked**, unchanged in count. G3's
 margin went from zero to two frames, which is the point.
+
+---
+
+## Iteration 4 — bar tracking against real footage
+
+Triggered by the first real clip ever fed to this pipeline: 61 s of deadlifts,
+1920x1080 landscape at 60 fps, pulled from the user's own R2 upload.
+
+**It reported 71 reps.** Coverage said 100%.
+
+### What was actually wrong, in three layers
+
+**Layer 1 — no continuity.** Hough was asked for circles in each frame
+independently and given whatever came back. Median frame-to-frame movement was
+81 px, maximum 992 px. A barbell cannot move 992 px in 1/60 s. The path was a
+scatter plot and the segmenter faithfully found 71 excursions in it.
+
+**Layer 2 — coverage was not confidence.** "I found a circle" is not "I found
+the bar", and nothing could fall, so nothing could trigger an abstention.
+
+**Layer 3, and the one I got wrong twice — THE PRIOR SELECTED FOR CEILING
+LIGHTS.** After fixing continuity the count dropped 71 → 7 and I reported that
+as progress. It was not. The user watched the annotated video and said it was
+tracking lights. Measuring where the tracked point actually sat:
+
+| | ceiling-lock | after motion gating |
+|---|---|---|
+| median y | 227 / 1080 (**21% — the ceiling**) | 637 (59%) |
+| median radius | 223 px | 173 px |
+| coherence | 74% | 64% |
+
+The bar was identified as "the two circles at the most similar height". That
+is a precise description of a row of ceiling lights. The heuristic did not
+fail — it worked, on the wrong objects, with perfect coherence.
+
+### The fix, and the one it broke first
+
+The spec said "Hough circles **+ optical flow**". Only the Hough half had been
+built. The camera is static by scope, so the room does not move and the bar
+does — MOG2 background subtraction separates them where geometry could not.
+
+First attempt gated EVERY frame on motion, which regressed both synthetic
+clips from 5 and 3 reps to abstaining: a bar that pauses at lockout is learned
+as background within a second. Motion now gates ACQUISITION only. Once the
+right object is held, continuity keeps it, and a plate that stops moving is
+still the plate.
+
+| Gate | Before | After |
+|---|---|---|
+| G1 `rep_count_exact` | green (2/2) | green (2/2) |
+| G6 `no_verdict_on_low_quality` | green | green |
+| others | unchanged | unchanged |
+
+Verdict : improved, but NOT resolved
+
+### What is still wrong
+
+The real clip now reports **1 rep** and I do not believe that either. Tracked
+travel is 88% of frame height; a deadlift bar travels roughly hip height, not
+the whole frame. Coherence is 64%, barely over the 60% floor.
+
+So: the ceiling-lock is gone and the absurd count is gone, but the tracker is
+still not reliably on the bar. **I cannot verify the count** — I do not know
+the true number of reps in that clip and have no way to watch it. The
+annotated video is at `evals/artifacts/USER_latest_tracked.mp4` and a human
+can answer in seconds what I cannot answer at all.
+
+### The escalation the spec anticipated
+
+> "Hough circles + optical flow first; only escalate to a fine-tuned YOLOv8n
+> if the gate fails."
+
+Both halves of the first option are now built and the gate still fails on real
+footage. That is the documented trigger, and it needs a decision rather than
+another attempt — see BLOCKERS.md.

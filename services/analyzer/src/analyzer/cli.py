@@ -27,6 +27,7 @@ from pathlib import Path
 from typing import Any
 
 from . import __version__, ingest, result, segmentation, tracking
+from .thresholds import thresholds
 
 
 def analyze_video(*, video: Path, exercise: str, view: str) -> dict[str, Any]:
@@ -59,6 +60,20 @@ def analyze_video(*, video: Path, exercise: str, view: str) -> dict[str, Any]:
     assert found is not None
 
     series = tracking.track(video, fps=found.fps)
+
+    # ABSTAIN BEFORE SEGMENTING. This is the check whose absence let a scatter
+    # plot become 71 reps: tracking had no way to say "I do not believe this",
+    # so segmentation was handed noise and did its job faithfully on it.
+    #
+    # Coherence, not coverage. Coverage read 1.0 on that clip.
+    if series.coherence < float(thresholds().value("tracking.min_coherence")):
+        return result.abstain(
+            reason="bar_not_tracked",
+            exercise=exercise,
+            runtime_ms=elapsed(),
+            frames_processed=found.frame_count,
+        )
+
     reps = segmentation.close_lockouts(
         segmentation.segment(series.y, exercise),
         last_frame=len(series),

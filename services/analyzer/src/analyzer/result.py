@@ -27,6 +27,7 @@ QualityReason = Literal[
     "duration_too_long",
     "resolution_too_low",
     "ambiguous_rotation",
+    "bar_not_tracked",
     "low_keypoint_confidence",
     "subject_occluded",
     "multiple_subjects",

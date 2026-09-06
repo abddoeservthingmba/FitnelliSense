@@ -210,6 +210,46 @@ squat:
     source: "Front view only. R03 is the fixture."
     date: 2026-09-05
 
+tracking:
+  # HOW FAR THE BAR MAY MOVE BETWEEN TWO FRAMES, as a fraction of frame height.
+  #
+  # This is the number that separates a bar path from a scatter plot. Without
+  # it, Hough returns a circle for every frame — a light fitting, a plate on
+  # the rack, a fan — and coverage reads 100% while the "path" jumps up to
+  # 992 px per frame. On the first real clip that produced 71 reps in 61
+  # seconds.
+  #
+  # 4% of frame height at 60 fps is about 2.6 m/s of bar speed on a 1080-tall
+  # frame filmed at a typical distance: far faster than any lift, slow enough
+  # to reject a jump across the room.
+  max_jump_frame_height_ratio:
+    value: 0.04
+    unit: ratio_of_frame_height
+    status: hypothesis
+    source: "Above any real bar speed, below a teleport. Real clip showed median 81px and max 992px jumps without it."
+    date: 2026-09-06
+
+  # How long the bar may be lost before the search gives up on continuity and
+  # re-acquires from the whole frame. Short: a plate hidden behind a thigh
+  # reappears within a few frames, and anything longer is a different shot.
+  reacquire_after_frames:
+    value: 12
+    unit: frames
+    status: hypothesis
+    source: "0.2 s at 60 fps. Long enough for an occlusion, short enough not to drift onto a new object."
+    date: 2026-09-06
+
+  # Below this fraction of frames genuinely locked onto the bar, the clip is
+  # refused. COVERAGE IS NOT CONFIDENCE — "I found a circle" is not "I found
+  # the bar", and reporting the first as the second is what let 71 reps
+  # through with no warning.
+  min_coherence:
+    value: 0.60
+    unit: ratio_of_frames
+    status: hypothesis
+    source: "Placeholder. Needs the real golden set to place properly; deliberately permissive for now."
+    date: 2026-09-06
+
 bar:
   horizontal_drift_bar_length_ratio:
     value: 0.04
