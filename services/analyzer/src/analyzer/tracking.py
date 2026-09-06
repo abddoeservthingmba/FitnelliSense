@@ -37,6 +37,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
+from .decode import open_video
 from .thresholds import thresholds
 
 #: Detection runs at this short side. Fixed rather than proportional so the
@@ -204,25 +205,69 @@ def _radius_band(grey: np.ndarray) -> tuple[int, int]:
     return min_r, max(min_r + 4, int(short * 0.22))
 
 
-def _acquire(grey: np.ndarray, mask: np.ndarray) -> tuple[float, float, float] | None:
-    """Find the bar with no prior — among things that are MOVING.
+def _acquire(
+    grey: np.ndarray,
+    mask: np.ndarray,
+    expect: float | None,
+    deviation: float,
+    near: tuple[float, float] | None = None,
+    within: float = 0.0,
+) -> tuple[float, float, float] | None:
+    """Find the bar with no positional prior — among things that are MOVING.
 
     The height-similarity heuristic that used to select the pair is gone. It
     was the bug: ceiling lights are level with each other by construction, so
     "most level pair" reliably picked the ceiling. Motion decides now, and
     among moving candidates the largest is taken, because a plate is the
     biggest moving disc in a gym.
+
+    ONE CLIP HAS ONE PLATE, AND IT KEEPS ITS SIZE. Once a size has been
+    established, `expect` carries it, and re-acquisition is confined to it.
+    Without that, every recovery after a long occlusion is a fresh guess, and
+    a minority of bad guesses is enough to wreck the clip-level statistics
+    even while the lock is mostly right: measured radius spread was 3.33x
+    against a 1.60 limit on a clip whose sustained runs were all 164-179 px.
+
+    The lifter can walk toward the camera, so the band is generous. The plate
+    cannot become a different plate, so there is a band at all.
+
+    `near`/`within` KEEP A RECOVERY LOCAL. Losing the lock for a fifth of a
+    second does not entitle the search to the whole frame. The adversary that
+    forced this is a WALL FAN: circular, the same size as the plate at this
+    camera distance, and its blades move, so it passes the circle test, the
+    size test and the motion test at once. The lock sat correctly on the plate
+    and periodically jumped 900 px to the fan, and every jump became a rep.
+    Size cannot separate those two objects. Proximity can, because the bar was
+    nearby a moment ago and the fan never was.
     """
     min_r, max_r = _radius_band(grey)
+    if expect is not None:
+        # Search only where the plate can be. Narrower is also faster, and
+        # rules out the large circles — wheels, fans, the lifter's own torso —
+        # that a cold search has to consider.
+        min_r = max(min_r, int(expect * (1.0 - deviation)))
+        max_r = max(min_r + 2, int(np.ceil(expect * (1.0 + deviation))))
+
     found = _circles(grey, min_r, max_r, min(grey.shape[:2]) * 0.15)
     if found is None:
         return None
 
     candidates = [c for c in np.round(found[0]).astype(np.float64) if _moving(mask, c[0], c[1])]
+    if expect is not None:
+        candidates = [c for c in candidates if abs(c[2] - expect) <= expect * deviation]
+    if near is not None and within > 0:
+        candidates = [
+            c for c in candidates if float(np.hypot(c[0] - near[0], c[1] - near[1])) <= within
+        ]
     if not candidates:
         return None
 
-    best = max(candidates, key=lambda c: c[2])
+    # With a known size, the closest match to it; cold, the largest, because a
+    # plate is the biggest moving disc in a gym.
+    if expect is None:
+        best = max(candidates, key=lambda c: c[2])
+    else:
+        best = min(candidates, key=lambda c: abs(c[2] - expect))
     return float(best[0]), float(best[1]), float(best[2])
 
 
@@ -308,6 +353,7 @@ def track(path: Path, fps: float) -> BarSeries:
     patience = int(limits.value("tracking.reacquire_after_frames"))
     deviation = float(limits.value("tracking.max_radius_deviation_ratio"))
     memory = int(limits.value("tracking.radius_memory_frames"))
+    reacquire_radii = float(limits.value("tracking.reacquire_radius_plate_radii"))
 
     # History of 200 frames: long enough to learn a static gym, short enough
     # that a lifter standing still briefly does not become background.
@@ -315,7 +361,7 @@ def track(path: Path, fps: float) -> BarSeries:
         history=200, varThreshold=32, detectShadows=True
     )
 
-    capture = cv2.VideoCapture(str(path))
+    capture = open_video(path)
     xs: list[float] = []
     ys: list[float] = []
     rs: list[float] = []
@@ -327,6 +373,10 @@ def track(path: Path, fps: float) -> BarSeries:
     # A median rather than the last value: one noisy frame must not be able to
     # move the size band, because moving the band is how the lock escapes it.
     recent: list[float] = []
+    # The size the plate IS, fixed for the clip once enough frames agree. This
+    # survives every loss of the lock — the plate does not change between
+    # occlusions, so a recovery should not be free to pick a new size.
+    established: float | None = None
     missing = 0
     height = 0
 
@@ -343,7 +393,16 @@ def track(path: Path, fps: float) -> BarSeries:
             # search happens in.
             max_jump = grey.shape[0] * jump_ratio
 
-            held = float(np.median(recent)) if recent else 0.0
+            # THE ESTABLISHED SIZE WINS ONCE IT EXISTS. Centring the band on a
+            # rolling median lets the band itself drift: each frame is within
+            # 25% of the last, and after enough frames the accepted size is
+            # nowhere near the plate — the same slow walk the per-frame band
+            # stops positionally, happening in the size dimension instead.
+            # Measured as a clip-level spread of 1.80x while every sustained
+            # run sat inside 164-179 px.
+            held = established if established is not None else (
+                float(np.median(recent)) if recent else 0.0
+            )
             hit = (
                 _follow(grey, mask, last, held, max_jump, deviation)
                 if last is not None and recent
@@ -356,12 +415,17 @@ def track(path: Path, fps: float) -> BarSeries:
                 # Only re-acquire once continuity is genuinely lost. Doing it
                 # every frame is what produced the scatter plot.
                 if last is None or missing > patience:
-                    hit = _acquire(grey, mask)
+                    # A cold search only when there is genuinely no prior. With
+                    # a last position and an established size, recovery stays
+                    # local — see `_acquire` on the wall fan.
+                    anchor = (last[0], last[1]) if last is not None else None
+                    reach = established * reacquire_radii if established is not None else 0.0
+                    hit = _acquire(grey, mask, established, deviation, anchor, reach)
                     if hit is not None:
-                        # A fresh acquisition is a new object, so the size
-                        # memory of the old one must go with it. Keeping it
-                        # would either reject the new bar forever or slowly
-                        # blend two objects into one average that is neither.
+                        # The short-term memory goes, because the positional
+                        # history is genuinely stale. The ESTABLISHED size does
+                        # not: it describes the plate, not this stretch of
+                        # tracking, and the plate is still the same plate.
                         recent = []
                         missing = 0
 
@@ -377,6 +441,12 @@ def track(path: Path, fps: float) -> BarSeries:
                 recent.append(hit[2])
                 if len(recent) > memory:
                     recent.pop(0)
+                # Fixed once, from a full memory's worth of agreeing frames,
+                # and never revised. Letting it drift would reintroduce exactly
+                # the slow walk onto another object that the per-frame band
+                # exists to stop, just on a longer timescale.
+                if established is None and len(recent) == memory:
+                    established = float(np.median(recent))
                 xs.append(hit[0] / scale)
                 ys.append(hit[1] / scale)
                 rs.append(hit[2] / scale)

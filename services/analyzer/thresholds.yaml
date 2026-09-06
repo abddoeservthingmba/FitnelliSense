@@ -239,6 +239,28 @@ tracking:
     source: "0.2 s at 60 fps. Long enough for an occlusion, short enough not to drift onto a new object."
     date: 2026-09-06
 
+  # HOW FAR FROM ITS LAST KNOWN POSITION A RE-ACQUIRED BAR MAY BE, in plate
+  # radii. Losing the lock for a fifth of a second does not entitle the search
+  # to the whole frame, and giving it the whole frame is how the tracker
+  # crossed the room.
+  #
+  # The specific adversary: a WALL FAN. It is circular, it is the same size as
+  # the plate at this camera distance, and its blades move — so it satisfies
+  # the circle test, the size test and the motion test simultaneously. The
+  # lock sat on the plate at y=1035 for most of the clip and periodically
+  # jumped to the fan at y=119, and each 900 px teleport became a rep.
+  #
+  # What separates them is that the bar was NEARBY a moment ago and the fan
+  # never was. At the jump ceiling of 4% of frame height per frame, 12 frames
+  # of loss permits about 2 radii of real movement; 3 gives margin for a
+  # fast pull and still rules out anything across the room.
+  reacquire_radius_plate_radii:
+    value: 3.0
+    unit: plate_radii
+    status: hypothesis
+    source: "12 lost frames at the max jump rate is ~2 radii of possible travel. 3 adds margin; the fan sat 5.5 radii away."
+    date: 2026-09-06
+
   # Below this fraction of frames genuinely locked onto the bar, the clip is
   # refused. COVERAGE IS NOT CONFIDENCE — "I found a circle" is not "I found
   # the bar", and reporting the first as the second is what let 71 reps

@@ -558,3 +558,105 @@ is the half a single tap replaces. See BLOCKERS.md §4.
 
 The pipeline no longer claims anything about this clip, which is the outcome
 the abstain rule exists for. It does not yet analyse it.
+
+---
+
+## Iteration 6 — the video was sideways, and had been all along
+
+### What the user saw that I could not
+
+They watched the annotated render and said the tracking looked correct. That
+contradicted my own measurement, which said the tracker was stuck on a static
+object. So I extracted frames and LOOKED at them, which I should have done in
+iteration 4 instead of reasoning about percentiles.
+
+The green circle was on the plate. It had been on the plate. But **the lifter
+was lying on their side**, because the clip is portrait video in a landscape
+container:
+
+```
+CAP_PROP_ORIENTATION_META : 90.0     <- the container says rotate
+CAP_PROP_ORIENTATION_AUTO : 0.0      <- OpenCV does not
+probe                     : 1920x1080 (should be 1080x1920)
+```
+
+**Segmentation runs on `y`. The bar's vertical travel was in `x`.** Every
+symptom of the last three iterations was this one fact:
+
+| measured | I read it as | it actually was |
+|---|---|---|
+| y travel 11% of frame | "this object barely moves" | sideways drift, correctly measured |
+| x drift 53% of frame | ignored | THE REPS |
+| 71, then 7, then 1, then 4 reps | tracker instability | noise on the wrong axis |
+| travel 0.88 radii | "a wall fixture" | the plate, measured across its width |
+
+The tracker was never the problem. It had locked onto the plate and followed
+it accurately, and I spent three iterations hardening a component that was
+working — while the actual defect sat in ingest, where `rotation_from_probe`
+was CALLED AND ITS RESULT DISCARDED (`ingest.py:140`, no assignment). It
+validated orientation and never applied it. ffprobe also was not resolving
+from Python, so even that no-op was a no-op.
+
+### The fix
+
+`decode.open_video` sets `CAP_PROP_ORIENTATION_AUTO` before the first read,
+and all three captures in the codebase go through it. Orientation is resolved
+ONCE, at decode, rather than carried downstream as a number every consumer has
+to remember to apply — an analyser that measures lifts cannot be agnostic
+about which way gravity points.
+
+`probe` reports post-rotation dimensions, so `min_short_side_px` now checks a
+resolution somebody actually decodes.
+
+### Then the fan
+
+Upright, acquisition immediately found a new adversary: **a wall fan**. It is
+circular, it is the same size as the plate at this camera distance, and its
+blades move — so it satisfies the circle test, the size test and the motion
+test simultaneously. Size cannot separate those two objects.
+
+The lock sat correctly on the plate at y=1035 and periodically jumped 900 px
+to the fan at y=119. Each teleport became a rep.
+
+Two changes, both physical rather than tuned:
+
+- **One clip has one plate, and it keeps its size.** An `established` radius
+  is fixed once from a full memory of agreeing frames and never revised;
+  re-acquisition is confined to it, and it survives every loss because the
+  plate does not change between occlusions. Centring the band on a *rolling*
+  median instead let the band itself walk — 25% per frame compounds.
+- **Recovery stays local.** Losing the lock for 0.2 s does not entitle the
+  search to the whole frame. The bar was nearby a moment ago; the fan never
+  was.
+
+```
+                 iter 5   +rotation   +established   +local recovery
+coverage           0.83      0.63          0.83           0.59
+coherence          0.83      0.62          0.83           0.59
+radius spread      1.39      3.33          1.53           1.42
+travel (radii)     0.88      4.09          8.10           2.65
+verdict          abstain   abstain      ok, 6 reps      abstain
+```
+
+The `ok, 6 reps` column is the one to distrust: rep 1 spanned frames 0-1756,
+a 29-second "rep". That was the fan teleports being segmented.
+
+### Where it stands
+
+**Abstains at 59% coherence against a 60% floor.** Genuinely borderline, and
+the right answer at that number — but it is one point away, so the gate is not
+what is holding it back; the missing 40% of frames is.
+
+The locked path is now credible for the first time: centred at (416, 740) on a
+1080x1920 frame, y ranging 533-1019, which is roughly three plate radii of
+vertical excursion. That is what a deadlift looks like.
+
+Synthetic clips unchanged at 5 and 3 reps. 60 tests pass. Gates unchanged.
+
+### What I got wrong, and the lesson
+
+I diagnosed "wall fixture" from percentile statistics and wrote it into
+BLOCKERS.md as settled, having never looked at a single frame. The user looked
+and was right within seconds. **Extract frames before theorising about
+tracking** — an image answers in one glance what a distribution cannot answer
+at all, and I had the capability the whole time.

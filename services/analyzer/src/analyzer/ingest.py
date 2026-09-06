@@ -28,6 +28,7 @@ from pathlib import Path
 
 import cv2
 
+from .decode import open_video
 from .result import QualityReason
 from .rotation import RotationError, rotation_from_probe
 from .thresholds import thresholds
@@ -54,11 +55,18 @@ class Probe:
 
 
 def probe(path: Path) -> Probe | None:
-    """Read the container's properties, or None if it cannot be opened."""
+    """Read the container's properties, or None if it cannot be opened.
+
+    Through `open_video`, so width and height describe the frames a caller
+    will actually be handed. A portrait clip reports 1080x1920 here even
+    though the container stores 1920x1080, because that is what comes out of
+    `read()` — and `min_short_side_px` compared against the container's
+    numbers would be checking a resolution nobody decodes.
+    """
     if not path.is_file():
         return None
 
-    capture = cv2.VideoCapture(str(path))
+    capture = open_video(path)
     try:
         if not capture.isOpened():
             return None

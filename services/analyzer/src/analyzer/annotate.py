@@ -22,6 +22,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
+from .decode import open_video
 from .tracking import BarSeries
 
 #: BGR. Green where the bar was tracked continuously, amber where it was
@@ -50,7 +51,7 @@ def _label(series: BarSeries, index: int) -> str:
 
 def render(video: Path, series: BarSeries, out: Path, *, max_frames: int | None = None) -> Path:
     """Write a copy of the clip with the bar path drawn over it."""
-    capture = cv2.VideoCapture(str(video))
+    capture = open_video(video)
     width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = capture.get(cv2.CAP_PROP_FPS) or series.fps
