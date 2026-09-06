@@ -150,9 +150,32 @@ The bar was being identified as "the two circles at the most similar height",
 which is exactly what a row of ceiling lights looks like.
 
 Adding motion gating (MOG2, camera is static by scope) removed the ceiling
-lock. It now sits at 59% down the frame with a 173 px radius, coherence 64%,
-and reports **1 rep** — which is also probably wrong. Tracked travel is 88% of
-frame height and a deadlift bar does not travel the whole frame.
+lock. Then iteration 5 found that the tracked object had no fixed **size** —
+its radius varied 3.25x and it drifted 104% of frame height sideways, because
+`_follow` constrained position and nothing else. Constraining size too took
+coherence to 81% and spread to 1.39x.
+
+**AND IT IS STILL WRONG, which is the part that matters here.** The tracker
+now holds a single object for **47.6 unbroken seconds** while it moves 11% of
+frame height. That is a fixture on a wall, and it scores *better* on both
+confidence signals than a real barbell does, because a wall is the most
+coherent and most size-stable thing in any room.
+
+A third check — vertical travel measured in plate radii, the plate being the
+only object of known size in frame — now refuses the clip outright
+(`insufficient_quality`, 0 reps) instead of reporting 4. So the pipeline is
+honest about it. It still cannot analyse it.
+
+**WHAT THIS NARROWS THE DECISION TO.** Iteration 4 said "the tracker fails".
+That was too broad. Measured:
+
+- **Following works.** 47.6 s of unbroken lock, 2 px of frame-to-frame size
+  jitter, on real 1080p footage. That is a working tracker.
+- **Acquisition fails.** It picks the wrong object, and following then holds
+  that wrong object faithfully and forever.
+
+Only the first frame is the problem. Every option below should be read as
+"how do we find the bar ONCE".
 
 **The spec's own escalation applies:**
 
@@ -182,13 +205,22 @@ otherwise. Cheapest by far, and it narrows who can use the feature to people
 who film it exactly right — which, given a static-camera scope already, may be
 less of a narrowing than it sounds.
 
-**Recommendation: (b) now, (a) later.** (b) makes the rest of the pipeline —
-calibration, kinematics, rules, scoring — buildable and testable this week
-against real footage, instead of blocked behind a detector that is itself a
-week of work. (a) then replaces acquisition without touching anything
-downstream, because the interface is just "where is the bar in frame 0".
+**Recommendation: (b) now, (a) later** — and iteration 5 strengthens it
+considerably. A tap is not a workaround for a broken tracker; it supplies the
+one input the working tracker is missing. Following already holds an object
+for 47 seconds with 2 px of jitter, so handing it the right object in frame 0
+is the entire remaining problem, and a fingertip solves it exactly.
 
-**What is NOT an option: leaving it as it is.** It currently answers `ok` with
-1 rep on a clip it is not tracking. That is the failure the abstain rule
-exists to prevent, and the coherence floor is too permissive to catch it —
-64% passed a 60% gate while being wrong.
+It also unblocks everything downstream this week — calibration, kinematics,
+rules, scoring — instead of leaving them behind a detector that is itself a
+week of work. (a) then replaces acquisition later without touching anything
+else, because the interface is just "where is the bar in frame 0". The two
+options are the same seam.
+
+**What is NOT an option: leaving it as it is.** ~~It currently answers `ok`
+with 1 rep on a clip it is not tracking.~~ **CLOSED in iteration 5.** Three
+signals now gate the result — continuity, size stability, and vertical travel
+in plate radii — and the clip is refused rather than answered. Coherence and
+size stability both scored green on a wall fixture; travel is what caught it.
+The lesson is worth keeping: each of these was added after the previous one
+was measured passing on something plainly wrong.

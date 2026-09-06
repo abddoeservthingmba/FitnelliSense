@@ -250,6 +250,72 @@ tracking:
     source: "Placeholder. Needs the real golden set to place properly; deliberately permissive for now."
     date: 2026-09-06
 
+  # A PLATE IS ONE OBJECT AND ONE OBJECT HAS ONE SIZE.
+  #
+  # Continuity in POSITION alone is not continuity in identity. The jump limit
+  # above permits 4% of frame height per frame, which is correct for a bar and
+  # also enough to step onto a neighbouring object — and then onto the next.
+  # Over 3692 frames the lock walked 104% of frame height sideways while the
+  # tracked radius swung from 72 px to 234 px. Nothing objected, because
+  # nothing was watching the radius.
+  #
+  # The camera is static and the plate is rigid, so apparent radius changes
+  # only with distance to the lens. A lifter shifting 0.5 m toward or away
+  # from a phone 3 m out moves it about 17%. 25% covers that with margin and
+  # still rejects an object of a visibly different size.
+  max_radius_deviation_ratio:
+    value: 0.25
+    unit: ratio_of_held_radius
+    status: hypothesis
+    source: "Geometry: ±0.5 m of depth change at a 3 m camera distance is ~17% apparent size. 25% allows it plus detector noise."
+    date: 2026-09-06
+
+  # The held radius is a median over this many recent frames rather than the
+  # last value, so one noisy detection cannot drag the size band with it and
+  # open the door to the next object along.
+  radius_memory_frames:
+    value: 15
+    unit: frames
+    status: hypothesis
+    source: "0.25 s at 60 fps. Long enough to be robust to single-frame noise, short enough to follow genuine depth change."
+    date: 2026-09-06
+
+  # Across the whole clip, p95/p5 of the tracked radius. Above this the
+  # tracker visited objects of different sizes, whatever its coherence says.
+  #
+  # This exists because coherence did NOT catch the failure it was written to
+  # catch: 64% coherence passed a 60% floor on a clip where the tracked radius
+  # varied 3.25x. Every frame was continuous with the one before it and the
+  # sequence as a whole was still not a barbell.
+  max_radius_spread_ratio:
+    value: 1.60
+    unit: ratio
+    status: hypothesis
+    source: "Two applications of the 25% per-step band in opposite directions. Measured 3.25x on a clip known to be wrong."
+    date: 2026-09-06
+
+  # HOW FAR THE BAR MUST TRAVEL VERTICALLY FOR THE CLIP TO CONTAIN REPS AT
+  # ALL, measured in plate radii — the plate is the one object of known size
+  # in the frame, so it is the ruler, and a ratio needs no calibration.
+  #
+  # A competition plate is 450 mm across, so one radius is ~22 cm. Every lift
+  # this analyser supports moves the bar considerably further than that: a
+  # deadlift is ~55 cm, a squat ~60 cm, a bench ~40 cm. Requiring a single
+  # radius therefore refuses only paths that could not be reps, with roughly
+  # half a rep of margin.
+  #
+  # This is the check that catches what the other two cannot. A tracker locked
+  # onto a fixture on the wall scores PERFECTLY on coherence and on size
+  # stability, because a wall fixture is the most stable thing in the room —
+  # measured here as 47.6 s of unbroken lock with 11% of frame height of
+  # movement, reported as 4 reps.
+  min_travel_plate_radii:
+    value: 1.0
+    unit: plate_radii
+    status: hypothesis
+    source: "One radius is ~22 cm on a 450 mm plate; the shortest supported lift (bench) is ~40 cm. Refuses only impossible paths."
+    date: 2026-09-06
+
 bar:
   horizontal_drift_bar_length_ratio:
     value: 0.04

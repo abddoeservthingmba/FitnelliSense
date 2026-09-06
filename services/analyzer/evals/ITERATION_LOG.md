@@ -456,3 +456,105 @@ can answer in seconds what I cannot answer at all.
 Both halves of the first option are now built and the gate still fails on real
 footage. That is the documented trigger, and it needs a decision rather than
 another attempt — see BLOCKERS.md.
+
+---
+
+## Iteration 5 — the object had no fixed size, and nothing noticed
+
+### What I measured instead of assuming
+
+Iteration 4 ended with "1 rep, and I do not believe it" and a plan to ask for
+a decision. Before asking, I measured one property I had never constrained:
+**the size of the thing being tracked.**
+
+```
+radius   median 173 px   p5 72   p95 234      spread 3.25x
+radius   frame-to-frame change: median 11 px, p95 88 px
+x drift  104% of frame height
+```
+
+A plate is rigid and the camera is static, so its apparent radius is fixed up
+to the lifter's own depth change — call it 20%. This thing changed size by
+**3.25x**, and jumped by more than half its own radius between consecutive
+frames, and travelled sideways further than the frame is tall.
+
+### The defect
+
+`_follow` constrained POSITION and nothing else. The jump limit is 4% of frame
+height, sized so a real bar is never rejected — which also makes it large
+enough to step onto whatever is next door. Do that 3692 times and the lock is
+anywhere at all, having been continuous at every single step.
+
+Coherence could never catch this. It asks "did frame *n* follow from frame
+*n−1*", and the answer was yes, all the way across the room.
+
+**Fix: identity is position AND size.** The held radius is a 15-frame median,
+the search band is derived from it, and a candidate outside ±25% is not the
+same object. A fresh acquisition clears the memory, because a new object has
+a new size and blending the two averages into a third thing that is neither.
+
+| | before | after |
+|---|---|---|
+| coherence | 0.64 | **0.81** |
+| radius spread | 3.25x | **1.39x** |
+| frame-to-frame \|dr\| median | 11.2 px | **2.2 px** |
+| S01 / S02 reps | 5 / 3 | **5 / 3** (no regression) |
+
+### AND IT WAS STILL WRONG
+
+Holding one object made the wrong answer *stickier*, which is worse:
+
+```
+76 locked runs; the longest is frames 834-3692 — 47.6 SECONDS UNBROKEN
+  radius 166.5 constant, y moves 121 px (11% of frame height)
+  -> status ok, 4 reps
+```
+
+47.6 seconds of perfect lock on something that barely moves. That is a
+fixture on a wall, and it scores *better* on both confidence signals than a
+real barbell does, because a wall is the most coherent and most size-stable
+object in any room. Two gates, both green, both wrong.
+
+### The third signal: the plate is its own ruler
+
+Stage 5 does not exist, so there is no px-per-metre — but a **ratio** needs no
+calibration, and the one object of known size in the frame is the thing being
+tracked. A competition plate is 450 mm across, so one radius is ~22 cm
+regardless of the camera.
+
+Every supported lift moves the bar much further than that: bench ~40 cm, dead
+~55 cm, squat ~60 cm. So `travel_in_radii < 1.0` is not a tuned threshold, it
+is a statement that no rep happened.
+
+Measured p5–p95, not min–max. Min–max read **4.22 radii** on this clip — a
+handful of stray acquisitions near the start stretching a lock that actually
+moved 0.5 — and would have waved it straight through the gate written to stop
+it. That was very nearly the same mistake a third time.
+
+```
+REAL   coh 0.81  spread 1.39  travel 0.88r  ->  insufficient_quality, 0 reps
+S01    coh 0.93  spread 1.04  travel 5.31r  ->  ok, 5 reps
+S02    coh 0.92  spread 1.04  travel 4.19r  ->  ok, 3 reps
+```
+
+Real reps clear the floor by 4-5x. The floor only ever catches things that
+are not moving.
+
+| Gate | Before | After |
+|---|---|---|
+| all ten | 7 green / 1 red / 2 blocked | **unchanged** |
+
+Verdict : the pipeline is now HONEST, and acquisition is still broken
+
+### What this changes about the escalation
+
+Iteration 4 asked for a decision on the whole tracker. The measurement narrows
+it to one half. **Following works** — 47.6 seconds of unbroken lock, 2 px of
+size jitter, on real 1080p footage. **Acquisition does not** — it picks the
+wrong object and following then holds it faithfully.
+
+That is a much better position than "the tracker fails", because acquisition
+is the half a single tap replaces. See BLOCKERS.md §4.
+
+The pipeline no longer claims anything about this clip, which is the outcome
+the abstain rule exists for. It does not yet analyse it.

@@ -65,8 +65,25 @@ def analyze_video(*, video: Path, exercise: str, view: str) -> dict[str, Any]:
     # plot become 71 reps: tracking had no way to say "I do not believe this",
     # so segmentation was handed noise and did its job faithfully on it.
     #
-    # Coherence, not coverage. Coverage read 1.0 on that clip.
-    if series.coherence < float(thresholds().value("tracking.min_coherence")):
+    # THREE SIGNALS, AND EACH ONE IS HERE BECAUSE THE ONES BEFORE IT MISSED.
+    #
+    # Coherence asks whether each frame followed from the last. A lock can
+    # satisfy that at every step and still walk onto a different object
+    # entirely, one plausible step at a time: 64% coherence cleared this floor
+    # on a clip that tracked three different sizes of thing.
+    #
+    # Radius spread asks whether it stayed the SAME object. A rigid plate in
+    # front of a static camera does not change size.
+    #
+    # Travel asks whether that object ever MOVED LIKE A BARBELL. Both checks
+    # above score perfectly on a light fitting, because a light fitting is the
+    # most coherent, most size-stable thing in the room — 47.6 s of unbroken
+    # lock, reported as 4 reps. Nothing that holds still is doing a set.
+    limits = thresholds()
+    incoherent = series.coherence < float(limits.value("tracking.min_coherence"))
+    inconsistent = series.radius_spread > float(limits.value("tracking.max_radius_spread_ratio"))
+    motionless = series.travel_in_radii < float(limits.value("tracking.min_travel_plate_radii"))
+    if incoherent or inconsistent or motionless:
         return result.abstain(
             reason="bar_not_tracked",
             exercise=exercise,

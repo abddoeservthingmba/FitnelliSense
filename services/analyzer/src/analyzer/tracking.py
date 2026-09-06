@@ -78,6 +78,62 @@ class BarSeries:
         """Fraction of frames tracked continuously. THIS is the confidence."""
         return float(self.locked.mean()) if self.locked.size else 0.0
 
+    @property
+    def radius_spread(self) -> float:
+        """p95/p5 of the tracked radius. 1.0 is a rigid object; 3.0 is several.
+
+        THE SECOND CONFIDENCE SIGNAL, and it exists because the first one
+        missed. Coherence asks "was each frame continuous with the last"; a
+        lock can satisfy that at every step and still end up somewhere else
+        entirely, one plausible step at a time. This asks the question
+        coherence cannot: was it the same SIZE of thing throughout.
+
+        Measured 3.25 on a clip whose coherence of 64% cleared a 60% floor.
+        """
+        seen = self.radius[self.found & np.isfinite(self.radius)]
+        if seen.size == 0:
+            return float("inf")
+        low = float(np.percentile(seen, 5))
+        high = float(np.percentile(seen, 95))
+        return high / low if low > 0 else float("inf")
+
+    @property
+    def travel_in_radii(self) -> float:
+        """Vertical range of the path, measured in PLATE RADII.
+
+        THE PLATE IS ITS OWN RULER. Stage 5 does not exist, so there is no
+        px-per-metre and no distance can be published — but a ratio needs no
+        calibration, and the one rigid object of known size in the frame is
+        the very thing being tracked. A competition plate is 450 mm across, so
+        one radius is about 22 cm whatever the camera did.
+
+        That makes this a claim about physics rather than a tuned heuristic:
+        a squat, a deadlift, a press and a bench all move the bar further than
+        22 cm, so a path that does not is not a set of reps. It is the check
+        that catches the failure the other two miss — an object held with
+        perfect coherence and perfect size stability, because it is a fixture
+        on the wall and fixtures are very stable indeed.
+
+        A ROBUST range, p5 to p95, not min to max. Min-max is one bad frame
+        away from meaningless, and it was: on the clip that prompted this the
+        sustained lock moved 0.5 radii while a handful of stray acquisitions
+        near the start stretched min-max to 4.2, which would have waved the
+        clip straight through the gate this property exists to close.
+
+        Clipping the extremes also costs a real set very little — the bar
+        pauses at both ends of a rep, so the top and bottom 5% of frames are
+        mostly the turnarounds it already spent time at.
+        """
+        seen = self.y[np.isfinite(self.y)]
+        radii = self.radius[np.isfinite(self.radius)]
+        if seen.size == 0 or radii.size == 0:
+            return 0.0
+        median_radius = float(np.median(radii))
+        if median_radius <= 0:
+            return 0.0
+        span = float(np.percentile(seen, 95) - np.percentile(seen, 5))
+        return span / median_radius
+
 
 def _motion_mask(background: cv2.BackgroundSubtractorMOG2, grey: np.ndarray) -> np.ndarray:
     """Which pixels are moving in this frame.
@@ -174,16 +230,30 @@ def _follow(
     grey: np.ndarray,
     mask: np.ndarray,
     last: tuple[float, float, float],
+    held_radius: float,
     max_jump: float,
+    max_deviation: float,
 ) -> tuple[float, float, float] | None:
-    """Find the bar NEAR where it was, or return None.
+    """Find the bar NEAR where it was AND THE SIZE IT WAS, or return None.
 
     A window rather than the whole frame. This is what makes the result a path
     instead of a scatter plot, and it is also why the pass is fast enough to
     finish: the search area is a fraction of the frame.
+
+    THE SECOND CONSTRAINT IS NOT OPTIONAL, and leaving it out cost an entire
+    iteration. Position continuity alone says "something plausible is here",
+    not "the same thing is here": the jump limit is sized for a bar, which
+    also makes it big enough to step onto whatever is next door. Over a 61 s
+    clip the lock walked 104% of frame height SIDEWAYS — a deadlift does not —
+    while the tracked radius ranged from 72 px to 234 px. Every single step
+    was continuous. The sequence was still not a barbell.
+
+    A plate is rigid and the camera is static, so its apparent size is fixed
+    up to the lifter's own depth change. Size is therefore the cheapest
+    identity check available, and the one that was missing.
     """
-    lx, ly, lr = last
-    pad = max_jump + lr * 2
+    lx, ly, _ = last
+    pad = max_jump + held_radius * 2
     h, w = grey.shape[:2]
 
     x0, x1 = max(0, int(lx - pad)), min(w, int(lx + pad))
@@ -191,9 +261,13 @@ def _follow(
     if x1 - x0 < 16 or y1 - y0 < 16:
         return None
 
+    # The size band is the search band. Asking Hough for radii the bar cannot
+    # have wastes time and invites exactly the wrong answers.
+    lo = max(1, int(held_radius * (1.0 - max_deviation)))
+    hi = max(lo + 2, int(np.ceil(held_radius * (1.0 + max_deviation))))
+
     window = grey[y0:y1, x0:x1]
-    min_r, max_r = _radius_band(grey)
-    found = _circles(window, min_r, max_r, max(8.0, min_r * 1.5))
+    found = _circles(window, lo, hi, max(8.0, lo * 1.5))
     if found is None:
         return None
 
@@ -201,9 +275,16 @@ def _follow(
     candidates[:, 0] += x0
     candidates[:, 1] += y0
 
+    # Hough's minRadius/maxRadius are a hint rather than a guarantee, so the
+    # band is enforced here too.
+    same_size = [c for c in candidates if abs(c[2] - held_radius) <= held_radius * max_deviation]
+    if not same_size:
+        return None
+
     # Nearest to the last known position, then checked against the ceiling.
     # Nearest alone is not enough: with nothing else in the window the nearest
     # candidate can still be somewhere the bar could not have reached.
+    #
     # MOTION GATES ACQUISITION, NOT FOLLOWING. Requiring movement every frame
     # loses the bar the moment it pauses — at lockout, and at the bottom of a
     # squat — because a stationary object is learned as background within a
@@ -211,9 +292,9 @@ def _follow(
     # abstaining.
     #
     # Acquisition already rejected the ceiling; once the right object is held,
-    # continuity is what keeps it, and a plate that stops moving is still the
-    # plate.
-    near = min(candidates, key=lambda c: float(np.hypot(c[0] - lx, c[1] - ly)))
+    # continuity of position and size is what keeps it, and a plate that stops
+    # moving is still the plate.
+    near = min(same_size, key=lambda c: float(np.hypot(c[0] - lx, c[1] - ly)))
     if float(np.hypot(near[0] - lx, near[1] - ly)) > max_jump:
         return None
 
@@ -225,6 +306,8 @@ def track(path: Path, fps: float) -> BarSeries:
     limits = thresholds()
     jump_ratio = float(limits.value("tracking.max_jump_frame_height_ratio"))
     patience = int(limits.value("tracking.reacquire_after_frames"))
+    deviation = float(limits.value("tracking.max_radius_deviation_ratio"))
+    memory = int(limits.value("tracking.radius_memory_frames"))
 
     # History of 200 frames: long enough to learn a static gym, short enough
     # that a lifter standing still briefly does not become background.
@@ -240,6 +323,10 @@ def track(path: Path, fps: float) -> BarSeries:
     lock: list[bool] = []
 
     last: tuple[float, float, float] | None = None
+    # The size the bar is BELIEVED to be, as a median of recent detections.
+    # A median rather than the last value: one noisy frame must not be able to
+    # move the size band, because moving the band is how the lock escapes it.
+    recent: list[float] = []
     missing = 0
     height = 0
 
@@ -256,7 +343,12 @@ def track(path: Path, fps: float) -> BarSeries:
             # search happens in.
             max_jump = grey.shape[0] * jump_ratio
 
-            hit = _follow(grey, mask, last, max_jump) if last is not None else None
+            held = float(np.median(recent)) if recent else 0.0
+            hit = (
+                _follow(grey, mask, last, held, max_jump, deviation)
+                if last is not None and recent
+                else None
+            )
             locked = hit is not None
 
             if hit is None:
@@ -265,7 +357,13 @@ def track(path: Path, fps: float) -> BarSeries:
                 # every frame is what produced the scatter plot.
                 if last is None or missing > patience:
                     hit = _acquire(grey, mask)
-                    missing = 0 if hit is not None else missing
+                    if hit is not None:
+                        # A fresh acquisition is a new object, so the size
+                        # memory of the old one must go with it. Keeping it
+                        # would either reject the new bar forever or slowly
+                        # blend two objects into one average that is neither.
+                        recent = []
+                        missing = 0
 
             if hit is None:
                 xs.append(np.nan)
@@ -276,6 +374,9 @@ def track(path: Path, fps: float) -> BarSeries:
             else:
                 last = hit
                 missing = 0
+                recent.append(hit[2])
+                if len(recent) > memory:
+                    recent.pop(0)
                 xs.append(hit[0] / scale)
                 ys.append(hit[1] / scale)
                 rs.append(hit[2] / scale)
