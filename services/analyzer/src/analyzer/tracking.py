@@ -48,6 +48,35 @@ DETECT_SHORT_SIDE = 480
 
 
 @dataclass(frozen=True)
+class Seed:
+    """Where the lifter says the plate is, in SOURCE pixels of the UPRIGHT frame.
+
+    WHY A HUMAN SUPPLIES THIS. Acquisition — deciding which circular thing in
+    a gym is the bar — is the half of tracking that kept failing, and it failed
+    differently every time: ceiling lights, then a wall fan, then a circle
+    twice the plate's size. Following, once pointed at the right object, is
+    the half that works.
+
+    Every heuristic tried for acquisition encodes a guess about gyms. "The
+    largest moving circle" is a guess, and on the first real clip it was
+    wrong. A tap is not a guess; it is the answer, and it costs the lifter a
+    second.
+
+    Coordinates are in the frame the LIFTER SAW — the upright frame, after
+    rotation is applied. Anything else would ask the client to reason about
+    container metadata, which is exactly the confusion that had this pipeline
+    measuring deadlifts sideways for three iterations.
+    """
+
+    x: float
+    y: float
+    #: Which frame was on screen when they tapped. Zero unless the client lets
+    #: them scrub, and it must travel with the point — a plate tapped at rest
+    #: is somewhere else entirely by mid-pull.
+    frame: int = 0
+
+
+@dataclass(frozen=True)
 class BarSeries:
     """The bar's path through the clip, in SOURCE pixels, y down."""
 
@@ -271,6 +300,52 @@ def _acquire(
     return float(best[0]), float(best[1]), float(best[2])
 
 
+def _acquire_at(
+    grey: np.ndarray, point: tuple[float, float], tolerance: float
+) -> tuple[float, float, float] | None:
+    """Find the circle the lifter pointed at.
+
+    No motion test and no size prior: both are ways of GUESSING which object
+    is the bar, and the tap has already answered that. Applying them anyway
+    would let a heuristic overrule the one piece of ground truth in the
+    pipeline — and the motion test in particular would reject a bar resting on
+    the floor, which is exactly where a lifter naturally taps it.
+
+    The circle must CONTAIN the tap, or sit within `tolerance` of it. A tap is
+    worth a few tens of pixels of slop on a phone; it is not worth the whole
+    frame, and accepting a distant circle would quietly turn the lifter's
+    answer back into a guess.
+    """
+    px, py = point
+    min_r, max_r = _radius_band(grey)
+    reach = tolerance + max_r
+    h, w = grey.shape[:2]
+
+    x0, x1 = max(0, int(px - reach)), min(w, int(px + reach))
+    y0, y1 = max(0, int(py - reach)), min(h, int(py + reach))
+    if x1 - x0 < 16 or y1 - y0 < 16:
+        return None
+
+    found = _circles(grey[y0:y1, x0:x1], min_r, max_r, max(8.0, min_r * 1.5))
+    if found is None:
+        return None
+
+    candidates = np.round(found[0]).astype(np.float64)
+    candidates[:, 0] += x0
+    candidates[:, 1] += y0
+
+    def acceptable(circle: np.ndarray) -> bool:
+        gap = float(np.hypot(circle[0] - px, circle[1] - py))
+        return gap <= circle[2] or gap <= tolerance
+
+    usable = [c for c in candidates if acceptable(c)]
+    if not usable:
+        return None
+
+    best = min(usable, key=lambda c: float(np.hypot(c[0] - px, c[1] - py)))
+    return float(best[0]), float(best[1]), float(best[2])
+
+
 def _follow(
     grey: np.ndarray,
     mask: np.ndarray,
@@ -346,14 +421,21 @@ def _follow(
     return (float(near[0]), float(near[1]), float(near[2]))
 
 
-def track(path: Path, fps: float) -> BarSeries:
-    """Follow the bar through every frame, and report how well it was followed."""
+def track(path: Path, fps: float, seed: Seed | None = None) -> BarSeries:
+    """Follow the bar through every frame, and report how well it was followed.
+
+    `seed` is the lifter's tap. With one, acquisition is ANSWERED rather than
+    guessed, and it also fixes the plate's size from a frame that is known
+    rather than inferred. Without one the old heuristic still applies, so
+    synthetic clips and any caller with no tap keep working unchanged.
+    """
     limits = thresholds()
     jump_ratio = float(limits.value("tracking.max_jump_frame_height_ratio"))
     patience = int(limits.value("tracking.reacquire_after_frames"))
     deviation = float(limits.value("tracking.max_radius_deviation_ratio"))
     memory = int(limits.value("tracking.radius_memory_frames"))
     reacquire_radii = float(limits.value("tracking.reacquire_radius_plate_radii"))
+    seed_tolerance = float(limits.value("tracking.seed_tolerance_frame_height_ratio"))
 
     # History of 200 frames: long enough to learn a static gym, short enough
     # that a lifter standing still briefly does not become background.
@@ -379,6 +461,7 @@ def track(path: Path, fps: float) -> BarSeries:
     established: float | None = None
     missing = 0
     height = 0
+    index = -1
 
     try:
         while True:
@@ -386,6 +469,7 @@ def track(path: Path, fps: float) -> BarSeries:
             if not read:
                 break
 
+            index += 1
             height = frame.shape[0]
             grey, scale = _prepare(frame)
             mask = _motion_mask(background, grey)
@@ -409,6 +493,26 @@ def track(path: Path, fps: float) -> BarSeries:
                 else None
             )
             locked = hit is not None
+
+            # THE TAP OVERRIDES EVERYTHING, on its own frame only. It is ground
+            # truth, and the single moment where this pipeline knows rather
+            # than infers. Placed after `locked` is computed so a seeded frame
+            # does not count as continuity it has not earned.
+            if seed is not None and index == seed.frame:
+                pointed = _acquire_at(
+                    grey,
+                    (seed.x * scale, seed.y * scale),
+                    grey.shape[0] * seed_tolerance,
+                )
+                if pointed is not None:
+                    hit = pointed
+                    # Believe the tap's size immediately. Waiting `memory`
+                    # frames to establish it would leave the band open during
+                    # the very frames the lifter has just removed all doubt
+                    # about.
+                    recent = [pointed[2]]
+                    established = pointed[2]
+                    missing = 0
 
             if hit is None:
                 missing += 1

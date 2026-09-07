@@ -660,3 +660,81 @@ BLOCKERS.md as settled, having never looked at a single frame. The user looked
 and was right within seconds. **Extract frames before theorising about
 tracking** — an image answers in one glance what a distribution cannot answer
 at all, and I had the capability the whole time.
+
+---
+
+## Iteration 7 — the tap, and two trackers that did not earn their place
+
+Decision taken: **the lifter taps the plate once.** BLOCKERS §4 option (b).
+
+### What the tap is worth
+
+```
+            coverage  coherence  spread  travel   y range (of 1920)   verdict
+guessed       0.59      0.59      1.42   2.65r      533-1019          abstain
+TAPPED        0.85      0.85      1.44   4.37r      698-1431          ok, 3 reps
+```
+
+The y range is the part that matters more than the coherence. 698-1431 is a
+plate resting on the floor and being pulled to hip height. 533-1019 is
+something in the middle of the frame that never touches either end. The
+heuristic was not slightly wrong, it was looking at a different object.
+
+`Seed(x, y, frame)` carries the tap in SOURCE pixels of the UPRIGHT frame —
+the frame the lifter actually saw. Asking the client to reason about container
+rotation is precisely the confusion that had this pipeline measuring deadlifts
+sideways for three iterations, and it is not being reintroduced at the API
+boundary.
+
+`_acquire_at` applies no motion test and no size prior. Both are ways of
+GUESSING which object is the bar, and the tap has already answered that;
+the motion test in particular would reject a bar resting on the floor, which
+is exactly where a lifter naturally taps it. The circle must contain the tap
+or fall within 96 px of it — a tap is trusted, not obeyed, and pointing at
+blank wall finds nothing rather than manufacturing a lock there.
+
+### Two trackers built and deleted
+
+Having a known first frame invites appearance-based following. Two attempts,
+both reverted, both preserved in `stash@{0}` as negative results.
+
+**Normalised cross-correlation on a grey patch.** Scored **0.61 on the plate
+and 0.61 on the lifter's back**. A square patch of a round plate is a fifth
+background, and dark gym floor correlates with dark gym everything. The lock
+walked off the plate within two seconds at 98% reported confidence.
+
+**Masked to the disc, TM_CCORR_NORMED** — the only normalised method OpenCV
+will mask. Worse: without mean subtraction it scored **0.88-0.94 across the
+entire frame**, discriminating nothing at all. No cutoff separates a
+distribution that does not separate, which is why no template threshold
+survives in `thresholds.yaml`.
+
+**CSRT**, the right tool on paper and available in `opencv-contrib-python`.
+Coherence 0.97 and radius spread 1.00 — and it had still drifted, tracking a
+y range of 818-1137 rather than the plate's 745-1504. **It also took 496
+seconds on a 61-second clip**, against a 45-second target. Eight minutes of
+compute to track the wrong object confidently.
+
+That is the third time in this file that a high confidence number has
+accompanied a wrong answer, and the second time CSRT-grade machinery has been
+beaten by simply looking at a frame.
+
+### Where it stands
+
+Kept: Hough + established size + local recovery + the tap. 120 s on the real
+clip, which is four times faster than CSRT and still **well over the 45 s
+target** — G8 is now a live problem rather than a comfortable green.
+
+Reps come back as 3, with spans of 20 s, 9 s and 22 s. A deadlift rep is
+3-5 s, so those spans are swallowing the rest between reps. **Segmentation is
+now the weak link, not tracking** — it was only ever tuned against synthetic
+clips of continuous reps with no rest, and a real set is mostly rest.
+
+Synthetic clips unchanged at 5 and 3. Gates unchanged.
+
+### What is NOT done
+
+The tap exists in the analyzer only. Nothing carries it from a phone: no Zod
+schema, no column, no API field, no screen. That is the next block of work and
+it is ordinary plumbing — the risky half was whether a tap would help at all,
+and the table above answers that.

@@ -144,6 +144,66 @@ def test_the_synthetic_clip_still_tracks_cleanly():
     assert result["set"]["rep_count"] == 5
 
 
+@real_only
+def test_the_tap_beats_the_guess():
+    """The whole justification for asking the lifter to tap.
+
+    If a seed did not measurably beat the heuristic there would be no case for
+    spending a second of the lifter's attention on it. On this clip the guess
+    reaches 59% coherence and abstains; the tap reaches 85% and produces a
+    path whose vertical extent matches a deadlift.
+
+    Asserted as a comparison rather than against a fixed number, because the
+    claim being defended is "the tap helps", not "coherence is 0.85".
+    """
+    found, _ = check(REAL)
+    guessed = tracking.track(REAL, fps=found.fps)
+    tapped = tracking.track(REAL, fps=found.fps, seed=tracking.Seed(x=225, y=1440, frame=0))
+
+    assert tapped.coherence > guessed.coherence, (
+        f"tap {tapped.coherence:.2f} did not beat guess {guessed.coherence:.2f}"
+    )
+    # The plate rests on the floor and is pulled to hip height, so the path
+    # must span a good part of the lower frame rather than hovering.
+    tracked = tapped.y[tapped.locked & np.isfinite(tapped.y)]
+    assert np.percentile(tracked, 95) > found.height * 0.6, "never reached the floor"
+    assert np.percentile(tracked, 5) < found.height * 0.5, "never reached lockout"
+
+
+@real_only
+def test_a_mis_tap_produces_no_verdict():
+    """A tap decides WHICH OBJECT. The gates still decide whether it is a lift.
+
+    Written first as "a tap on the ceiling must not lock onto the ceiling",
+    and that assertion failed — it does lock, at a median y of 88 in a
+    1920-tall frame. Which is correct behaviour, and the test was wrong: the
+    tap is ground truth about the lifter's intent, and second-guessing it here
+    would put the guessing back exactly where it kept going wrong.
+
+    What must never happen is a CONFIDENT ANSWER about the ceiling. The
+    clip-level gates are what prevent that, and they do: a ceiling fan travels
+    0.66 plate radii, so the clip is refused rather than measured.
+
+    This is the seeded case of the same rule the unseeded path already
+    obeys — abstain over guess, whoever did the guessing.
+    """
+    ceiling = tracking.Seed(x=980, y=60, frame=0)
+    result = analyze_video(video=REAL, exercise="deadlift", view="side", seed=ceiling)
+
+    assert result["status"] != "ok", "measured the ceiling it was pointed at"
+    assert result["set"]["rep_count"] == 0
+    assert result["reps"] == []
+
+
+def test_seeding_is_optional():
+    """No tap, no change. Synthetic clips have never had one and still count."""
+    clip = SYNTH / "S01_squat_side_clean.mp4"
+    if not clip.is_file():
+        pytest.skip("synthetic clips not generated")
+
+    assert analyze_video(video=clip, exercise="back_squat", view="side")["set"]["rep_count"] == 5
+
+
 def test_real_reps_clear_the_travel_floor_by_a_wide_margin():
     """The floor must only ever catch things that are not moving.
 

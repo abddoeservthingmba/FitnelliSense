@@ -30,7 +30,13 @@ from . import __version__, ingest, result, segmentation, tracking
 from .thresholds import thresholds
 
 
-def analyze_video(*, video: Path, exercise: str, view: str) -> dict[str, Any]:
+def analyze_video(
+    *,
+    video: Path,
+    exercise: str,
+    view: str,
+    seed: tracking.Seed | None = None,
+) -> dict[str, Any]:
     """Analyse one set and return a result conforming to the output schema.
 
     INGEST, BAR TRACKING AND SEGMENTATION ARE BUILT. Pose, calibration,
@@ -59,7 +65,7 @@ def analyze_video(*, video: Path, exercise: str, view: str) -> dict[str, Any]:
 
     assert found is not None
 
-    series = tracking.track(video, fps=found.fps)
+    series = tracking.track(video, fps=found.fps, seed=seed)
 
     # ABSTAIN BEFORE SEGMENTING. This is the check whose absence let a scatter
     # plot become 71 reps: tracking had no way to say "I do not believe this",
@@ -147,16 +153,52 @@ def _rep_to_wire(rep: segmentation.Rep, fps: float) -> dict[str, Any]:
     }
 
 
+def _parse_seed(raw: str | None) -> tracking.Seed | None:
+    """`X,Y` or `X,Y,FRAME`. Raises rather than ignoring a malformed value.
+
+    A tap that silently fails to parse would fall back to the guessing path
+    and produce a plausible-looking answer about the wrong object, which is
+    the whole failure mode this feature exists to remove.
+    """
+    if raw is None:
+        return None
+
+    parts = raw.split(",")
+    if len(parts) not in (2, 3):
+        raise SystemExit("--seed must be X,Y or X,Y,FRAME")
+    try:
+        x, y = float(parts[0]), float(parts[1])
+        frame = int(parts[2]) if len(parts) == 3 else 0
+    except ValueError as bad:
+        raise SystemExit(f"--seed is not numeric: {raw}") from bad
+    if frame < 0:
+        raise SystemExit("--seed frame cannot be negative")
+    return tracking.Seed(x=x, y=y, frame=frame)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(prog="analyze", description="Analyse one weightlifting set.")
     parser.add_argument("--video", required=True, type=Path)
     parser.add_argument("--exercise", required=True)
     parser.add_argument("--view", required=True, choices=["side", "front", "rear", "45"])
     parser.add_argument("--out", type=Path)
+    # The lifter's tap, in UPRIGHT source pixels. Two numbers rather than a
+    # richer shape because that is genuinely all it is, and a frame index only
+    # when the client let them scrub to pick it.
+    parser.add_argument(
+        "--seed",
+        metavar="X,Y[,FRAME]",
+        help="where the plate is, in pixels of the upright frame",
+    )
     parser.add_argument("--version", action="version", version=__version__)
     args = parser.parse_args()
 
-    analysis = analyze_video(video=args.video, exercise=args.exercise, view=args.view)
+    analysis = analyze_video(
+        video=args.video,
+        exercise=args.exercise,
+        view=args.view,
+        seed=_parse_seed(args.seed),
+    )
 
     # sort_keys so two runs of the same clip serialise identically (G7).
     payload = json.dumps(analysis, indent=2, sort_keys=True)

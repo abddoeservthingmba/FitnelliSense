@@ -272,6 +272,22 @@ tracking:
     source: "Placeholder. Needs the real golden set to place properly; deliberately permissive for now."
     date: 2026-09-06
 
+  # HOW FAR FROM THE LIFTER'S TAP THE PLATE MAY BE, as a fraction of frame
+  # height. A tap on a phone is worth a few tens of pixels of slop — a
+  # fingertip is about 8 mm, aimed at arm's length — but it is not worth the
+  # whole frame. Accept a distant circle and the tap stops being ground truth
+  # and goes back to being a hint.
+  #
+  # 5% of 1920 is 96 px: comfortably more than a thumb's imprecision, and far
+  # less than the distance to the nearest decoy in any clip seen so far (the
+  # wall fan sat ~950 px from the plate).
+  seed_tolerance_frame_height_ratio:
+    value: 0.05
+    unit: ratio_of_frame_height
+    status: hypothesis
+    source: "96 px on a 1920-tall frame. Larger than a fingertip's error, far smaller than the gap to the nearest decoy."
+    date: 2026-09-07
+
   # A PLATE IS ONE OBJECT AND ONE OBJECT HAS ONE SIZE.
   #
   # Continuity in POSITION alone is not continuity in identity. The jump limit
