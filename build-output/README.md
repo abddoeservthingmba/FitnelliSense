@@ -14,7 +14,8 @@ whose update refuses to install.
 
 | Version   | Code | Package                     | Date       | What changed                                                                                                       |
 | --------- | ---- | --------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------ |
-| **1.5.0** | 21   | com.ascension.fitness       | 2026-09-05 | Google sign-in; in-app microphone for voice logging (adds RECORD_AUDIO); camera viewfinder no longer crops, records 1080p with zoom |
+| **1.9.2** | 29   | com.ascension.fitness       | 2026-09-08 | **Nothing user-visible on Android.** Version bumped so the binary is installable at all — see the note below       |
+| 1.5.0     | 21   | com.ascension.fitness       | 2026-09-05 | Google sign-in; in-app microphone for voice logging (adds RECORD_AUDIO); camera viewfinder no longer crops, records 1080p with zoom |
 | 1.4.0     | 20   | com.ascension.fitness       | 2026-09-05 | Form-analysis capture and voice logging. Film a set or pick a video, choose which 3 minutes are analysed. Native change — built `--clean` |
 | 1.1.0     | 17   | com.ascension.fitness       | 2026-09-03 | 30 per-tier character icons; fixes Hunter/ranking showing raw E–S ranks; Ascension moved to top of Profile         |
 | 1.0.0     | 16   | com.ascension.fitness       | 2026-09-03 | Character select at launch, animated sigils, motivational lines per Ascension                                      |
@@ -35,6 +36,30 @@ whose update refuses to install.
 > rows are not reconstructed from memory: an invented changelog is worse than a
 > visible gap, because it reads exactly like a real one. What 1.2.0 and 1.3.0
 > contained is recoverable from git history if it is ever needed.
+>
+> **Codes 22 to 28 have no rows either**, and for the same reason. The APKs
+> exist in this directory — 1.6.0 through 1.9.1 — so those builds happened; the
+> log simply was not kept, and the "Current build" block below sat at 1.5.0
+> through all seven of them. Filling them in now would mean guessing, so they
+> stay a visible gap.
+
+### Why 1.9.2 exists
+
+**Because 1.9.1 could not be updated.** The `Ascension-1.9.1.apk` in this
+directory was cut on 2026-09-06 at 02:24, and `GoogleSignInButton.tsx` changed
+after it (69fc740, 08:07 the same day). So a rebuild would have carried
+different code under an identical `versionCode` of 28 — which Android refuses
+to install over an existing 1.9.1, with a confusing error. Bumping to 29 is
+what makes the binary installable; that is the whole content of this release.
+
+The change itself is web-only in effect. Google sign-in for the browser moved
+into its own `GoogleSignInButton.web.tsx` using Google Identity Services, and
+the native button consequently lost two dead `Platform.OS === 'web'` branches.
+On Android that is a no-op, and it is written down as one rather than dressed
+up: this row is a version bump, not a feature.
+
+Nothing from the analyzer work of 2026-09-07/08 is in here. `services/analyzer`
+is a Python service that does not ship inside the APK.
 
 **The package has changed twice, and each time cost every user a reinstall.**
 Android identifies an app by its package, so a new one is a new app: it cannot
@@ -58,19 +83,25 @@ which id.
 
 |                           |                                                                    |
 | ------------------------- | ------------------------------------------------------------------ |
-| File                      | `Ascension-1.5.0.apk`                                              |
+| File                      | `Ascension-1.9.2.apk`                                              |
 | Package                   | `com.ascension.fitness`                                            |
-| versionName / versionCode | 1.5.0 / 21                                                         |
-| Size                      | 75,566,995 bytes (72.1 MB)                                         |
-| SHA-256                   | `2f3071f3bea00be776a12817d0a059ccc94a156e530cbd1a22724428f212aa2d` |
+| versionName / versionCode | 1.9.2 / 29                                                         |
+| Size                      | 76,010,689 bytes (72.5 MB)                                         |
+| SHA-256                   | `fcef641d27501c7898a89fec16daef6c620f3fa6793de21fabaf2ef64d23aed0` |
 | **Signing cert SHA-256**  | `c35574e619810ce487e6e92d2e3cbabced3e85356f32e4d793183335a0fee5de` |
 | API                       | `https://fitnellisense.onrender.com`                               |
 | ABIs                      | arm64-v8a, armeabi-v7a                                             |
-| Manifest permissions      | 13 (was 12 — RECORD_AUDIO added for voice logging)                                                        |
+| Manifest permissions      | 13 (unchanged since 1.5.0)                                         |
 | allowBackup               | `false`                                                            |
 
 The certificate is unchanged from 1.3.0, so this installs over an existing copy
-as an update. Verified with `apksigner`, not assumed.
+as an update. Verified with `apksigner`, not assumed — the digest above was
+read off this binary, and it matches the one this table has carried since 1.5.0.
+
+**This block was stale at 1.5.0 for seven releases.** It is the table an
+existing install's updatability depends on, so it going unmaintained is worse
+than the missing changelog rows: a changed signing identity would have gone
+unnoticed. Updated here, and worth updating on every build.
 
 **RECORD_AUDIO is present from 1.5.0, and that is a real change.** In-app voice
 logging needs it; it was blocked in three separate places before (the
@@ -82,7 +113,7 @@ microphone was never used. Set video still records muted.
 Still absent, and checked against this binary rather than the config:
 
 ```bash
-aapt dump badging build-output/Ascension-1.5.0.apk | grep -iE 'READ_MEDIA|EXTERNAL_STORAGE'
+aapt dump badging build-output/Ascension-1.9.2.apk | grep -iE 'READ_MEDIA|EXTERNAL_STORAGE'
 # no output
 ```
 
@@ -92,7 +123,7 @@ aapt dump badging build-output/Ascension-1.5.0.apk | grep -iE 'READ_MEDIA|EXTERN
 # apksigner is not on PATH and needs a JDK. It ships with the SDK build-tools:
 JAVA_HOME="I:/android-toolchain/jdk-17.0.20.1+1" \
   /i/android-toolchain/sdk/build-tools/36.0.0/apksigner.bat \
-  verify --print-certs build-output/Ascension-1.5.0.apk
+  verify --print-certs build-output/Ascension-1.9.2.apk
 ```
 
 Only apksigner can read it. These APKs are signed with **v2/v3 only**, so there
