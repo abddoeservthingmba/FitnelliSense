@@ -40,11 +40,19 @@ const schema = z.object({
    * no Redis, no Kafka (§3.3.1). The queue is a column, `status = 'queued'`,
    * and claiming is a conditional UPDATE — which is atomic without any of it.
    *
-   * Five seconds is chosen against Neon's free tier rather than against
-   * latency: the compute suspends when idle, so a tighter poll would keep it
-   * awake continuously and spend the monthly allowance on finding nothing.
+   * SIXTY SECONDS, AND CHOSEN AGAINST NEON'S BILLING RATHER THAN AGAINST
+   * LATENCY. This was five, which is wrong in a way that costs money: Neon's
+   * free tier suspends idle compute and charges for the hours it is awake, so a
+   * query every five seconds keeps it awake permanently and spends the monthly
+   * allowance on finding nothing to do.
+   *
+   * A minute of queue latency is free in practice, because tracking a
+   * one-minute clip takes about two — nobody watching the result screen can
+   * tell the difference between a 5s poll and a 60s one when the work itself
+   * takes 120s. And a backlog does not wait a minute per clip: the loop only
+   * sleeps when it finds nothing.
    */
-  POLL_INTERVAL_MS: z.coerce.number().int().min(250).default(5_000),
+  POLL_INTERVAL_MS: z.coerce.number().int().min(250).default(60_000),
 
   /** Give up on one clip after this long and mark it failed. */
   ANALYSIS_TIMEOUT_MS: z.coerce.number().int().min(10_000).default(10 * 60_000),

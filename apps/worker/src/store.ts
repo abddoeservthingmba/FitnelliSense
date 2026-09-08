@@ -61,6 +61,16 @@ export interface Store {
   /** `message` is shown to the user, so it must never carry a stack trace. */
   fail(analysis: Claimed, message: string): Promise<void>;
   /**
+   * Put a row back on the queue, untouched.
+   *
+   * For a failure that is OURS rather than the clip's — storage unreachable,
+   * most obviously. `failed` is terminal and the client tells the user a failed
+   * analysis needs filming again, so marking a perfectly good clip failed
+   * because our network was interfered with destroys work that is not ours to
+   * destroy. This leaves the row exactly as it was found.
+   */
+  release(analysis: Claimed): Promise<void>;
+  /**
    * Return rows abandoned mid-flight to the queue.
    *
    * A worker killed while analysing leaves its row in `processing`, and
@@ -137,6 +147,15 @@ export function createStore(config: Config): Store {
       await sql`
         UPDATE cv_analyses
         SET status = 'failed', error = ${message}, completed_at = now()
+        WHERE id = ${analysis.id} AND user_id = ${analysis.userId}
+      `;
+    },
+
+    async release(analysis) {
+      // `started_at` is cleared too, or the abandonment sweep would count the
+      // time this attempt spent against the next one.
+      await sql`
+        UPDATE cv_analyses SET status = 'queued', started_at = NULL
         WHERE id = ${analysis.id} AND user_id = ${analysis.userId}
       `;
     },

@@ -32,7 +32,7 @@ import { analyserExercise } from '@fi/domain';
 import { AnalyzerError, parseBarPath, runAnalyzer } from './analyser';
 import { loadConfig, type Config } from './config';
 import { measure, NotMeasurable } from './measure';
-import { createStorage, VideoMissing, type Storage } from './storage';
+import { createStorage, StorageUnreachable, VideoMissing, type Storage } from './storage';
 import { createStore, type Claimed, type Store } from './store';
 
 /**
@@ -63,9 +63,23 @@ function log(event: string, fields: Record<string, unknown> = {}): void {
 }
 
 /**
- * Analyse one claimed row. Returns the message to fail with, or null on success.
+ * What became of one clip.
  *
- * Returning the message rather than writing it keeps every database write in
+ * `retry` is the one worth explaining. It means the attempt failed for a reason
+ * that is OURS — storage unreachable, most obviously — and the row goes back on
+ * the queue untouched. `failed` is terminal and the client tells the user a
+ * failed analysis needs filming again, so spending it on our own network
+ * problem destroys work that is not ours to destroy.
+ */
+type Outcome =
+  | { readonly kind: 'complete' }
+  | { readonly kind: 'failed'; readonly message: string }
+  | { readonly kind: 'retry'; readonly detail: string };
+
+/**
+ * Analyse one claimed row and say what became of it.
+ *
+ * Returning the outcome rather than writing it keeps every database write in
  * `runOnce`, so there is exactly one place that decides a row's final state.
  */
 async function analyse(
@@ -73,14 +87,14 @@ async function analyse(
   config: Config,
   store: Store,
   storage: Storage,
-): Promise<string | null> {
+): Promise<Outcome> {
   const slug = await store.exerciseSlug(analysis);
   const exercise = analyserExercise(slug);
   if (exercise === null) {
     // The API checks this before queueing, so reaching here means the
     // catalogue changed under a clip that was already in flight. Reported as
     // the fact it is rather than as an error.
-    return 'This lift is not one we can measure.';
+    return { kind: 'failed', message: 'This lift is not one we can measure.' };
   }
 
   /*
@@ -94,7 +108,10 @@ async function analyse(
    * they had. The 80 MB upload cap makes this rare; it is not made impossible.
    */
   if (analysis.clipStartSecs > 0) {
-    return 'Analysing part of a longer video is not supported yet. Film the set on its own.';
+    return {
+      kind: 'failed',
+      message: 'Analysing part of a longer video is not supported yet. Film the set on its own.',
+    };
   }
 
   const scratch = await mkdtemp(join(tmpdir(), 'fi-analysis-'));
@@ -124,7 +141,7 @@ async function analyse(
     });
 
     if (payload.status !== 'ok') {
-      return explain(payload.reason, analysis.seed !== null);
+      return { kind: 'failed', message: explain(payload.reason, analysis.seed !== null) };
     }
 
     const { result, repCount } = measure(payload, exercise);
@@ -135,21 +152,37 @@ async function analyse(
       verticalRangeM: result.verticalRangeM,
       straightness: result.straightness,
     });
-    return null;
+    return { kind: 'complete' };
   } catch (cause) {
-    if (cause instanceof NotMeasurable || cause instanceof VideoMissing) {
+    /*
+     * STORAGE BEING UNREACHABLE IS NOT THE CLIP'S FAULT, and this branch is
+     * here because the very first production run got it wrong: behind
+     * TLS-intercepting security software the download failed with
+     * "self-signed certificate in certificate chain", every storage error was
+     * treated as a missing object, and a lifter's perfectly good recording was
+     * marked failed with "That video could not be found."
+     */
+    if (cause instanceof StorageUnreachable) {
+      log('storage-unreachable', { analysisId: analysis.id, detail: cause.message });
+      return { kind: 'retry', detail: cause.message };
+    }
+    if (cause instanceof NotMeasurable) {
       log('unmeasurable', { analysisId: analysis.id, detail: cause.message });
-      return cause instanceof NotMeasurable ? cause.message : 'That video could not be found.';
+      return { kind: 'failed', message: cause.message };
+    }
+    if (cause instanceof VideoMissing) {
+      log('video-missing', { analysisId: analysis.id, detail: cause.message });
+      return { kind: 'failed', message: 'That video could not be found.' };
     }
     if (cause instanceof AnalyzerError) {
       log('analyzer-failed', { analysisId: analysis.id, detail: cause.message });
-      return INTERNAL_FAILURE;
+      return { kind: 'failed', message: INTERNAL_FAILURE };
     }
     log('worker-error', {
       analysisId: analysis.id,
       detail: cause instanceof Error ? cause.message : String(cause),
     });
-    return INTERNAL_FAILURE;
+    return { kind: 'failed', message: INTERNAL_FAILURE };
   } finally {
     // The clip is somebody's face and their gym. It does not linger in a temp
     // directory once it has been measured.
@@ -187,16 +220,19 @@ function explain(reason: string | null, tapped: boolean): string {
   }
 }
 
-async function runOnce(config: Config, store: Store, storage: Storage): Promise<boolean> {
+/** 'idle' when there was nothing queued. Otherwise what became of the clip. */
+type Tick = Outcome['kind'] | 'idle';
+
+async function runOnce(config: Config, store: Store, storage: Storage): Promise<Tick> {
   const analysis = await store.claim();
-  if (analysis === null) return false;
+  if (analysis === null) return 'idle';
 
   log('claimed', { analysisId: analysis.id, seeded: analysis.seed !== null });
   const started = Date.now();
 
-  let failure: string | null;
+  let outcome: Outcome;
   try {
-    failure = await analyse(analysis, config, store, storage);
+    outcome = await analyse(analysis, config, store, storage);
   } catch (cause) {
     // `analyse` handles its own errors; this is the last resort, and it exists
     // so that a bug in the error handling itself cannot strand a row.
@@ -204,16 +240,14 @@ async function runOnce(config: Config, store: Store, storage: Storage): Promise<
       analysisId: analysis.id,
       detail: cause instanceof Error ? cause.message : String(cause),
     });
-    failure = INTERNAL_FAILURE;
+    outcome = { kind: 'failed', message: INTERNAL_FAILURE };
   }
 
-  if (failure !== null) await store.fail(analysis, failure);
-  log('finished', {
-    analysisId: analysis.id,
-    ms: Date.now() - started,
-    outcome: failure === null ? 'complete' : 'failed',
-  });
-  return true;
+  if (outcome.kind === 'failed') await store.fail(analysis, outcome.message);
+  if (outcome.kind === 'retry') await store.release(analysis);
+
+  log('finished', { analysisId: analysis.id, ms: Date.now() - started, outcome: outcome.kind });
+  return outcome.kind;
 }
 
 async function main(): Promise<void> {
@@ -238,11 +272,18 @@ async function main(): Promise<void> {
     log('started', { once, pollMs: config.POLL_INTERVAL_MS });
 
     do {
-      const worked = await runOnce(config, store, storage);
+      const tick = await runOnce(config, store, storage);
       if (once) break;
-      // Only sleep when there was nothing to do. Back to back while a backlog
-      // exists, so a batch of clips does not drain at one every five seconds.
-      if (!worked && !stopping) {
+      /*
+       * Back to back while a backlog exists, so a batch of clips does not drain
+       * at one every five seconds — but PAUSE after an idle tick and after a
+       * RETRY. The retry case is the one that matters: a released row is
+       * immediately the oldest queued row again, so claiming straight away
+       * would spin against whatever is broken as fast as the database can
+       * answer. Waiting a poll interval turns that into a slow retry, which is
+       * what it should be.
+       */
+      if ((tick === 'idle' || tick === 'retry') && !stopping) {
         await new Promise((resolve) => setTimeout(resolve, config.POLL_INTERVAL_MS));
       }
     } while (!stopping);
