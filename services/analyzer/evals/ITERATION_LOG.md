@@ -738,3 +738,147 @@ The tap exists in the analyzer only. Nothing carries it from a phone: no Zod
 schema, no column, no API field, no screen. That is the next block of work and
 it is ordinary plumbing — the risky half was whether a tap would help at all,
 and the table above answers that.
+
+---
+
+## Iteration 8 — a deadlift does not start at the top
+
+Iteration 7 ended with "segmentation is now the weak link": three reps with
+spans of 20.1 s, 9.1 s and 22.4 s on a clip whose reps are 3-5 s. This is that.
+
+### I looked at the frames first
+
+The lesson from iteration 6 held. Twelve frames with the tracked circle drawn
+on them answered in one glance what the trace could not:
+
+```
+  0-30 s   the circle is on the lifter's BACK, on a pole, on his shoulder.
+           The green plate sits on the floor untouched the whole time.
+ 30-61 s   the circle is on the plate, every frame, and the set is three
+           deadlifts at ~30 s, 38 s and 51 s with 5 s and 9 s of rest.
+```
+
+So the clip is 30 seconds of setting up and 30 seconds of lifting, and the
+first half is a TRACKING failure that segmentation cannot be blamed for or fix.
+Everything below is measured on the half that is tracked correctly.
+
+### Defect 1: every lift was modelled as a squat
+
+`segment` found the middle of a rep with `find_peaks(y)` — a maximum in y, the
+bar at its LOWEST. That is a squat: start at the top, go down, come back. A
+deadlift is the other way round. Its maxima in y are the bar LYING ON THE FLOOR
+BETWEEN REPS, so each "rep" was built around one of them: the lowering of a
+real rep, then the rest, then the pull of the next.
+
+**The rest was in the middle of the span, not on the end.** That is why it
+could not be trimmed off, and it is the whole of the 9.1 s rep.
+
+`thresholds.yaml` had known this since 2026-09-05 — the deadlift's
+`min_rom_ratio` carries the note *"Bar starts at rest on the floor; cycle
+begins with the concentric"* — and nothing acted on it. Each exercise now
+carries a `cycle`, and it is `status: fixed` rather than a hypothesis, because
+which way a deadlift goes is not a number anyone will sweep.
+
+The implementation is one sign. `motion = y` for a squat and `-y` for a
+deadlift, so the peaks are always the middle of the rep and the troughs always
+the rest position; the maths below has one form and only the phase NAMES swap.
+
+### Defect 2: rest was a phase of a rep
+
+`close_lockouts` ran each rep's trailing pause to the start of the next one, so
+the phases tiled the entire clip. On synthetic clips of back-to-back reps there
+is no gap for that to swallow and the assumption is invisible. On a real set it
+is most of the clip.
+
+Frames between reps now belong to NO REP. The four phases still tile each rep
+exactly; the gap is outside.
+
+### Defect 3, which the first two uncovered: velocity cannot cross a rest
+
+With the direction fixed, the pull still started 3.4 s before the lifter
+touched the bar. Both ends of an excursion are bounded by a peak somewhere in
+the middle of however long the bar sat still, so both have to be walked in
+across a plateau — and on real footage a per-frame velocity test cannot do it:
+
+```
+  seven seconds of a barbell lying untouched on the floor
+    centroid jitter    0.7 - 1.7 px/frame
+    onset floor        0.96 px/frame        <- inside the noise
+```
+
+The walk stops at the first frame ABOVE the floor, so one noise spike ends it.
+A synthetic centroid is exact, there is no jitter, and none of this shows.
+
+Displacement crosses the plateau reliably. But used as the boundary it put
+S01's eccentric start six frames late against a three-frame budget, and the
+sweep said the SHAPE was wrong rather than the number:
+
+```
+  gate    S01 eccentric median    real clip rep spans
+  0.015          3 frames         2.4, 14.8, 11.8 s     G3 ok, rest swallowed
+  0.050          6 frames         2.4,  6.3,  4.6 s     rest fixed, G3 RED
+```
+
+No value satisfies both. So displacement is used ONLY to reach a frame that is
+unmistakably inside the movement, and velocity walks back from there to the
+edge. That reverses the direction of the fragile test and fixes it: walking
+back stops at the first frame BELOW the floor, and inside a real movement the
+bar travels 3-12 px/frame, so no noise dip ever reaches down to stop it early.
+
+The sweep then goes flat — every gate from **0.05 to 0.30** gives an identical
+1.0-frame median boundary error and identical rep spans. A parameter that stops
+mattering over a 6x range is one that is finally the right shape. 0.10 is the
+middle of the plateau.
+
+**The same two-stage pattern replaced the turnaround walk**, which had the same
+fragility: on rep 2 the lifter held the lockout for 1.7 s, a noise spike ended
+the hold 0.1 s in, and the remaining 1.6 s was handed to the eccentric —
+reporting a 3.3 s lowering of a bar that took 1.5 s to reach the floor. All
+four boundaries are now found the same way, which is not a coincidence: it is
+the same question asked about four different edges.
+
+### Where it stands
+
+```
+              BEFORE                      AFTER
+  rep 1    9.9-29.9 s   20.1 s        1.0- 3.4 s   2.4 s   (phantom, see below)
+  rep 2   29.9-39.0 s    9.1 s       38.1-44.3 s   6.3 s
+  rep 3   39.0-61.4 s   22.4 s       51.3-55.9 s   4.6 s
+
+  rep 2 phases, after:   pull 0.9 s | hold 1.8 s | lower 1.6 s | floor 2.0 s
+  read off the frames:   pull 38.3-38.8 | held 39.3-40.6 | lowered 40.8-42.3
+```
+
+Reps 2 and 3 match the video. Synthetic clips unchanged at 5 and 3 reps, G1
+exact, G3 median 1.0 frames over 32 boundaries against a target of 3.0. 69
+tests pass (six new), ruff clean, gates unchanged at 7 green / 1 red /
+2 blocked.
+
+The six new tests build their traces rather than filming them, so they run in
+0.8 s and everywhere. That is deliberate: whether a deadlift goes up first, and
+when a rep stops, is arithmetic that never needed a camera to pin down — and
+pinning it down there means the real clip is spent on the questions only real
+footage can answer. Fed the same built trace, the old squat-shaped model
+returns **two** reps of 12.1 s and 12.4 s, each with an eight-second "bottom"
+that is the rest between two pulls. That is the defect reproduced on demand,
+which it never was before.
+
+### What is NOT fixed, and the number to distrust
+
+**Rep 1 is a phantom and the count of 3 is right by coincidence.** It is a
+444 px excursion that goes out and back in 0.2 s — no barbell does that — and
+it comes from the tracker being on the lifter's back during the first 30 s. The
+real first rep, at ~30 s, is LOST for the same reason: the frames either side of
+its turnaround are on the wrong object, so its measured range is 37 px and the
+ROM filter discards it. One fabricated rep and one missing rep cancelling out
+is not three reps.
+
+Segmentation could reject the phantom on duration — 0.2 s is not a lift, and
+that check is as calibration-free as `travel_in_radii`. It is deliberately NOT
+added here: it would take the count from 3 to 2 on the only real clip in the
+set, tuned against my own reading of the footage with no label in the manifest
+behind it, and the log already records twice what comes of tuning to one clip.
+The cause is acquisition after a long rest, which belongs in tracking.
+
+**Runtime is still 120 s on this clip against a 45 s target.** Untouched here;
+G8 remains live.

@@ -122,12 +122,55 @@ segmentation:
   #
   # A fraction of the excursion's own peak speed, so it means the same thing
   # for a fast single and a grinding last rep.
+  # Used ONLY to place the pause at the turnaround, which sits inside the
+  # excursion where the bar is genuinely moving either side of it. It is no
+  # longer used to find where the rep starts and ends — see the entry below for
+  # why a velocity test cannot answer that question on real footage.
   motion_onset_velocity_fraction:
     value: 0.08
     unit: ratio_of_peak_speed
     status: hypothesis
     source: "Above the noise floor of a smoothed centroid, below the speed of a deliberate descent."
     date: 2026-09-05
+
+  # HOW FAR THE BAR MUST HAVE LEFT ITS REST POSITION FOR THE MOVEMENT TO BE
+  # UNMISTAKABLE, as a fraction of that rep's own range.
+  #
+  # This does NOT place the rep's boundary. It only reaches a frame that is
+  # certainly inside the movement, from which the velocity test walks back to
+  # the edge; see `_phases`. The distinction is the entire point of the number,
+  # so it is worth being plain about why.
+  #
+  # A VELOCITY TEST CANNOT CROSS A REST. Both ends of an excursion are bounded
+  # by a peak somewhere in the middle of however long the bar sat still, so
+  # both have to be walked in across a plateau. Measured on the first real set:
+  # across seven seconds of a barbell lying untouched on the floor, the tracked
+  # centroid jittered 0.7-1.7 px per frame against an onset floor of 0.96. The
+  # test is a coin flip there, so a forward walk stopped on the first noise
+  # spike and put the start of a pull 3.4 s before the lifter had touched the
+  # bar. Widening the velocity stencil until the noise averaged out needed
+  # 0.20 s of frames for 15% of margin, and it cancels at a turnaround, where
+  # velocity legitimately passes through zero.
+  #
+  # A DISPLACEMENT TEST CANNOT PLACE A BOUNDARY. A gate large enough to clear
+  # the jitter is reached well after the movement began. Swept as the boundary
+  # itself, no value satisfied both clips — G3 wanted <= 0.015 and the real
+  # clip wanted >= 0.05 — which said the shape was wrong, not the number.
+  #
+  # Used only to get inside the movement, it costs nothing in precision, and
+  # the sweep goes flat: every value from 0.05 to 0.30 gives an identical
+  # 1.0-frame median boundary error on S01 and S02 and identical rep spans on
+  # the real clip. 0.10 sits in the middle of that plateau and is roughly four
+  # times the jitter band, which was 10 px peak to peak against a 390 px rep.
+  left_rest_position_rom_fraction:
+    value: 0.10
+    unit: ratio_of_rep_rom
+    status: hypothesis
+    source: >
+      Swept 0.01-0.30 against S01, S02 and the first real deadlift set. Flat
+      from 0.05 upward on every measure; 0.10 is the middle of that plateau and
+      ~4x the 10 px jitter band measured on a 390 px rep.
+    date: 2026-09-07
 
   # What a candidate excursion is measured AGAINST.
   #
@@ -147,9 +190,45 @@ segmentation:
     source: "Separates the rep cluster from decoys. S02's decoys are at 0.10, 0.14 and 0.35 of full range."
     date: 2026-09-05
 
+  # HOW LONG THE BAR MAY SIT AT THE REST POSITION AND STILL BELONG TO THE REP
+  # IT JUST FINISHED.
+  #
+  # Phases used to tile the whole clip: every rep's trailing pause ran to the
+  # start of the next one, and the last one ran to the final frame. On a
+  # synthetic set of back-to-back reps that is invisible, because there is no
+  # gap for it to swallow. On a real set it is most of the clip. The first real
+  # deadlift set measured here came back as reps of 20.1 s, 9.1 s and 22.4 s
+  # against a deadlift rep of 3-5 s, because the nine seconds the lifter spent
+  # standing over the bar between two pulls were inside one of them.
+  #
+  # REST IS NOT A PHASE OF A REP. The tiling assumption was the defect, not the
+  # boundary: a pause longer than this is the lifter recovering, and it belongs
+  # to no rep at all. Frames between reps are now allowed to belong to nothing.
+  max_end_pause_s:
+    value: 2.0
+    unit: s
+    status: hypothesis
+    source: >
+      A deliberate lockout is well under a second, and a competition deadlift
+      is held for a "down" signal of about one. 2 s admits both with margin and
+      is far short of any real rest between reps.
+    date: 2026-09-07
+
   # The single most important number in the pipeline: it decides what counts as
   # a rep. Too low and re-grips become reps; too high and a shallow last rep
   # vanishes. S02 exists specifically to pin it down.
+  #
+  # WHICH WAY THE REP GOES is the other per-exercise fact, and it is not a
+  # threshold — it is a statement about the lift, so it carries `status: fixed`
+  # like the plate diameter rather than waiting on a sweep.
+  #
+  # A squat, a bench and a press begin at the top: the bar is lowered, pauses,
+  # and is driven back. A DEADLIFT BEGINS ON THE FLOOR, and its first movement
+  # is the concentric. Segmentation used to model every lift the first way, so
+  # on a deadlift it built each "rep" around the bar's time on the FLOOR — the
+  # lowering of one rep, the rest, and the pull of the next, in one span. That
+  # is why the rest could not be trimmed out of a rep: it was in the middle of
+  # it, not on the end.
   back_squat:
     min_rom_ratio:
       value: 0.55
@@ -157,14 +236,19 @@ segmentation:
       status: hypothesis
       source: "Guess. S02's decoys sit at 0.10, 0.14 and 0.35 to bracket it."
       date: 2026-09-05
+    cycle: { value: eccentric_first, unit: phase_order, status: fixed, source: "The bar starts racked on the shoulders at standing height; the rep opens with the descent.", date: 2026-09-07 }
   front_squat:
     min_rom_ratio: { value: 0.55, unit: ratio_of_median_rep_rom, status: hypothesis, source: "Mirrors back_squat until evidence separates them.", date: 2026-09-05 }
+    cycle: { value: eccentric_first, unit: phase_order, status: fixed, source: "As back_squat — standing start, descent first.", date: 2026-09-07 }
   deadlift:
     min_rom_ratio: { value: 0.60, unit: ratio_of_median_rep_rom, status: hypothesis, source: "Bar starts at rest on the floor; cycle begins with the concentric.", date: 2026-09-05 }
+    cycle: { value: concentric_first, unit: phase_order, status: fixed, source: "The bar rests on the floor between reps. The pull is the first movement, and the rep ends with the bar back down.", date: 2026-09-07 }
   bench_press:
     min_rom_ratio: { value: 0.50, unit: ratio_of_median_rep_rom, status: hypothesis, source: "Shorter ROM and more variance than a squat.", date: 2026-09-05 }
+    cycle: { value: eccentric_first, unit: phase_order, status: fixed, source: "Arms locked at the start; the bar is lowered to the chest first.", date: 2026-09-07 }
   overhead_press:
     min_rom_ratio: { value: 0.55, unit: ratio_of_median_rep_rom, status: hypothesis, source: "Guess.", date: 2026-09-05 }
+    cycle: { value: eccentric_first, unit: phase_order, status: fixed, source: "Rack position is the start of the rep and the bar is dipped before it is driven, so the descent leads.", date: 2026-09-07 }
 
 squat:
   # UNIT CHANGED before any tuning, deliberately. This was `depth_margin_px`,

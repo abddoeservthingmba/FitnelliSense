@@ -224,3 +224,45 @@ in plate radii — and the clip is refused rather than answered. Coherence and
 size stability both scored green on a wall fixture; travel is what caught it.
 The lesson is worth keeping: each of these was added after the previous one
 was measured passing on something plainly wrong.
+
+### 4a. What is left of it after the tap — acquisition during a long rest
+
+**Added after iteration 8.** The tap fixed frame 0 and following holds from
+there, but the lock is still lost and re-acquired badly while nothing is
+happening. Frames extracted across the real clip with the tracked circle drawn
+on them show it plainly:
+
+```
+  0-30 s   the circle is on the lifter's BACK, then a pole, then his shoulder.
+           The plate sits on the floor untouched the whole time.
+ 30-61 s   the circle is on the plate, every frame.
+```
+
+The lifter spends the first 30 seconds walking up, bending over the bar and
+standing again without lifting it. The plate is stationary, so the motion mask
+has nothing to offer, and re-acquisition takes whatever moving circle is
+nearest — which is the lifter.
+
+**It costs a real rep and invents a fake one.** The rep at ~30 s is discarded
+because the frames either side of its turnaround are on the wrong object, so
+its measured range is 37 px; a 0.2 s excursion at 1-3 s is counted instead.
+The clip reports 3 reps, which is the right number for the wrong reasons.
+
+This is why the count on the real clip should not be read as evidence for
+anything yet. It is a tracking problem, not a segmentation one — segmentation
+was measured separately in iteration 8 against the half of the clip that is
+tracked correctly, and reps 2 and 3 match the video.
+
+---
+
+## 5. ~~Segmentation swallows the rest between reps~~ — CLOSED (iteration 8)
+
+Raised at the end of iteration 7, when the first correctly tracked real clip
+came back as three reps of 20.1 s, 9.1 s and 22.4 s. Three causes, all closed:
+every lift was modelled as a squat, so a deadlift's rest sat in the MIDDLE of
+each reported rep; the trailing pause of every rep ran to the start of the next
+one, so the phases tiled the whole clip; and the per-frame velocity test used
+to find a rep's edges cannot cross a rest plateau on real footage, where
+centroid jitter is 0.7-1.7 px per frame against a 0.96 px floor.
+
+Reps 2 and 3 now match the video to the phase. See ITERATION_LOG.md.

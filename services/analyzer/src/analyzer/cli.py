@@ -97,10 +97,10 @@ def analyze_video(
             frames_processed=found.frame_count,
         )
 
-    reps = segmentation.close_lockouts(
-        segmentation.segment(series.y, exercise),
-        last_frame=len(series),
-    )
+    # The frame rate reaches segmentation because a rep's trailing pause is
+    # bounded in SECONDS: a lockout is under a second whatever the camera was
+    # doing, and anything longer is rest rather than a phase of the rep.
+    reps = segmentation.segment(series.y, exercise, fps=series.fps)
 
     # STAGE 5 IS NOT BUILT, so there is no scale. Reported as "none" rather
     # than left null: null would mean nobody looked, "none" means we looked and
