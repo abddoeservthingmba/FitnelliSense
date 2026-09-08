@@ -17,7 +17,7 @@
  */
 import { useState } from 'react';
 import { useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Analysis, MeResponse, VideoUploadTarget } from '@fi/shared';
+import type { Analysis, BarSeed, MeResponse, VideoUploadTarget } from '@fi/shared';
 import { api } from '../client';
 import { keys } from '../query-client';
 
@@ -76,10 +76,20 @@ export function useAnalysis(analysisId: string | null) {
     enabled: analysisId !== null,
     refetchInterval: (query) => {
       const status = query.state.data?.status;
-      // 30s, not 5s. Nothing transitions a queued analysis yet — the worker
-      // does not exist — so a tighter poll is a request every five seconds
-      // that can only ever return the row it already has.
-      return status === 'queued' || status === 'processing' ? 30_000 : false;
+      /*
+       * BACK TO 5s NOW THAT SOMETHING ACTUALLY PICKS THESE UP. This was 30s,
+       * on the sound reasoning that nothing transitioned a queued analysis so
+       * a tighter poll could only ever return the row it already had. Now
+       * `apps/worker` claims it, and tracking a 60s clip takes around two
+       * minutes — so a 30s poll means up to half a minute of watching a
+       * finished analysis still say "Working on it".
+       *
+       * `processing` is polled faster than `queued`: a row that is being
+       * worked on is about to change, whereas a queued one is waiting on a
+       * worker that may not be running at all (see apps/worker/README.md).
+       */
+      if (status === 'processing') return 5_000;
+      return status === 'queued' ? 15_000 : false;
     },
   });
 }
@@ -115,6 +125,15 @@ export interface UploadInput {
   clipStartSecs?: number;
   /** Whether to measure the clip, or merely keep it. The server re-checks. */
   analyse?: boolean;
+  /**
+   * Where the lifter tapped the plate, as fractions of the frame they saw.
+   *
+   * Optional, and omitting it is a real choice rather than a missing feature —
+   * see `PlateTapper`. What it costs is measurement: without a tap the tracker
+   * has to work out for itself which circular thing in the gym is the bar, and
+   * on real footage it abstains far more often than it succeeds.
+   */
+  seed?: BarSeed;
 }
 
 /** Which of the three steps failed, so the UI can say something useful. */
@@ -225,6 +244,7 @@ export function useUploadSetVideo() {
       durationSecs,
       clipStartSecs,
       analyse,
+      seed,
     }: UploadInput): Promise<Analysis> => {
       setProgress(0);
       /*
@@ -243,6 +263,7 @@ export function useUploadSetVideo() {
           durationSecs,
           clipStartSecs,
           analyse: analyse ?? false,
+          seed,
         })
         .catch((error: unknown) => {
           throw new UploadFailure('ask', error instanceof Error ? error.message : 'Could not start');

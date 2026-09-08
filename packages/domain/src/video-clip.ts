@@ -129,3 +129,81 @@ export function planUpload(video: PickedVideo): UploadPlan {
   }
   return { kind: 'ok', window: { startSecs: 0, endSecs: duration } };
 }
+
+// ------------------------------------------------- pointing at the plate --
+
+/** The size of the view a video is being drawn into, in layout units. */
+export interface ViewSize {
+  readonly width: number;
+  readonly height: number;
+}
+
+/** A point, either in view coordinates or as fractions of the frame. */
+export interface Point {
+  readonly x: number;
+  readonly y: number;
+}
+
+export interface Rect {
+  readonly left: number;
+  readonly top: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+const EMPTY_RECT: Rect = { left: 0, top: 0, width: 0, height: 0 };
+
+/**
+ * Where the video actually is inside its view.
+ *
+ * A player that fits the whole frame in — `contentFit: 'contain'`, which is the
+ * only honest choice when someone is judging a bar path — matches the view on
+ * one axis and is inset on the other by however much the aspect ratios differ.
+ * Those insets are part of the touch target and NOT part of the picture.
+ */
+export function videoContentRect(view: ViewSize, aspect: number): Rect {
+  if (view.width <= 0 || view.height <= 0) return EMPTY_RECT;
+  if (!Number.isFinite(aspect) || aspect <= 0) return EMPTY_RECT;
+
+  if (view.width / view.height > aspect) {
+    // The view is wider than the video: bars down the sides.
+    const width = view.height * aspect;
+    return { left: (view.width - width) / 2, top: 0, width, height: view.height };
+  }
+  // The view is taller than the video: bars top and bottom.
+  const height = view.width / aspect;
+  return { left: 0, top: (view.height - height) / 2, width: view.width, height };
+}
+
+/**
+ * A tap on a video, as fractions of the FRAME. Null if it missed the picture.
+ *
+ * THIS IS THE CONVERSION THAT MUST NOT BE WRONG, and it is separated out here
+ * because it is the one piece of the tap flow that can be tested. A seed is
+ * where the analyser looks for the barbell; an offset one points at whatever
+ * else happens to be there, and the tracker then follows that faithfully and
+ * reports a confident answer about the wrong object.
+ *
+ * Measured against the video's content rect rather than the view, because the
+ * letterbox bars belong to neither. On a tall phone showing a landscape clip
+ * they can be a third of the height, so a tap measured against the view is not
+ * slightly off — it is off by a third of the frame.
+ *
+ * A TAP IN THE LETTERBOX IS REFUSED RATHER THAN CLAMPED. Clamping records a
+ * point on the border of the picture as though it had been chosen, and the
+ * analyser would either find nothing there or lock onto whatever sits at the
+ * frame's edge. Null lets the caller do nothing at all, which is a clear
+ * signal to try again.
+ */
+export function tapToFrameFraction(tap: Point, view: ViewSize, aspect: number): Point | null {
+  const rect = videoContentRect(view, aspect);
+  if (rect.width <= 0 || rect.height <= 0) return null;
+
+  const x = (tap.x - rect.left) / rect.width;
+  const y = (tap.y - rect.top) / rect.height;
+  if (x < 0 || x > 1 || y < 0 || y > 1) return null;
+
+  // Four decimals is about a fifth of a pixel on a 1080-wide frame — far finer
+  // than a fingertip, and it keeps the wire payload readable.
+  return { x: Number(x.toFixed(4)), y: Number(y.toFixed(4)) };
+}

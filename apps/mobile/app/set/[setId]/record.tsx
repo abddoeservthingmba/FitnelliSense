@@ -1,10 +1,10 @@
 /**
  * Getting a video of a set for form analysis (FR-VID-01, 03, 11, 12, 13).
  *
- * Six states in one screen, in the order they are reached: consent, choosing a
- * window, uploading, web, permission, camera. One screen because they are one
- * task — splitting them would mean six routes and a back button that lands
- * somewhere useless.
+ * Seven states in one screen, in the order they are reached: consent, tapping
+ * the plate, choosing a window, uploading, web, permission, camera. One screen
+ * because they are one task — splitting them would mean seven routes and a
+ * back button that lands somewhere useless.
  *
  * THE ORDER OF THOSE CHECKS IS LOAD-BEARING, and it is why `pickFromLibrary`
  * is defined above all of them: several states offer it, so it cannot live
@@ -12,6 +12,13 @@
  * ABOVE the web check for the same reason — a browser can pick a file even
  * though it cannot film, and a web user who picks a long video still has to
  * choose a window.
+ *
+ * THE TAP SITS ABOVE THE WINDOW CHOOSER, which is the subtle one. A short
+ * picked clip sets `picked` and `chosenWindow` on its way through, so the
+ * chooser's condition matches it too — it used to be hidden only because
+ * `startUpload` made the upload pending in the same tick. Now that a tap comes
+ * first nothing is pending, and the chooser would render over the top asking
+ * which part of a twelve-second video to measure.
  *
  * THE CONSENT STATE IS NOT DECORATION. The API refuses to issue an upload
  * target without a recorded consent, so this screen cannot skip it even if
@@ -51,7 +58,9 @@ import {
   type ClipWindow,
   type PickedVideo,
 } from '@fi/domain';
+import type { BarSeed } from '@fi/shared';
 import { ClipChooser } from '../../../src/features/analysis/ClipChooser';
+import { PlateTapper } from '../../../src/features/analysis/PlateTapper';
 import { Button } from '../../../src/components/Button';
 import { Card, Row, Stack as Column } from '../../../src/components/Card';
 import { Screen } from '../../../src/components/Screen';
@@ -123,6 +132,14 @@ export default function RecordSetScreen() {
   const [chosenWindow, setChosenWindow] = useState<ClipWindow | null>(null);
   /** Why a pick was refused, when it was. */
   const [pickError, setPickError] = useState<string | null>(null);
+  /**
+   * A clip waiting on the lifter to point at the plate.
+   *
+   * Held here rather than uploaded immediately, because the tap has to travel
+   * WITH the upload request — the seed is part of the presign body, so there
+   * is no adding it afterwards.
+   */
+  const [pendingTap, setPendingTap] = useState<{ uri: string; durationSecs: number } | null>(null);
   /** 0 is the widest the lens goes; 1 is the device's maximum. */
   const [zoom, setZoom] = useState(0);
 
@@ -223,12 +240,42 @@ export default function RecordSetScreen() {
    * One entry point makes that class of bug unrepresentable rather than merely
    * fixed.
    */
-  const startUpload = (uri: string, durationSecs: number, clipStartSecs?: number) =>
+  const startUpload = (uri: string, durationSecs: number, clipStartSecs?: number) => {
+    /*
+     * ASK FOR THE TAP FIRST, when it is worth asking for.
+     *
+     * It is worth asking whenever the clip is going to be measured, because
+     * without it the tracker has to work out for itself which circular thing
+     * in the gym is the bar — and on real footage it abstains far more often
+     * than it succeeds. On the first real clip the guess reached 59% coherence
+     * and was refused; a tap reached 85% and produced a measurable path.
+     *
+     * NOT asked for a clip that is only being kept: there is nothing to point
+     * at a tracker that will not run. And not asked for a WINDOWED clip
+     * either — a tap belongs to a specific frame, this screen can only show
+     * the first frame of the file, and the analysed window starts somewhere
+     * else. The worker refuses a windowed clip today in any case, so asking
+     * would collect an answer nothing could use.
+     */
+    if (analyse && measurable && !clipStartSecs) {
+      setPendingTap({ uri, durationSecs });
+      return;
+    }
+    submitUpload(uri, durationSecs, clipStartSecs);
+  };
+
+  /** The mutation itself. Reached from `startUpload`, or from the tap screen. */
+  const submitUpload = (
+    uri: string,
+    durationSecs: number,
+    clipStartSecs?: number,
+    seed?: BarSeed,
+  ) =>
     upload.mutate(
       // `analyse && measurable`, not just `analyse`: belt and braces against a
       // stale toggle if the slug were ever to change under the screen. The
       // server checks this too and is the authority.
-      { setId, uri, durationSecs, clipStartSecs, analyse: analyse && measurable },
+      { setId, uri, durationSecs, clipStartSecs, analyse: analyse && measurable, seed },
       { onSuccess: (analysis) => router.replace(`/analysis/${analysis.id}`) },
     );
 
@@ -314,6 +361,39 @@ export default function RecordSetScreen() {
               </Text>
             </Column>
           </Column>
+        </Screen>
+      </>
+    );
+  }
+
+  // ------------------------------------------------------- tap the plate --
+
+  /*
+   * BEFORE the window chooser, and that ordering is load-bearing. A short
+   * picked clip sets `picked` and `chosenWindow` on its way through, so the
+   * chooser's condition below is satisfied for it too — it used to be hidden
+   * only because `startUpload` made `upload.isPending` true in the same tick.
+   * Now that a tap comes first, nothing is pending, and the chooser would
+   * render over the top asking which part of a 12-second video to analyse.
+   */
+  if (pendingTap !== null && !upload.isPending) {
+    return (
+      <>
+        {header('Tap the plate')}
+        <Screen scroll>
+          <PlateTapper
+            uri={pendingTap.uri}
+            onDone={(seed) => {
+              const clip = pendingTap;
+              setPendingTap(null);
+              submitUpload(clip.uri, Math.floor(clip.durationSecs), undefined, seed ?? undefined);
+            }}
+            onCancel={() => {
+              setPendingTap(null);
+              setPicked(null);
+              setChosenWindow(null);
+            }}
+          />
         </Screen>
       </>
     );
