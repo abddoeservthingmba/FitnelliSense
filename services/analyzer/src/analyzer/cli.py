@@ -26,8 +26,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from . import __version__, ingest, result, segmentation, tracking
-from .thresholds import thresholds
+from . import __version__, barpath, ingest, result, segmentation, tracking
 
 
 def analyze_video(
@@ -67,29 +66,12 @@ def analyze_video(
 
     series = tracking.track(video, fps=found.fps, seed=seed)
 
-    # ABSTAIN BEFORE SEGMENTING. This is the check whose absence let a scatter
-    # plot become 71 reps: tracking had no way to say "I do not believe this",
-    # so segmentation was handed noise and did its job faithfully on it.
-    #
-    # THREE SIGNALS, AND EACH ONE IS HERE BECAUSE THE ONES BEFORE IT MISSED.
-    #
-    # Coherence asks whether each frame followed from the last. A lock can
-    # satisfy that at every step and still walk onto a different object
-    # entirely, one plausible step at a time: 64% coherence cleared this floor
-    # on a clip that tracked three different sizes of thing.
-    #
-    # Radius spread asks whether it stayed the SAME object. A rigid plate in
-    # front of a static camera does not change size.
-    #
-    # Travel asks whether that object ever MOVED LIKE A BARBELL. Both checks
-    # above score perfectly on a light fitting, because a light fitting is the
-    # most coherent, most size-stable thing in the room — 47.6 s of unbroken
-    # lock, reported as 4 reps. Nothing that holds still is doing a set.
-    limits = thresholds()
-    incoherent = series.coherence < float(limits.value("tracking.min_coherence"))
-    inconsistent = series.radius_spread > float(limits.value("tracking.max_radius_spread_ratio"))
-    motionless = series.travel_in_radii < float(limits.value("tracking.min_travel_plate_radii"))
-    if incoherent or inconsistent or motionless:
+    # ABSTAIN BEFORE SEGMENTING, on the three signals `tracking.refuse` holds.
+    # They live there rather than here because the bar-path export needs the
+    # same verdict, and a gate written out at two call sites is a gate that
+    # will eventually differ between them.
+    refused = tracking.refuse(series)
+    if refused is not None:
         return result.abstain(
             reason="bar_not_tracked",
             exercise=exercise,
@@ -176,6 +158,35 @@ def _parse_seed(raw: str | None) -> tracking.Seed | None:
     return tracking.Seed(x=x, y=y, frame=frame)
 
 
+def _parse_seed_fraction(raw: str | None) -> tuple[float, float, float] | None:
+    """`X,Y` or `X,Y,SECS`, with X and Y as fractions of the frame.
+
+    RANGE-CHECKED, and it raises rather than clamping. A fraction outside [0, 1]
+    means the caller measured the tap against something other than the frame —
+    a view with letterboxing, or the wrong dimension of a rotated clip — and
+    clamping it to the edge would turn that bug into a lock on whatever sits at
+    the border of the picture, which is exactly the confident wrong answer this
+    pipeline keeps having to be defended against.
+    """
+    if raw is None:
+        return None
+
+    parts = raw.split(",")
+    if len(parts) not in (2, 3):
+        raise SystemExit("--seed-frac must be X,Y or X,Y,SECS")
+    try:
+        x, y = float(parts[0]), float(parts[1])
+        at_secs = float(parts[2]) if len(parts) == 3 else 0.0
+    except ValueError as bad:
+        raise SystemExit(f"--seed-frac is not numeric: {raw}") from bad
+
+    if not (0.0 <= x <= 1.0 and 0.0 <= y <= 1.0):
+        raise SystemExit(f"--seed-frac x and y must be fractions in 0..1, got {x},{y}")
+    if at_secs < 0:
+        raise SystemExit("--seed-frac seconds cannot be negative")
+    return x, y, at_secs
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(prog="analyze", description="Analyse one weightlifting set.")
     parser.add_argument("--video", required=True, type=Path)
@@ -190,14 +201,53 @@ def main() -> int:
         metavar="X,Y[,FRAME]",
         help="where the plate is, in pixels of the upright frame",
     )
+    # THE BAR PATH, for a caller that computes its own metrics.
+    #
+    # The worker that serves production takes this rather than the result
+    # envelope below, because range of motion in metres, velocity and bar drift
+    # are already implemented and tested in `packages/domain/bar-path.ts` and
+    # the wire contract was written against that implementation. See barpath.py.
+    parser.add_argument(
+        "--emit-path",
+        metavar="FILE",
+        type=Path,
+        help="write the tracked bar path as JSON and do nothing else",
+    )
+    # THE TAP AS A PHONE REPORTS IT. Fractions of the upright frame the lifter
+    # saw, and a time rather than a frame index, because a client knows neither
+    # the source resolution nor the exact frame rate reliably. Resolved against
+    # the decoded video in `barpath.bar_path`.
+    parser.add_argument(
+        "--seed-frac",
+        metavar="X,Y[,SECS]",
+        help="where the plate is, as fractions of the upright frame (0-1)",
+    )
     parser.add_argument("--version", action="version", version=__version__)
     args = parser.parse_args()
+
+    seed = _parse_seed(args.seed)
+
+    # Exits here. Tracking is the expensive part and both outputs need it, but
+    # nothing wants both in one run — and running the segmenter to throw its
+    # answer away would put a second, unused rep count in the logs of every
+    # production analysis, which is exactly the kind of thing that gets read
+    # later as if it meant something.
+    if args.emit_path is not None:
+        barpath.write(
+            barpath.bar_path(
+                video=args.video,
+                seed=seed,
+                seed_fraction=_parse_seed_fraction(args.seed_frac),
+            ),
+            args.emit_path,
+        )
+        return 0
 
     analysis = analyze_video(
         video=args.video,
         exercise=args.exercise,
         view=args.view,
-        seed=_parse_seed(args.seed),
+        seed=seed,
     )
 
     # sort_keys so two runs of the same clip serialise identically (G7).

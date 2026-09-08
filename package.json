@@ -12,6 +12,8 @@
   "scripts": {
     "dev:api": "pnpm --filter @fi/api dev",
     "dev:mobile": "pnpm --filter @fi/mobile start",
+    "dev:worker": "pnpm --filter @fi/worker dev",
+    "worker:once": "pnpm --filter @fi/worker once",
     "build": "pnpm --filter @fi/api build",
     "start": "node apps/api/dist/index.js",
     "migrate": "node apps/api/dist/migrate.js",

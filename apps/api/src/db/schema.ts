@@ -638,6 +638,35 @@ export const cvAnalyses = pgTable(
     analysisRequested: boolean('analysis_requested').notNull().default(false),
     clipStartSecs: integer('clip_start_secs').notNull().default(0),
     clipEndSecs: integer('clip_end_secs').notNull().default(0),
+    /**
+     * Where the lifter tapped the plate — `{ x, y, atSecs }`, x and y as
+     * FRACTIONS of the upright frame they were shown (0019).
+     *
+     * Acquisition — deciding which circular thing in a gym is the bar — is the
+     * half of tracking that kept failing, and it failed differently each time:
+     * ceiling lights, a wall fan, a circle twice the plate's size. On the first
+     * real clip the guess reached 59% coherence and was refused; the tap
+     * reached 85% and produced a measurable path.
+     *
+     * JSONB rather than three columns, so `barSeedSchema` in `@fi/shared`
+     * stays the single definition of the shape. Nothing queries inside it —
+     * the worker reads it whole, once, for the clip it is analysing.
+     *
+     * NULLABLE, and null is a normal value: a clip filmed before this shipped
+     * has no tap, and one can still be stored and watched back. What it cannot
+     * usually be is measured.
+     */
+    seed: jsonb('seed'),
+    /**
+     * When a worker claimed this row (0019). Null until one does.
+     *
+     * NOT derivable from `created_at`, which is when the row was created —
+     * before the upload had even happened. Recovering a row abandoned by a
+     * killed worker means asking "how long has this been processing", and
+     * against `created_at` that question returns yes for a row claimed one
+     * second ago, so a restart would steal work that is still running.
+     */
+    startedAt: timestamp('started_at', { withTimezone: true }),
     repCount: smallint('rep_count'),
     result: jsonb('result'),
     error: text('error'),

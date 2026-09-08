@@ -134,6 +134,13 @@
       "when": 1788619110506,
       "tag": "0018_analysis_requested",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1788857023180,
+      "tag": "0019_analysis_seed",
+      "breakpoints": true
     }
   ]
 }

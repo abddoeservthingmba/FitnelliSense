@@ -143,6 +143,16 @@ export async function requestVideoUpload(
     analysisRequested: willAnalyse,
     clipStartSecs: window.startSecs,
     clipEndSecs: window.endSecs,
+    /*
+     * Stored whether or not this clip will be measured. It is the record of
+     * what the client actually sent, and a row whose seed disappeared because
+     * the server decided it would not be needed is a row nobody can debug — the
+     * question "did the app send a tap" would have no answer.
+     *
+     * Validated by `requestVideoUploadSchema` on the way in, so what lands in
+     * the column is always `{ x, y, atSecs }` with x and y inside [0, 1].
+     */
+    seed: input.seed ?? null,
   });
 
   return {
@@ -315,6 +325,11 @@ async function toWire(
     clipStartSecs: row.clipStartSecs,
     clipEndSecs: row.clipEndSecs,
     analysisRequested: row.analysisRequested,
+    // Echoed back so the client can tell "we could not follow the bar" from
+    // "we could not follow the bar, and you never pointed at the plate" —
+    // which are the same message to a user unless this field distinguishes
+    // them, and only one of them is worth retrying.
+    seed: (row.seed as Analysis['seed']) ?? null,
     // Written by the worker; trusted to match the schema it was given.
     result: (row.result as Analysis['result']) ?? null,
     error: row.error,

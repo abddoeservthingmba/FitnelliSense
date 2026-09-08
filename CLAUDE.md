@@ -38,19 +38,27 @@ the contract — reference them in commits and PR descriptions.
 ## Layout
 
 ```
-apps/api        Fastify + Drizzle. routes/ are thin; services/ hold the logic.
-apps/mobile     Expo Router app, Android + web from one codebase.
-packages/shared Zod schemas and derived types — the API contract.
-packages/domain Pure business logic. No I/O, no framework imports.
-content/        exercises.seed.json — the catalogue as reviewable data.
-docs/adr/       Architecture decisions.
+apps/api          Fastify + Drizzle. routes/ are thin; services/ hold the logic.
+apps/mobile       Expo Router app, Android + web from one codebase.
+apps/worker       Claims queued analyses, runs the analyzer, writes results.
+packages/shared   Zod schemas and derived types — the API contract.
+packages/domain   Pure business logic. No I/O, no framework imports.
+services/analyzer Python. Tracks the bar and emits a PATH — nothing more.
+content/          exercises.seed.json — the catalogue as reviewable data.
+docs/adr/         Architecture decisions.
 ```
+
+The analyzer emits a bar path; `packages/domain/bar-path.ts` turns it into
+metres, reps and velocities. That seam is deliberate — see apps/worker/README.md.
+Do not compute a published number in Python.
 
 ## Commands
 
 ```
 pnpm dev:api        Fastify with watch
 pnpm dev:mobile     Expo (press 'a' for Android, 'w' for web)
+pnpm dev:worker     Analysis worker with watch
+pnpm worker:once    Claim one queued analysis, work it, exit
 pnpm db:generate    Drizzle migration from the schema diff
 pnpm db:migrate     Apply migrations (forward-only)
 pnpm db:seed        Load content/exercises.seed.json

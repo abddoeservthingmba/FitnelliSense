@@ -142,3 +142,36 @@ frame access still needs `react-native-vision-camera`.
 
 Uploading an existing clip from the camera roll remains unbuilt for the reason
 given above: it needs a native transcoder. Only in-app recording ships.
+
+## Status as of 2026-09-08 — the worker exists
+
+`apps/worker` claims queued analyses and writes results, so a clip no longer
+stops at `queued`. The staging above held: **stage 2 and 3 collapsed into one
+another** rather than arriving in order.
+
+The tracker is `services/analyzer` (Python, Hough circles plus continuity and a
+size prior). Manual point entry was not skipped — it turned out to be the
+thing that makes the tracker work, and it is a single tap rather than a point
+per frame. Deciding which circular thing in a gym is the bar is the half of
+tracking that kept failing, and it failed differently every time: ceiling
+lights, then a wall fan, then a circle twice the plate's size. On the first
+real clip the guess reached 59% frame-to-frame coherence and the clip was
+refused; a tap reached 85% and produced a path whose vertical extent matches a
+deadlift.
+
+**The seam this ADR predicted held exactly.** `bar-path.ts` was written to be
+"ignorant of how the point was tracked", and that is what let a Python tracker
+be bolted to a TypeScript metrics layer without either one being rewritten: the
+analyzer emits a path in pixels plus the plate's radius, and every published
+number is computed by `packages/domain`. The plate is the ruler, so
+`calibrationFromPlate` supplies the scale that stage 5 was going to — measured
+at 750 px/m on the first real clip, which makes its 396 px pull 52.8 cm.
+
+**Where it runs is still not settled.** It runs on a developer's machine
+against the production database, because ffmpeg and OpenCV still do not fit
+Render's free instance and background workers there are a paid plan. Analysis
+is therefore unavailable when that machine is off; clips upload and are kept,
+and sit in `queued` until it next runs. That is the state the row was designed
+to express, and it is the honest interim answer rather than a silent one.
+
+Camera-roll upload is still unbuilt, for the transcoder reason above.

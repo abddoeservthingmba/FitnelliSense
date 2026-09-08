@@ -184,6 +184,84 @@ export function barPathMetrics(path: readonly PathPoint[]): BarPathMetrics {
  */
 export const MIN_REP_RANGE_M = 0.1;
 
+/**
+ * A rep must also reach this fraction of the set's own typical range.
+ *
+ * WHY AN ABSOLUTE FLOOR IS NOT ENOUGH, measured on the first real clip fed
+ * through this module: 14 reps from a set of three. `MIN_REP_RANGE_M` rejects
+ * jitter, and every one of those eleven extras cleared it comfortably — they
+ * ranged from 15 cm to 72 cm, because they were not jitter. They were the
+ * tracker holding the lifter's back and his shoulder while he walked around
+ * setting up, and a shoulder moves further than 10 cm.
+ *
+ * No absolute number separates those from reps. 72 cm is longer than a real
+ * deadlift, so a floor high enough to exclude it excludes the set as well.
+ * What does separate them is that REAL REPS OF ONE SET RESEMBLE EACH OTHER:
+ * the same lifter moving the same bar through the same range, three or five
+ * times over. Anything far below the group is something else.
+ *
+ * That makes the test relative, and relative to the group rather than to the
+ * largest single excursion — one wild candidate must not be allowed to raise
+ * the bar for the real ones. See `repRangeReference`.
+ */
+export const MIN_REP_RANGE_RATIO = 0.6;
+
+/**
+ * The fraction of the largest excursion that counts as "in the main group".
+ *
+ * The reference has to come from the real reps, and the real reps are the ones
+ * near the top of the range — so the group is defined from the top down. A
+ * plain median over ALL candidates fails exactly when it matters: with three
+ * real reps and eleven decoys the median lands among the decoys and licenses
+ * them.
+ */
+const REP_CLUSTER_FRACTION = 0.5;
+
+/**
+ * Above this peak concentric velocity, it was not a barbell.
+ *
+ * A PHYSICAL CEILING, NOT A TUNED ONE, which is what makes it worth having.
+ * The fastest bar speed in sport is the second pull of a snatch, at roughly
+ * 2 m/s for a world-class lifter; a barbell simply does not travel at 9. So
+ * this rejects only paths that could not be lifts, in the same way that
+ * measuring travel in plate radii rejects a path that could not be a rep.
+ *
+ * It is the check that catches what the relative test cannot. On the first
+ * real clip, two candidates survived the range comparison — 0.72 m and 0.53 m,
+ * plausible deadlift ranges — because they came from the tracker holding the
+ * lifter's shoulder while he walked, and a shoulder crossing the frame covers
+ * a real distance. They peaked at 9.08 and 4.87 m/s. The genuine reps in the
+ * same clip peaked at 0.94 and 0.87, so the two populations are separated
+ * threefold on either side of this number.
+ *
+ * Velocity is only available because the plate gives a scale. Before
+ * calibration existed there was no way to state this check at all, which is
+ * why it is expressed in m/s and lives here rather than in the tracker.
+ */
+export const MAX_REP_PEAK_VELOCITY_MS = 3.0;
+
+/**
+ * The range a typical rep of this set covers, in metres.
+ *
+ * A median over the main group rather than a mean, so one candidate cannot
+ * drag it. Exported because it is the number a caller needs to explain why a
+ * rep was rejected, and a threshold nobody can see the other side of is a
+ * threshold nobody can argue with.
+ */
+export function repRangeReference(ranges: readonly number[]): number | null {
+  const usable = ranges.filter((range) => Number.isFinite(range) && range > 0);
+  const largest = Math.max(...usable, 0);
+  if (largest <= 0) return null;
+
+  const group = usable.filter((range) => range >= largest * REP_CLUSTER_FRACTION).sort((a, b) => a - b);
+  const middle = Math.floor(group.length / 2);
+  const median =
+    group.length % 2 === 1
+      ? (group[middle] as number)
+      : ((group[middle - 1] as number) + (group[middle] as number)) / 2;
+  return median;
+}
+
 export interface Rep {
   readonly index: number;
   readonly startMs: number;
@@ -317,6 +395,94 @@ function concentricVelocity(
   return { mean, peak };
 }
 
+/**
+ * How far the bar must leave its rest position for the movement to be
+ * unmistakable, as a fraction of the rep's own range.
+ *
+ * Not the boundary itself — only a point that is certainly inside the
+ * movement, from which the boundary is found by walking back. See `settled`.
+ */
+const REST_EXIT_FRACTION = 0.1;
+
+/** Below this fraction of the rep's peak speed, the bar is not moving. */
+const STILLNESS_FRACTION = 0.08;
+
+/**
+ * The frames where a rep's movement actually begins and ends.
+ *
+ * WHY A TURNING POINT IS NOT A BOUNDARY. `turningPoints` reports the extreme of
+ * each reversal, and when a lifter rests the extreme sits somewhere in the
+ * middle of however long they rested. So a rep bounded by turning points runs
+ * from the middle of one rest to the middle of the next, and the rest lands
+ * INSIDE it.
+ *
+ * Measured on the first real clip: a deadlift whose pull took 0.9 s and whose
+ * lowering took 1.5 s was reported with a 4.69 s concentric and a 10.49 s
+ * eccentric, because eight seconds of the bar lying on the floor between reps
+ * belonged to the rep either side. That is not only a wrong duration — it is
+ * the wrong `meanConcentricVelocityMs`, which came out at 0.115 m/s for a pull
+ * that actually averaged nearer 0.6. Velocity-based training is built on that
+ * number, so an inflated denominator is the most expensive error in this file.
+ *
+ * TWO STAGES, because neither test can do the job alone. Displacement crosses
+ * a rest reliably — noise wanders inside a band a few pixels wide and a lift
+ * leaves it for good — but a gate large enough to clear the noise is reached
+ * well after the movement began, so it cannot place the boundary. Speed places
+ * it precisely but cannot cross a rest: walking forward from the turning point
+ * stops at the first frame above the floor, and on real footage a resting
+ * barbell's tracked centroid crosses that floor constantly. So displacement
+ * gets inside the movement and speed walks back to its edge, which reverses
+ * the fragile direction — inside a real movement the bar is moving far faster
+ * than the floor, so no noise dip stops the walk early.
+ */
+function settled(
+  path: readonly PathPoint[],
+  fromIndex: number,
+  turnIndex: number,
+  toIndex: number,
+  romM: number,
+): { from: number; to: number } {
+  const gate = romM * REST_EXIT_FRACTION;
+
+  let peak = 0;
+  for (let i = fromIndex + 1; i <= toIndex; i += 1) {
+    const dt = ((path[i] as PathPoint).tMs - (path[i - 1] as PathPoint).tMs) / 1000;
+    if (dt <= 0) continue;
+    peak = Math.max(peak, Math.abs((path[i] as PathPoint).y - (path[i - 1] as PathPoint).y) / dt);
+  }
+  const stillness = peak * STILLNESS_FRACTION;
+
+  const restY = (path[fromIndex] as PathPoint).y;
+  let moving = fromIndex;
+  while (moving < turnIndex && Math.abs((path[moving] as PathPoint).y - restY) < gate) moving += 1;
+  let from = moving;
+  while (from > fromIndex && speedAt(path, from) > stillness) from -= 1;
+
+  const endY = (path[toIndex] as PathPoint).y;
+  moving = toIndex;
+  while (moving > turnIndex && Math.abs((path[moving] as PathPoint).y - endY) < gate) moving -= 1;
+  let to = moving;
+  while (to < toIndex && speedAt(path, to + 1) > stillness) to += 1;
+
+  return { from, to };
+}
+
+/**
+ * Speed of the step INTO `index`, in metres per second.
+ *
+ * `index` is always at least 1: both callers in `settled` walk within bounds
+ * they have already tested. There is deliberately no guard for index 0 — an
+ * unreachable one would be a branch no test can cover, and this module is held
+ * at 100% branch coverage precisely so that untested paths are visible.
+ */
+function speedAt(path: readonly PathPoint[], index: number): number {
+  const current = path[index] as PathPoint;
+  const previous = path[index - 1] as PathPoint;
+  const dt = (current.tMs - previous.tMs) / 1000;
+  if (dt <= 0) return 0;
+  return Math.abs(current.y - previous.y) / dt;
+}
+
 export interface DetectRepsOptions {
   /**
    * Where a rep begins. A squat and a bench start at the top and go down; a
@@ -326,6 +492,20 @@ export interface DetectRepsOptions {
   readonly startsAt?: 'top' | 'bottom';
   /** Reversals smaller than this are not reps. */
   readonly minRangeM?: number;
+  /**
+   * A rep must also reach this fraction of the set's typical range.
+   *
+   * Set to 0 to take every reversal that clears `minRangeM` — which is what
+   * this function used to do, and is right only when the path is known to be
+   * clean. See `MIN_REP_RANGE_RATIO`.
+   */
+  readonly minRangeRatio?: number;
+  /**
+   * Reject a rep whose peak concentric velocity exceeds this, in m/s.
+   *
+   * `Infinity` accepts anything. See `MAX_REP_PEAK_VELOCITY_MS`.
+   */
+  readonly maxPeakVelocityMs?: number;
 }
 
 /**
@@ -337,9 +517,14 @@ export interface DetectRepsOptions {
 export function detectReps(path: readonly PathPoint[], options: DetectRepsOptions = {}): Rep[] {
   const startsAt = options.startsAt ?? 'top';
   const minRange = options.minRangeM ?? MIN_REP_RANGE_M;
+  const minRatio = options.minRangeRatio ?? MIN_REP_RANGE_RATIO;
+  const maxPeak = options.maxPeakVelocityMs ?? MAX_REP_PEAK_VELOCITY_MS;
 
   const turns = turningPoints(path, minRange / 2);
-  const reps: Rep[] = [];
+  // Indexed at the end, not here: a candidate rejected by the relative test
+  // below must not leave a hole in the numbering, and every per-rep number in
+  // the app is keyed on this index.
+  const candidates: Omit<Rep, 'index'>[] = [];
 
   for (let i = 0; i + 2 < turns.length; i += 1) {
     const start = turns[i] as Turn;
@@ -347,23 +532,29 @@ export function detectReps(path: readonly PathPoint[], options: DetectRepsOption
     const end = turns[i + 2] as Turn;
     if (start.kind !== startsAt || turn.kind === startsAt) continue;
 
-    const startPoint = path[start.index] as PathPoint;
-    const turnPoint = path[turn.index] as PathPoint;
-    const endPoint = path[end.index] as PathPoint;
-
-    const romM = Math.abs(turnPoint.y - startPoint.y);
+    const romM = Math.abs(
+      (path[turn.index] as PathPoint).y - (path[start.index] as PathPoint).y,
+    );
     if (romM < minRange) continue;
 
+    // TRIM THE REST OFF BOTH ENDS before anything is measured. `start` and
+    // `end` are turning points, which sit in the middle of however long the
+    // lifter rested; every duration and every velocity below is derived from
+    // these indices, so trimming has to happen first.
+    const { from, to } = settled(path, start.index, turn.index, end.index, romM);
+
+    const startPoint = path[from] as PathPoint;
+    const turnPoint = path[turn.index] as PathPoint;
+    const endPoint = path[to] as PathPoint;
+
     // The concentric is whichever half travels upward.
-    const [ascentFrom, ascentTo] =
-      startsAt === 'top' ? [turn.index, end.index] : [start.index, turn.index];
+    const [ascentFrom, ascentTo] = startsAt === 'top' ? [turn.index, to] : [from, turn.index];
     const { mean, peak } = concentricVelocity(path, ascentFrom, ascentTo);
 
     const firstHalfMs = turnPoint.tMs - startPoint.tMs;
     const secondHalfMs = endPoint.tMs - turnPoint.tMs;
 
-    reps.push({
-      index: reps.length,
+    candidates.push({
       startMs: startPoint.tMs,
       turnMs: turnPoint.tMs,
       endMs: endPoint.tMs,
@@ -375,7 +566,23 @@ export function detectReps(path: readonly PathPoint[], options: DetectRepsOption
     });
   }
 
-  return reps;
+  // THE PHYSICAL TEST FIRST, and the order is not incidental. A candidate that
+  // could not be a barbell must be gone BEFORE the group is measured, or it
+  // joins the group it should have been excluded from and raises the floor for
+  // the real reps. On the first real clip the two impossible candidates were
+  // the two largest, so leaving them in set the reference from them.
+  const possible = candidates.filter((candidate) => candidate.peakConcentricVelocityMs <= maxPeak);
+
+  // THE RELATIVE TEST. A set's real reps resemble each other; a candidate far
+  // below the group is something else that happened to reverse. Measured
+  // against the group's median rather than the largest single excursion, so
+  // one wild candidate cannot raise the bar for the genuine ones.
+  const reference = repRangeReference(possible.map((candidate) => candidate.romM));
+  const floor = reference === null ? 0 : reference * minRatio;
+
+  return possible
+    .filter((candidate) => candidate.romM >= floor)
+    .map((candidate, index) => ({ index, ...candidate }));
 }
 
 /**

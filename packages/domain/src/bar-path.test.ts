@@ -5,6 +5,7 @@ import {
   barPathMetrics,
   calibrationFromPlate,
   detectReps,
+  repRangeReference,
   smoothPath,
   toMetres,
   velocityLossPercent,
@@ -273,9 +274,138 @@ describe('detectReps', () => {
   it('splits eccentric from concentric', () => {
     const path = syntheticSet({ reps: 3, romM: 0.5, secondsPerRep: 4 });
     const rep = detectReps(path)[0];
-    // A symmetric cosine spends half the rep going each way.
-    expect(rep?.eccentricMs).toBeCloseTo(2000, -2);
-    expect(rep?.concentricMs).toBeCloseTo(2000, -2);
+
+    // A symmetric cosine spends half the rep going each way, and the two
+    // halves must come out EQUAL — that is the property worth asserting,
+    // because an asymmetry here would mean the direction convention is wrong.
+    expect(rep?.eccentricMs).toBe(rep?.concentricMs);
+
+    // Just under half of 4000 ms, not exactly half, and deliberately so. The
+    // boundaries are now trimmed to where the bar is actually moving, and
+    // either side of a cosine turnaround it is not: 67 ms at each end sits
+    // below 8% of the rep's peak speed. Excluding that from the durations is
+    // the point of the trim — it is what stops eight seconds of a barbell
+    // lying on the floor being reported as an eccentric. On a clip with no
+    // rest in it there is nothing to remove but the turnaround itself.
+    expect(rep?.eccentricMs).toBeGreaterThan(1900);
+    expect(rep?.eccentricMs).toBeLessThanOrEqual(2000);
+  });
+
+  it('leaves the rest between reps out of the rep', () => {
+    // The defect this trimming exists to fix, measured on the first real clip:
+    // a deadlift whose pull took 0.9 s and whose lowering took 1.5 s came back
+    // with a 4.69 s concentric and a 10.49 s eccentric, because the eight
+    // seconds the bar spent on the floor between reps belonged to the reps
+    // either side of it. A turning point sits in the MIDDLE of a rest, so a
+    // rep bounded by turning points contains half a rest at each end.
+    const perRep = 60; // 2 s of movement at 30 fps
+    const rest = 240; // 8 s of the bar on the floor
+    const path: PathPoint[] = [];
+    let tMs = 0;
+    for (let r = 0; r < 3; r += 1) {
+      for (let i = 0; i < perRep; i += 1) {
+        const u = i / perRep;
+        path.push({ tMs, x: 0, y: (0.5 * (1 - Math.cos(2 * Math.PI * u))) / 2 });
+        tMs += 1000 / 30;
+      }
+      for (let i = 0; i < rest; i += 1) {
+        // Not perfectly still: a tracked centroid never is, and it is exactly
+        // this jitter that defeats a plain velocity test.
+        path.push({ tMs, x: 0, y: Math.sin(i) * 0.004 });
+        tMs += 1000 / 30;
+      }
+    }
+
+    const reps = detectReps(path, { startsAt: 'bottom' });
+    expect(reps.length).toBeGreaterThan(0);
+    for (const rep of reps) {
+      // The movement is 2 s. Without trimming each rep ran to about 10 s.
+      expect(rep.endMs - rep.startMs).toBeLessThan(3000);
+    }
+  });
+
+  it('rejects an excursion far below the typical range of the set', () => {
+    // Eleven of the fourteen "reps" found in the first real clip were the
+    // tracker holding the lifter's back while he walked around. They cleared
+    // the absolute minimum comfortably — 15 cm to 72 cm — because a shoulder
+    // moves further than 10 cm. What separates them is that real reps of one
+    // set resemble each other.
+    const real = syntheticSet({ reps: 3, romM: 0.5, secondsPerRep: 3 });
+    const shrug = syntheticSet({ reps: 2, romM: 0.15, secondsPerRep: 3 }).map((point) => ({
+      ...point,
+      tMs: point.tMs + 9000,
+    }));
+
+    const kept = detectReps([...real, ...shrug]);
+    // Asserted as a property rather than a count: joining two synthetic sets
+    // leaves a seam between them that is itself a reversal, and pinning the
+    // number would be pinning that artefact rather than the rejection.
+    for (const rep of kept) expect(rep.romM).toBeGreaterThan(0.3);
+
+    // With the relative test switched off, the shallow pair comes back.
+    const all = detectReps([...real, ...shrug], { minRangeRatio: 0 });
+    expect(all.length).toBeGreaterThan(kept.length);
+    expect(all.some((rep) => rep.romM < 0.2)).toBe(true);
+  });
+
+  it('rejects a rep no barbell could have performed', () => {
+    // 0.5 m in 100 ms is 5 m/s. The fastest bar speed in sport is the second
+    // pull of a snatch at roughly 2 m/s, so this is not a lift — it is the
+    // tracker jumping between two objects.
+    const path: PathPoint[] = [
+      { tMs: 0, x: 0, y: 0 },
+      { tMs: 50, x: 0, y: 0.25 },
+      { tMs: 100, x: 0, y: 0.5 },
+      { tMs: 150, x: 0, y: 0.25 },
+      { tMs: 200, x: 0, y: 0 },
+    ];
+    expect(detectReps(path, { startsAt: 'bottom' })).toEqual([]);
+    expect(
+      detectReps(path, { startsAt: 'bottom', maxPeakVelocityMs: Infinity }).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it('survives a tracker that stalls mid-lift', () => {
+    // A real tracker repeats and reorders frames. An interval of zero inside
+    // the ascent would divide into the peak velocity and put Infinity on the
+    // screen, so it is skipped rather than trusted.
+    const stalled = syntheticSet({ reps: 2, romM: 0.5, secondsPerRep: 3 }).map((point, index) =>
+      index % 17 === 0 && index > 0
+        ? { ...point, tMs: Math.round(((index - 1) / 30) * 1000) }
+        : point,
+    );
+
+    const reps = detectReps(stalled);
+    expect(reps.length).toBeGreaterThan(0);
+    for (const rep of reps) {
+      expect(Number.isFinite(rep.peakConcentricVelocityMs)).toBe(true);
+      expect(Number.isFinite(rep.meanConcentricVelocityMs)).toBe(true);
+    }
+  });
+
+  it('numbers the reps that survive contiguously from zero', () => {
+    // A rejected candidate must not leave a hole: every per-rep number in the
+    // app is keyed on this index.
+    const real = syntheticSet({ reps: 2, romM: 0.5, secondsPerRep: 3 });
+    const shrug = syntheticSet({ reps: 1, romM: 0.15, secondsPerRep: 3 }).map((point) => ({
+      ...point,
+      tMs: point.tMs + 6000,
+    }));
+    const tail = syntheticSet({ reps: 2, romM: 0.5, secondsPerRep: 3 }).map((point) => ({
+      ...point,
+      tMs: point.tMs + 9000,
+    }));
+
+    const reps = detectReps([...real, ...shrug, ...tail]);
+    expect(reps.map((rep) => rep.index)).toEqual(reps.map((_, index) => index));
+  });
+
+  it('has no range reference to compare against when nothing moved', () => {
+    expect(repRangeReference([])).toBeNull();
+    expect(repRangeReference([0, -1, Number.NaN])).toBeNull();
+    expect(repRangeReference([0.5, 0.5, 0.1])).toBeCloseTo(0.5, 6);
+    // Even count: the median is the midpoint of the two middle values.
+    expect(repRangeReference([0.4, 0.6])).toBeCloseTo(0.5, 6);
   });
 
   it('reports concentric velocity as a positive number', () => {

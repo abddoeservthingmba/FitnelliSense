@@ -1,6 +1,7 @@
 packages:
   - 'apps/api'
   - 'apps/mobile'
+  - 'apps/worker'
   - 'packages/*'
 
 # Expo / React Native resolve native modules by walking node_modules; the

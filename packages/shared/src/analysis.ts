@@ -29,6 +29,45 @@ import { isoDateTimeSchema, uuidSchema } from './primitives';
  */
 
 /**
+ * Where the lifter tapped the plate.
+ *
+ * WHY A HUMAN SUPPLIES THIS. Deciding which circular thing in a gym is the bar
+ * is the half of tracking that kept failing, and it failed differently every
+ * time: ceiling lights, then a wall fan, then a circle twice the plate's size.
+ * Following, once pointed at the right object, is the half that works. On the
+ * first real clip the guess reached 59% frame-to-frame coherence and the clip
+ * was refused; the tap reached 85% and produced a measurable path.
+ *
+ * FRACTIONS OF THE FRAME, NOT PIXELS, and that is the important decision here.
+ * A phone knows where the tap landed inside the view it drew; what it does not
+ * reliably know is the source resolution, because Android reports a rotated
+ * clip's dimensions inconsistently and a `<video>` element reports the
+ * post-rotation size while the container stores the other one. Sending a
+ * fraction moves that problem to the only place that can answer it — the
+ * decoder — and asking a client to reason about container rotation is exactly
+ * the confusion that had this pipeline measuring deadlifts sideways for three
+ * iterations.
+ *
+ * The frame the lifter SAW is the reference. Whatever the phone showed them,
+ * upright, with the top-left corner at (0, 0).
+ */
+export const barSeedSchema = z.object({
+  /** 0 is the left edge of the frame, 1 the right. */
+  x: z.number().min(0).max(1),
+  /** 0 is the top of the frame, 1 the bottom. */
+  y: z.number().min(0).max(1),
+  /**
+   * Seconds into the ANALYSED WINDOW at which they tapped, not into the file.
+   *
+   * The window is what the worker decodes, so a time relative to the file
+   * would need `clipStartSecs` subtracted somewhere — and "somewhere" is how
+   * an off-by-one-window bug gets in. Zero, and almost always zero, because a
+   * plate tapped at rest is somewhere else entirely by mid-pull.
+   */
+  atSecs: z.number().min(0).default(0),
+});
+
+/**
  * What the client asks for before it uploads.
  *
  * `contentLength` is required, not optional: it is what lets the server refuse
@@ -80,6 +119,17 @@ export const requestVideoUploadSchema = z.object({
    * one the analyser supports, because a client can send anything.
    */
   analyse: z.boolean().default(false),
+  /**
+   * The lifter's tap on the plate, if they gave one.
+   *
+   * OPTIONAL, AND A CLIP WITHOUT ONE IS STILL ACCEPTED. It is not the server's
+   * place to refuse the upload — the video is worth keeping either way, and the
+   * tracker will say for itself whether it could follow the bar. What a missing
+   * tap costs is measurement: on real gym footage the unseeded tracker abstains
+   * far more often than it succeeds, so a clip sent without one will usually
+   * come back unmeasured rather than wrong.
+   */
+  seed: barSeedSchema.optional(),
 });
 
 export const videoUploadTargetSchema = z.object({
@@ -141,6 +191,15 @@ export const analysisSchema = z.object({
    * choice read as a failure.
    */
   analysisRequested: z.boolean(),
+  /**
+   * The tap this clip was analysed with, or null if none was given.
+   *
+   * Returned so a refusal can be EXPLAINED. "We could not follow the bar" is
+   * an unactionable message on its own; "we could not follow the bar, and you
+   * did not point at the plate" tells the lifter what to do differently, and
+   * the two cases are indistinguishable to the client without this field.
+   */
+  seed: barSeedSchema.nullable(),
   result: analysisResultSchema.nullable(),
   /**
    * Why it failed, in words a user can act on. Never a stack trace — a worker
@@ -157,6 +216,7 @@ export const analysisSchema = z.object({
 
 export const analysisListSchema = z.object({ items: z.array(analysisSchema) });
 
+export type BarSeed = z.infer<typeof barSeedSchema>;
 export type RequestVideoUpload = z.infer<typeof requestVideoUploadSchema>;
 export type VideoUploadTarget = z.infer<typeof videoUploadTargetSchema>;
 export type RepMetrics = z.infer<typeof repMetricsSchema>;

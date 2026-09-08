@@ -3,6 +3,7 @@ import {
   analyserExercise,
   analysisSupport,
   canRequestAnalysis,
+  repStartsAt,
   slugsFor,
   supportedExercises,
 } from './analysis-support';
@@ -93,5 +94,26 @@ describe('the supported list', () => {
     // exercise or one of them silently loses analysis.
     expect(slugsFor('deadlift')).toContain('deadlift');
     expect(slugsFor('deadlift')).toContain('conventional-deadlift');
+  });
+});
+
+describe('repStartsAt', () => {
+  it('starts a deadlift on the floor', () => {
+    expect(repStartsAt('deadlift')).toBe('bottom');
+  });
+
+  it('starts every other supported lift at the top', () => {
+    for (const exercise of supportedExercises()) {
+      if (exercise === 'deadlift') continue;
+      expect(repStartsAt(exercise)).toBe('top');
+    }
+  });
+
+  it('has an answer for every supported lift', () => {
+    // A missing entry would default a pull to 'top', which counts the reps
+    // between the wrong pair of turning points rather than failing visibly.
+    for (const exercise of supportedExercises()) {
+      expect(['top', 'bottom']).toContain(repStartsAt(exercise));
+    }
   });
 });

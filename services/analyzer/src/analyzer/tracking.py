@@ -165,6 +165,64 @@ class BarSeries:
         return span / median_radius
 
 
+def refuse(series: BarSeries) -> str | None:
+    """Why this path cannot be measured, or None if it can.
+
+    ABSTAIN BEFORE ANYONE COMPUTES ANYTHING. This is the check whose absence
+    let a scatter plot become 71 reps: tracking had no way to say "I do not
+    believe this", so the next stage was handed noise and did its job
+    faithfully on it.
+
+    THREE SIGNALS, AND EACH IS HERE BECAUSE THE ONES BEFORE IT MISSED.
+
+    Coherence asks whether each frame followed from the last. A lock can
+    satisfy that at every step and still walk onto a different object entirely,
+    one plausible step at a time: 64% coherence cleared this floor on a clip
+    that tracked three different sizes of thing.
+
+    Radius spread asks whether it stayed the SAME object. A rigid plate in
+    front of a static camera does not change size.
+
+    Travel asks whether that object ever MOVED LIKE A BARBELL. Both checks
+    above score perfectly on a light fitting, because a light fitting is the
+    most coherent, most size-stable thing in the room — 47.6 s of unbroken
+    lock, reported as 4 reps. Nothing that holds still is doing a set.
+
+    LIVES HERE, BESIDE THE PROPERTIES IT READS, because there are now two
+    callers — the full analysis and the bar-path export — and a gate duplicated
+    at two call sites is a gate that will eventually differ between them. The
+    one that then lets a wrong answer through is whichever was not updated.
+    """
+    limits = thresholds()
+    if series.coherence < float(limits.value("tracking.min_coherence")):
+        return "bar_not_tracked"
+    if series.radius_spread > float(limits.value("tracking.max_radius_spread_ratio")):
+        return "bar_not_tracked"
+    if series.travel_in_radii < float(limits.value("tracking.min_travel_plate_radii")):
+        return "bar_not_tracked"
+    return None
+
+
+def plate_radius_px(series: BarSeries) -> float | None:
+    """The plate's apparent radius, in SOURCE pixels, or None if unknown.
+
+    THE ONE OBJECT OF KNOWN SIZE IN THE FRAME, and therefore the only ruler
+    available: a competition plate is 450 mm across whatever the camera did, so
+    this number is what turns every pixel measurement downstream into metres.
+
+    A median over the frames where the bar was actually found, not a mean and
+    not the established radius: the established value is fixed early from the
+    first `radius_memory_frames` that agree, which is the right choice for
+    holding a lock and the wrong one for describing the whole clip, where the
+    lifter may have moved toward or away from the lens.
+    """
+    seen = series.radius[series.found & np.isfinite(series.radius)]
+    if seen.size == 0:
+        return None
+    median = float(np.median(seen))
+    return median if median > 0 else None
+
+
 def _motion_mask(background: cv2.BackgroundSubtractorMOG2, grey: np.ndarray) -> np.ndarray:
     """Which pixels are moving in this frame.
 

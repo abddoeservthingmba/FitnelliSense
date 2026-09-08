@@ -86,6 +86,26 @@ export function canRequestAnalysis(slug: string | null): boolean {
 }
 
 /**
+ * Which end of the movement a rep of this lift begins at.
+ *
+ * A SQUAT, A BENCH AND A PRESS START AT THE TOP: the bar is held at standing
+ * or lockout height and the rep opens with the descent. A DEADLIFT STARTS ON
+ * THE FLOOR, and its first movement is the pull.
+ *
+ * This is what `detectReps` needs to know, and getting it wrong does not
+ * produce a small error — it counts the reps between the WRONG pair of turning
+ * points, so a deadlift read as a squat pairs the lowering of one rep with the
+ * pull of the next and reports the rest between them as part of a rep.
+ *
+ * Enumerated rather than inferred. There is no property of an exercise slug
+ * that reveals which way it goes, and a default of 'top' would silently be
+ * wrong for every pull.
+ */
+export function repStartsAt(exercise: AnalyserExercise): 'top' | 'bottom' {
+  return exercise === 'deadlift' ? 'bottom' : 'top';
+}
+
+/**
  * The exercises the analyser supports, for a capture guide or a settings
  * screen. Sorted so the list is stable — an unsorted `Object.values` would
  * reorder on any edit to the map above and produce noise in a snapshot test.
